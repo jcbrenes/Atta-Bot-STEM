@@ -6,7 +6,7 @@ import 'package:proyecto_tec/screens/ventanaHistorial.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
 
-/// VentanaBase es una clase abstracta que extiende StatefulWidget.
+
 /// Define el esqueleto para una ventana de diálogo personalizada.
 abstract class VentanaBase extends StatefulWidget {
   const VentanaBase({Key? key}) : super(key: key);
@@ -20,7 +20,7 @@ abstract class VentanaBase extends StatefulWidget {
   _VentanaBaseState createState() => _VentanaBaseState();
 }
 
-/// _VentanaBaseState es una clase que extiende el State de VentanaBase.
+
 /// Define el estado para una ventana de diálogo personalizada.
 class _VentanaBaseState extends State<VentanaBase> {
   int numero = 0; // Número que se muestra en la ventana de diálogo
@@ -28,14 +28,14 @@ class _VentanaBaseState extends State<VentanaBase> {
   final _controller = TextEditingController(); // Controlador del TextField
 
   /// Cambia el número en un intervalo de tiempo.
-  /// @param cambio El valor para cambiar el número.
+
   void _cambiarNumero(int cambio) {
     if (_tiempo != null && _tiempo!.isActive) return;
 
     _tiempo = Timer.periodic(const Duration(milliseconds: 33), (timer) {
       setState(() {
         numero += cambio;
-        if (numero < 0) {
+        if (numero < 0) { //aca es un limitador para el numero no pase de 0 o de 300, que solo sea de 0 a 300
           numero = 0;
         } else if (numero > 300) {
           numero = 300;
@@ -69,7 +69,7 @@ class _VentanaBaseState extends State<VentanaBase> {
   }
 
   /// Crea el título de la ventana de diálogo.
-  /// @return Un widget que contiene el título.
+
   Widget _crearTitulo() {
     return Row(
       children: <Widget>[
@@ -81,7 +81,6 @@ class _VentanaBaseState extends State<VentanaBase> {
   }
 
   /// Crea el TextField de la ventana de diálogo.
-  /// @return Un widget que contiene el TextField.
   Widget _crearTextField() {
     return SizedBox(
       width: 70,
@@ -89,11 +88,11 @@ class _VentanaBaseState extends State<VentanaBase> {
         controller: _controller,
         keyboardType: TextInputType.number,
         inputFormatters: [
-          FilteringTextInputFormatter.allow(RegExp(r'^\d{0,3}$')),
+          FilteringTextInputFormatter.allow(RegExp(r'^\d{0,3}$')), //validacion de caracteres en el textfield
         ],
         onChanged: _onChanged,
         decoration: const InputDecoration(
-          hintText: '0-300',
+          hintText: '0-300',//valores que se muestran al usuario como guia
         ),
         textAlign: TextAlign.center,
       ),
@@ -101,7 +100,6 @@ class _VentanaBaseState extends State<VentanaBase> {
   }
 
   /// Maneja el cambio de valor en el TextField.
-  /// @param value El valor actual del TextField.
   void _onChanged(String value) {
     if (value.isEmpty) {
       numero = 0;
@@ -139,15 +137,13 @@ class _VentanaBaseState extends State<VentanaBase> {
   }
 
   /// Crea las acciones de la ventana de diálogo.
-  /// @param context El contexto en el que se construye el widget.
-  /// @return Una lista de widgets que contiene las acciones.
   List<Widget> _crearAcciones(BuildContext context) {
     return <Widget>[
       TextButton(
         child: Text(widget.accion),
-        onPressed: () {
-          Provider.of<Historial>(context, listen: false)
-              .addEvento('${widget.accion} $numero cm');
+        onPressed: () {  
+          Provider.of<Historial>(context, listen: false)// Se obtiene una instancia del proveedor 'Historial' y se añade un nuevo evento a este. 
+              .addEvento('${widget.accion} $numero cm');// El evento es una cadena de texto que contiene la acción realizada y la distancia en centímetros.
           Navigator.of(context).pop();
         },
       ),
@@ -155,7 +151,6 @@ class _VentanaBaseState extends State<VentanaBase> {
   }
 
   /// Crea el contenido de la ventana de diálogo.
-  /// @return Un widget que contiene el contenido.
   Widget _crearContenido() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -167,9 +162,6 @@ class _VentanaBaseState extends State<VentanaBase> {
   }
 
   /// Crea un botón con un icono.
-  /// @param cambio El valor para cambiar el número.
-  /// @param icono El icono del botón.
-  /// @return Un widget que contiene el botón.
   Widget _crearBoton(int cambio, IconData icono) {
     return GestureDetector(
       onTapDown: (_) => _cambiarNumero(cambio),
@@ -193,7 +185,7 @@ class _VentanaBaseState extends State<VentanaBase> {
   }
 }
 
-/// ventanaAvanzar es una clase que extiende VentanaBase.
+
 /// Representa una ventana de diálogo para avanzar.
 class ventanaAvanzar extends VentanaBase {
   const ventanaAvanzar({Key? key}) : super(key: key);
@@ -205,7 +197,7 @@ class ventanaAvanzar extends VentanaBase {
   String get accion => 'Avanzar';
 }
 
-/// ventanaRetroceder es una clase que extiende VentanaBase.
+
 /// Representa una ventana de diálogo para retroceder.
 class ventanaRetroceder extends VentanaBase {
   const ventanaRetroceder({Key? key}) : super(key: key);

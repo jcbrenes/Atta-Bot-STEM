@@ -1,4 +1,4 @@
-// ignore_for_file: camel_case_types
+// ignore_for_file: camel_case_types, use_build_context_synchronously
 
 import 'dart:io';
 
@@ -10,18 +10,18 @@ import 'package:proyecto_tec/screens/ventanaControlRobot.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 
 
-
-Future<bool> requestPermissions() async {
+//funcion que permite pedir permisos al sistema
+Future<bool> pedirPermisos() async {
   Map<Permission, PermissionStatus> statuses = await [
     Permission.location,
     Permission.bluetooth,
   ].request();
 
-  bool allPermissionsGranted = statuses.values.every((status) => status.isGranted);
-  return allPermissionsGranted;
+  bool permisosConcedidos = statuses.values.every((status) => status.isGranted);
+  return permisosConcedidos;
 }
 
-
+//pantalla de inicio, grafico
 class pantallaInicio extends StatelessWidget {
   const pantallaInicio({super.key});
 
@@ -53,6 +53,8 @@ class pantallaInicio extends StatelessWidget {
   }
 }
 
+
+//logo que se muestra al inicio
 class imagenInicio extends StatelessWidget {
   const imagenInicio({
     super.key,
@@ -61,12 +63,13 @@ class imagenInicio extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Image.asset(
-      'assets/AttaBotLogo.png',
+      'assets/AttaBotLogo.png',//aca es donde se carga la imagen
       fit: BoxFit.cover,
     );
   }
 }
 
+//texto de inicio
 class textoInicio extends StatelessWidget {
   const textoInicio({
     super.key,
@@ -84,19 +87,10 @@ class textoInicio extends StatelessWidget {
 
 
 
-
+//boton de inicio verifica si el bluetooth esta activado
 class botonComenzarInicio extends StatelessWidget {
   const botonComenzarInicio({Key? key}) : super(key: key);
 
-  Future<bool> requestPermissions() async {
-    Map<Permission, PermissionStatus> statuses = await [
-      Permission.location,
-      Permission.bluetooth,
-    ].request();
-
-    bool allPermissionsGranted = statuses.values.every((status) => status.isGranted);
-    return allPermissionsGranted;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,7 +104,8 @@ class botonComenzarInicio extends StatelessWidget {
         ),
       ),
       onPressed: () async {
-        if (Platform.isIOS) {
+        if (Platform.isIOS) {//verifica si es ios y valida el bluethoot
+          await FlutterBluePlus.adapterState.first;
           // Para iOS, usa Flutter Blue Plus
           if (await FlutterBluePlus.adapterState.first != BluetoothAdapterState.on) {
             showDialog(
@@ -138,14 +133,14 @@ class botonComenzarInicio extends StatelessWidget {
                   builder: (context) => const pantallaControlRobot()),
             );
           }
-        } else if (Platform.isAndroid) {
+        } else if (Platform.isAndroid) {//verifica si es ios y valida el bluethoot
           // Solicita los permisos de Bluetooth y GPS
-          bool permissionsGranted = await requestPermissions();
+          bool permisosConcedidos = await pedirPermisos();
 
-          if (permissionsGranted) {
+          if (permisosConcedidos) {
             // Para Android, usa Flutter Reactive Ble
             var status = await flutterReactiveBle.statusStream.first;
-            print(status);
+
 
             if (status != BleStatus.ready) {
               showDialog(
@@ -174,8 +169,7 @@ class botonComenzarInicio extends StatelessWidget {
               );
             }
           } else {
-            // Maneja el caso en que los permisos no fueron concedidos
-            // Por ejemplo, podrías mostrar un mensaje al usuario
+ 
           }
         }
       },

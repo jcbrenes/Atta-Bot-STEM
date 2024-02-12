@@ -4,13 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_tec/screens/ventanaHistorial.dart';
 
+
+
+/// Punto de entrada de la aplicación.
 void main() {
   runApp(const VentanaGirarDerecha());
 }
 
+/// Clase para la ventana principal de la aplicación.
 class VentanaGirarDerecha extends StatelessWidget {
   const VentanaGirarDerecha({Key? key}) : super(key: key);
 
+
+  /// Construye la interfaz de usuario de la aplicación.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -26,17 +32,25 @@ class VentanaGirarDerecha extends StatelessWidget {
   }
 }
 
+
+/// Clase para el widget de rotación a la derecha.
 class RotacionDerecha extends StatefulWidget {
   const RotacionDerecha({Key? key}) : super(key: key);
 
+
+ 
   @override
   _RotacionDerechaState createState() => _RotacionDerechaState();
 }
 
-class _RotacionDerechaState extends State<RotacionDerecha> {
-  double _rotation = 0.0;
-  final _controller = TextEditingController();
 
+/// Clase para el estado del widget de rotación a la derecha.
+class _RotacionDerechaState extends State<RotacionDerecha> {
+  double _rotacion = 0.0;
+  final _controlador = TextEditingController();
+
+
+  /// Construye la interfaz de usuario para este widget.
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -54,14 +68,16 @@ class _RotacionDerechaState extends State<RotacionDerecha> {
         GestureDetector(
           onPanUpdate: (details) {
             setState(() {
-              _rotation -= details.delta.dx / 1000;
-              _rotation = _rotation.clamp(0.0, 1.0);
+              _rotacion -= details.delta.dx / 1000;
+              _rotacion = _rotacion.clamp(0.0, 1.0);
             });
           },
           child: Stack(
+
+
             alignment: Alignment.center,
             children: <Widget>[
-              RotacionTrianguloInterno(rotation: _rotation),
+              RotacionTrianguloInterno(rotacion: _rotacion),
 
               Container(
                 width: 200,
@@ -71,13 +87,13 @@ class _RotacionDerechaState extends State<RotacionDerecha> {
                   color: Colors.grey,
                 ),
                 child:
-                    LineaCentro(rotation: _rotation), // Línea central inmóvil
+                    LineaCentro(rotacion: _rotacion), 
               ),
 
-              LineaMovil(rotation: _rotation), // Nueva línea móvil
-              ArcoGrados(rotation: _rotation), // Nuevo arco de grados
+              LineaMovil(rotacion: _rotacion), 
+              ArcoGrados(rotacion: _rotacion), 
               Transform.rotate(
-                angle: _rotation * math.pi * 2,
+                angle: _rotacion * math.pi * 2,
                 child: CustomPaint(
                   painter: TrianglePainter(),
                   child: const SizedBox(
@@ -90,7 +106,7 @@ class _RotacionDerechaState extends State<RotacionDerecha> {
           ),
         ),
         const SizedBox(height: 20),
-        // Primero, define un TextEditingController
+     
 
         Center(
           child: Row(
@@ -101,19 +117,19 @@ class _RotacionDerechaState extends State<RotacionDerecha> {
                 style: TextStyle(fontSize: 20),
               ),
               Container(
-                width: 50, // puedes ajustar el ancho como necesites
+                width: 50, 
                 child: TextField(
-                  controller: _controller,
+                  controller: _controlador,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    hintText: (_rotation * 360).toStringAsFixed(0),
+                    hintText: (_rotacion * 360).toStringAsFixed(0),
                   ),
                   textAlign: TextAlign.center,
                   onChanged: (value) {
-                    final number = int.tryParse(value);
-                    if (number != null && number >= 0 && number <= 360) {
+                    final numeroGrados = int.tryParse(value);
+                    if (numeroGrados != null && numeroGrados >= 0 && numeroGrados <= 360) {//limite de 0 a 360 grados
                       setState(() {
-                        _rotation = number / 360;
+                        _rotacion = numeroGrados / 360;
                       });
                     } else {
                       showDialog(
@@ -146,18 +162,22 @@ class _RotacionDerechaState extends State<RotacionDerecha> {
           ),
         ),
         const SizedBox(height: 30),
-        BotonGirarDerecha(rotation: _rotation),
+        BotonGirarDerecha(rotacion: _rotacion),
       ],
     );
   }
 }
 
+
+/// Clase para el botón de girar a la derecha.
 class BotonGirarDerecha extends StatelessWidget {
   const BotonGirarDerecha({
-    required this.rotation,
+    required this.rotacion,
   });
 
-  final double rotation;
+  final double rotacion;
+
+  /// Construye la interfaz de usuario para este widget.
 
   @override
   Widget build(BuildContext context) {
@@ -173,7 +193,7 @@ class BotonGirarDerecha extends StatelessWidget {
       ),
       onPressed: () {
         Provider.of<Historial>(context, listen: false)
-            .addEvento("Girar ${(rotation * 360).truncate()} grados derecha");
+            .addEvento("Girar ${(rotacion * 360).truncate()} grados derecha");//envia los datos si se gira a la derecha
         Navigator.of(context).pop();
       },
       child: const Text(
@@ -184,13 +204,15 @@ class BotonGirarDerecha extends StatelessWidget {
   }
 }
 
+
+/// Clase para la línea central del widget de rotación.
 class LineaCentro extends StatelessWidget {
   const LineaCentro({
-    required this.rotation,
+    required this.rotacion,
   });
 
-  final double rotation;
-
+  final double rotacion;
+  /// Construye la interfaz de usuario para este widget.
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -209,17 +231,20 @@ class LineaCentro extends StatelessWidget {
   }
 }
 
+
+/// Clase para la rotación del triángulo interno del widget de rotación.
 class RotacionTrianguloInterno extends StatelessWidget {
   const RotacionTrianguloInterno({
-    required this.rotation,
+    required this.rotacion,
   });
 
-  final double rotation;
+  final double rotacion;
 
+  /// Construye la interfaz de usuario para este widget.
   @override
   Widget build(BuildContext context) {
     return Transform.rotate(
-      angle: rotation * math.pi * 2,
+      angle: rotacion * math.pi * 2,
       child: Container(
         width: 100,
         height: 100,
@@ -230,6 +255,8 @@ class RotacionTrianguloInterno extends StatelessWidget {
   }
 }
 
+
+/// Clase para el pintor de triángulos del widget de rotación.
 class TrianglePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -245,51 +272,51 @@ class TrianglePainter extends CustomPainter {
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
-
+/// Clase para la línea móvil del widget de rotación.
 class LineaMovil extends StatelessWidget {
   const LineaMovil({
-    required this.rotation,
+    required this.rotacion,
   });
 
-  final double rotation;
-
+  final double rotacion;
+  /// Construye la interfaz de usuario para este widget.
   @override
   Widget build(BuildContext context) {
     return Transform.rotate(
-      angle: rotation * math.pi * 2,
+      angle: rotacion * math.pi * 2,
       child: Transform.translate(
-        offset: const Offset(0.0, -50.0), // Ajusta la posición de la línea aquí
+        offset: const Offset(0.0, -50.0), 
         child: Container(
           width: 2,
-          height: 100, // Ajusta la longitud de la línea aquí
+          height: 100, 
           color: Colors.black,
         ),
       ),
     );
   }
 }
-
+/// Clase para el arco de grados del widget de rotación.
 class ArcoGrados extends StatelessWidget {
   const ArcoGrados({
-    required this.rotation,
+    required this.rotacion,
   });
 
-  final double rotation;
-
+  final double rotacion;
+  /// Construye la interfaz de usuario para este widget.
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      size: const Size(200, 200), // Tamaño del CustomPainter
-      painter: ArcoPainter(rotation: rotation),
+      size: const Size(200, 200), 
+      painter: ArcoPainter(rotation: rotacion),
     );
   }
 }
-
+/// Clase para el pintor de arcos del widget de rotación.
 class ArcoPainter extends CustomPainter {
   ArcoPainter({required this.rotation});
 
   final double rotation;
-
+  /// Pinta el arco en el canvas.
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
@@ -299,14 +326,14 @@ class ArcoPainter extends CustomPainter {
 
     final rect = Rect.fromCenter(
       center: Offset(size.width / 2, size.height / 2),
-      width: size.width - 150, // Ajusta el tamaño del Rect aquí
-      height: size.height - 150, // Ajusta el tamaño del Rect aquí
+      width: size.width - 150, 
+      height: size.height - 150, 
     );
 
     // Dibuja un arco desde 0 hasta el ángulo de rotación
     canvas.drawArc(rect, -1.55, rotation * 2 * pi, false, paint);
   }
-
+  /// Determina si el pintor debe repintarse.
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
