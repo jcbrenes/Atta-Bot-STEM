@@ -1,4 +1,4 @@
-# Estándard de código para contribuciones a Atta-Bot STEM
+# Estándar de código para contribuciones a Atta-Bot STEM
 
 _Elaborado por Juan Carlos Brenes_
 
@@ -11,18 +11,29 @@ Se solicita seguir esta guía para tener código que sea leíble y entendible po
 - El nombre inicia siempre con minúscula
 
 - Utilizar nombres descriptivos. No importa que sean largos. 
-Ejemplo: contadorPulsosMotorDerecho -> bueno
-	 sum, j, pos -> malo
+
+Ejemplo: 
+```sh
+contadorPulsosMotorDerecho -> **bueno**
+sum, j, pos -> malo
+```
 
 - Si la variable nunca va a ser modificada en el código, se debe declarar como const. Esto ayuda al compilador a hacer el código 
 más eficiente. 
-Ejemplo: const int velocidadRefDerecha
+
+Ejemplo: 
+```sh
+const int velocidadRefDerecha
+```
 
 - NO deben aparecer en el código constantes (números). Esos números se entienden en el momento pero se olvidan luego de 48 horas. Se 
 debe crear una variable al inicio del código tipo constante. 
-Ejemplo: if (contadorPulsosMotorDerecho > 100) -> malo 
-     	 if (contadorPulsosMotorDerecho > velocidadRefDerecha) -> bueno
 
+Ejemplo: 
+```sh
+if (contadorPulsosMotorDerecho > 100) -> malo 
+if (contadorPulsosMotorDerecho > velocidadRefDerecha) -> bueno
+```
 
 
 # Funciones y clases:
