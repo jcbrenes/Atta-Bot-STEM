@@ -8,7 +8,7 @@ Diseñar y desarrollar una plataforma robótica de bajo costo, compuesta por un 
 ## Período de ejecución
 Enero 2024 - Diciembre 2026
 
-## Equipo investidor
+## Equipo investigador
 - **Cindy Calderón Arce.** ORCID: https://orcid.org/0000-0002-0077-225X  
 - **Rebeca Solís Ortega.** ORCID: https://orcid.org/0000-0002-3065-8386  
 - **Juan Carlos Brenes Torres.** ORCID: https://orcid.org/0000-0001-6323-2173  
@@ -22,7 +22,7 @@ Enero 2024 - Diciembre 2026
 - Docs -> Documentos que describen el armado, programación, y uso del robot.
 - Publicaciones -> Datos y materiales referentes a publicaciones del proyecto en revistas científicas.  
 
-## Estándard de programación
+## Estándar de programación
 Para contribuciones al proyecto se debe seguir el estándard de código o programación detallado en el archivo [Contributing.md]
 
 
