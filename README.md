@@ -19,8 +19,11 @@ Enero 2024 - Diciembre 2026
 - Robot -> Proyecto en Arduino IDE para la programación del controlador del robot
 - Chasis -> Diagramas y archivos para el chasís y parte mecánica del robot
 - Materiales -> Lista de materiales usados en la construcción del robot
-- Documentación -> Documentos que describen el armado, programación, y uso del robot.
+- Docs -> Documentos que describen el armado, programación, y uso del robot.
 - Publicaciones -> Datos y materiales referentes a publicaciones del proyecto en revistas científicas.  
 
 ## Estándard de programación
-Para contribuciones al proyecto se debe seguir el estándard de código o programación detallado en el archivo XXX. 
+Para contribuciones al proyecto se debe seguir el estándard de código o programación detallado en el archivo [Contributing.md]
+
+
+[Contributing.md]: <https://github.com/jcbrenes/Atta-Bot-STEM/blob/main/CONTRIBUTING.MD>
