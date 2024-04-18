@@ -10,29 +10,23 @@ Se solicita seguir esta guía para tener código que sea leíble y entendible po
 
 - El nombre inicia siempre con minúscula
 
-- Utilizar nombres descriptivos. No importa que sean largos. 
-
-Ejemplo: 
+- Utilizar nombres descriptivos. No importa que sean largos. Ejemplo: 
 ```sh
-contadorPulsosMotorDerecho -> **bueno**
-sum, j, pos -> malo
+contadorPulsosMotorDerecho // -> **bueno**
+sum, j, pos // -> malo
 ```
 
 - Si la variable nunca va a ser modificada en el código, se debe declarar como const. Esto ayuda al compilador a hacer el código 
-más eficiente. 
-
-Ejemplo: 
+más eficiente. Ejemplo: 
 ```sh
 const int velocidadRefDerecha
 ```
 
 - NO deben aparecer en el código constantes (números). Esos números se entienden en el momento pero se olvidan luego de 48 horas. Se 
-debe crear una variable al inicio del código tipo constante. 
-
-Ejemplo: 
+debe crear una variable al inicio del código tipo constante. Ejemplo: 
 ```sh
-if (contadorPulsosMotorDerecho > 100) -> malo 
-if (contadorPulsosMotorDerecho > velocidadRefDerecha) -> bueno
+if (contadorPulsosMotorDerecho > 100) // -> malo 
+if (contadorPulsosMotorDerecho > velocidadRefDerecha) // -> bueno
 ```
 
 
