@@ -10,20 +10,20 @@ Se solicita seguir esta guía para tener código que sea leíble y entendible po
 
 - El nombre inicia siempre con minúscula
 
-- Utilizar nombres descriptivos. No importa que sean largos. Ejemplo: 
+- Utilizar nombres descriptivos. No importa que sean largos.  
 ```sh
 contadorPulsosMotorDerecho // **bueno**
 sum, j, pos // **malo**
 ```
 
 - Si la variable nunca va a ser modificada en el código, se debe declarar como const. Esto ayuda al compilador a hacer el código 
-más eficiente. Ejemplo: 
+más eficiente.  
 ```sh
 const int velocidadRefDerecha
 ```
 
 - NO deben aparecer en el código constantes (números). Esos números se entienden en el momento pero se olvidan luego de 48 horas. Se 
-debe crear una variable al inicio del código tipo constante. Ejemplo: 
+debe crear una variable al inicio del código tipo constante.  
 ```sh
 if (contadorPulsosMotorDerecho > 100) // **malo** 
 if (contadorPulsosMotorDerecho > velocidadRefDerecha) // **bueno**
@@ -37,7 +37,7 @@ if (contadorPulsosMotorDerecho > velocidadRefDerecha) // **bueno**
 - Utilizar nombres descriptivos.
 
 - Cada función debe tener una caja de descripción de lo que hace la función. Se pone arriba del nombre de la función. Se especifican los parámetros y lo que retorna la función.
-Este formato permite que las herramientas de documentación lo reconozcan. Ejemplo:
+Este formato permite que las herramientas de documentación lo reconozcan. 
 ```sh
 //******************************************************************************************************************
 //Función que incrementa un contador con cada pulso del enconder. (Una frase resumen) 
@@ -61,7 +61,7 @@ int IncrementoContador (int contadorPulsosMotorDerecho, int incrementoPulso){
 
 - Hacer los comentarios con // y no con /* */ , esto facilita la vida al hacer debug.
 
-- Se recomienda usar espacios para hacer el código más leíble. Ejemplo: 
+- Se recomienda usar espacios para hacer el código más leíble.  
 ```sh
 buffer=contador+indice;  //  **enredado**
 buffer = contador + indice;  // **más claro**
