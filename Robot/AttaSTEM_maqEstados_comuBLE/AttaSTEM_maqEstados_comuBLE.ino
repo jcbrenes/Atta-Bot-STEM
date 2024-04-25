@@ -3,19 +3,19 @@
 using namespace std;
 
 //Definición de pines
-const int pin_boton_Start=13;
-const int pin_boton_Stop=14;
+const int pin_boton_Start=35;
+const int pin_boton_Stop=34;
 
 //variables máquina de estados
 enum posibles_Estados {ESPERA=0, LEE_MEMORIA, MOVERSE, GIRAR, DETENERSE, CICLO, OBSTACULOS, NADA};
 posibles_Estados estado = ESPERA;
 bool giro_listo = false;
-bool movimiento_listo = false; 
+bool movimiento_listo = true; 
 bool obstaculos_activo = false;
 bool primer_ciclo = true;
 
 //variables para comunicación Bluetooth
-string mensajeBLE="ATINIOBINIAV020GD030OBFINATFIN";
+string mensajeBLE="ATINIOBINIAV020GD030CI003RE010GI090CIFINOBFINATFIN";
 BLEService servicio("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
 BLEStringCharacteristic caracteristico("beb5483e-36e1-4688-b7f5-ea07361b26a8", BLERead | BLEWrite, 512);
 
@@ -57,9 +57,10 @@ void loop() {
   switch (estado) {
 
     case ESPERA:  { 
-      
-      Serial.println("Estado: Espera (recibe mensaje BLE");
-      delay(100);
+      //Serial.print("Stop: ");
+      //Serial.println(digitalRead( pin_boton_Stop ) );
+      Serial.println("Estado: Espera (recibe mensaje BLE)");
+      delay(1000);
 
       //Leer comunicación por BLE
       if (central) {
@@ -102,11 +103,6 @@ void loop() {
       } else {
         inst_actual = 0;
       }
-      Serial.print("Estado: Lee Memoria -> ");
-      Serial.print(posibles_Instrucciones(instruccion));
-      Serial.print(" valor: ");
-      Serial.println(valor_instruccion);
-      delay(1000);
       
       //Lógica estado siguiente
       if (digitalRead( pin_boton_Stop )  ||  inst_actual == inst_final) { 
@@ -133,6 +129,12 @@ void loop() {
         estado = OBSTACULOS;
       }
 
+      Serial.print("Estado: Lee Memoria -> ");
+      Serial.print(posibles_Instrucciones(instruccion));
+      Serial.print(" valor: ");
+      Serial.println(valor_instruccion);
+      delay(2000);
+
       break; 
     }
     
@@ -140,14 +142,15 @@ void loop() {
 
       //Ejecuta el estado de avanzar o retroceder
       //(es el mismo pero con distancia negativa)
-      Serial.println("Estado: Moverse (adelante o atrás");
-      delay(1000);
+      Serial.println("Estado: Moverse (adelante o atrás)");
+      delay(2000); 
 
       //Lógica estado siguiente
       if (digitalRead( pin_boton_Stop )) { 
         estado = ESPERA;
 
       }else if ( movimiento_listo ) {
+        //movimiento_listo = false;
         estado = DETENERSE;
       }
       break;
@@ -157,14 +160,15 @@ void loop() {
 
       //Ejecuta el estado de girar derecha o izquierda
       //(es el mismo pero con ángulo negativo)
-      Serial.println("Estado: Girar (derecha o izquierda");
-      delay(1000);
+      Serial.println("Estado: Girar (derecha o izquierda)");
+      delay(2000); 
 
       //Lógica estado siguiente
       if (digitalRead( pin_boton_Stop )) { 
         estado = ESPERA;
 
       }else if ( movimiento_listo ) {
+        //movimiento_listo = false;
         estado = DETENERSE;
       }
       break;
@@ -187,26 +191,27 @@ void loop() {
 
     case CICLO: {
 
-      if ( instruccion == inst_CicloInicia  &&  primer_ciclo ){
-        cantidad_ciclos = valor_instruccion; 
+      if ( instruccion == inst_CicloInicia  &&  primer_ciclo ){ //inicio ciclo, primera vez
+        cantidad_ciclos = valor_instruccion;  //guarda cantidad de ciclos, primero 
         primer_ciclo = false;
-        inst_inicio_ciclo = inst_actual; 
+        inst_inicio_ciclo = inst_actual-1;  //almacena apuntador a inicio de ciclo
+        cantidad_ciclos--; //resta el primer ciclo que se va a ejecutar
 
-      }else if ( instruccion == inst_CicloInicia  &&  !primer_ciclo ) {
-        cantidad_ciclos--; 
+      }else if ( instruccion == inst_CicloInicia  &&  !primer_ciclo ) { //inicio de ciclo, resto de veces
+        cantidad_ciclos--;  //resta 1 a la cantidad de ciclos
 
-      }else if ( instruccion == inst_CicloFin  &&  cantidad_ciclos != 0 ) {
-        inst_actual = inst_inicio_ciclo;
+      }else if ( instruccion == inst_CicloFin  &&  cantidad_ciclos != 0 ) { //final de ciclo, ciclos pendientes
+        inst_actual = inst_inicio_ciclo; //devuelve el apuntador al inicio del ciclo
 
-      }else if ( instruccion == inst_CicloFin  &&  cantidad_ciclos == 0 ) {
-        primer_ciclo = true;
+      }else if ( instruccion == inst_CicloFin  &&  cantidad_ciclos == 0 ) { //final de ciclo, última vez
+        primer_ciclo = true; //reset de variable
       }
 
-      Serial.print("Estado: Ciclo ->  Abre ciclo: ");
+      Serial.print("Estado: Ciclo ->  ¿Inicia ciclo? ");
       Serial.print(instruccion == inst_CicloInicia);
       Serial.print("  Ciclos pendientes: ");
       Serial.println(cantidad_ciclos);
-      delay(1000);
+      delay(5000);
 
 
       //Lógica estado siguiente
@@ -228,7 +233,7 @@ void loop() {
       }
       Serial.print("Estado: Obstáculos -> ");
       Serial.println(obstaculos_activo);
-      delay(1000);
+      delay(4000);
 
       //Lógica estado siguiente
       if (digitalRead( pin_boton_Stop )) { 
