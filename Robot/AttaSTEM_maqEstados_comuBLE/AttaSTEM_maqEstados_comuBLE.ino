@@ -15,7 +15,8 @@ bool obstaculos_activo = false;
 bool primer_ciclo = true;
 
 //variables para comunicación Bluetooth
-string mensajeBLE="ATINIOBINIAV020GD030CI003RE010GI090CIFINOBFINATFIN";
+//string mensajeBLE="ATINIOBINIAV020GD030CI003RE010GI090CIFINOBFINATFIN";
+string mensajeBLE="";
 BLEService servicio("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
 BLEStringCharacteristic caracteristico("beb5483e-36e1-4688-b7f5-ea07361b26a8", BLERead | BLEWrite, 512);
 
@@ -41,7 +42,7 @@ void setup() {
     Serial.println("starting BLE failed!");
     while (1);
   }
-  BLE.setLocalName("MyBLE");
+  BLE.setLocalName("AttaBotSTEM");
   BLE.setAdvertisedService(servicio);
   servicio.addCharacteristic(caracteristico);
   BLE.addService(servicio);
@@ -72,6 +73,9 @@ void loop() {
           mensajeBLE = string( caracteristico.value().c_str() );
           Serial.println(mensajeBLE.c_str());
           caracteristico.writeValue("");
+
+          //Revisa la cadena de caracteres y extrae las instrucciones 
+          Interpreta_mensajeBLE(mensajeBLE); 
         }
       }
       Serial.print("Desconectado del central: ");
@@ -82,8 +86,7 @@ void loop() {
       inst_actual = 0;
       }
       
-      //Revisa la cadena de caracteres y extrae las instrucciones 
-      Interpreta_mensajeBLE(mensajeBLE); 
+
 
       //Lógica estado siguiente
       if (digitalRead( pin_boton_Start )) { 
@@ -266,77 +269,77 @@ void Interpreta_mensajeBLE (string mensaje) {
 
   for (int i = 0; i < mensaje.length(); i=i+5 ) { 
         
-        string comando = mensaje.substr(i, 5);
-        string instruccion = mensaje.substr(i, 2);
-        string valor_instruccion =  mensaje.substr(i+2, 3);
+    string comando = mensaje.substr(i, 5);
+    string instruccion = mensaje.substr(i, 2);
+    string valor_instruccion =  mensaje.substr(i+2, 3);
 
-        
-        //if (comando.compare("ATINI")==0) {
-        if (comando == "ATINI"){
-          Serial.println("mensaje viene bien");
-        
-        }else if (comando == "ATFIN"){
-          Serial.println("Mensaje finalizado");
-          inst_final = i/5;
-        
-        }else if (comando == "OBINI"){
-          Serial.println("Obstaculos habilitados");
-          lista_instrucciones[inst_actual][0] = inst_ObstaculoInicia;
-          lista_instrucciones[inst_actual][1] = 0;
-          inst_actual++;
+    
+    //if (comando.compare("ATINI")==0) {
+    if (comando == "ATINI"){
+      Serial.println("mensaje viene bien");
+    
+    }else if (comando == "ATFIN"){
+      Serial.println("Mensaje finalizado");
+      inst_final = i/5;
+    
+    }else if (comando == "OBINI"){
+      Serial.println("Obstaculos habilitados");
+      lista_instrucciones[inst_actual][0] = inst_ObstaculoInicia;
+      lista_instrucciones[inst_actual][1] = 0;
+      inst_actual++;
 
-        }else if (comando == "OBFIN"){
-          Serial.println("Obstaculos deshabilitados");
-          lista_instrucciones[inst_actual][0] = inst_ObstaculoFin;
-          lista_instrucciones[inst_actual][1] = 0;
-          inst_actual++;
+    }else if (comando == "OBFIN"){
+      Serial.println("Obstaculos deshabilitados");
+      lista_instrucciones[inst_actual][0] = inst_ObstaculoFin;
+      lista_instrucciones[inst_actual][1] = 0;
+      inst_actual++;
 
-        }else if (comando == "CIFIN"){
-          Serial.println("Ciclo finaliza");
-          lista_instrucciones[inst_actual][0] = inst_CicloFin;
-          lista_instrucciones[inst_actual][1] = 0;
-          inst_actual++;  
+    }else if (comando == "CIFIN"){
+      Serial.println("Ciclo finaliza");
+      lista_instrucciones[inst_actual][0] = inst_CicloFin;
+      lista_instrucciones[inst_actual][1] = 0;
+      inst_actual++;  
 
-        }else if (instruccion == "CI" && comando != "CIFIN"){
-          Serial.print("Ciclo inicia: ");
-          short valor = stoi (valor_instruccion);
-          Serial.println(valor);
-          lista_instrucciones[inst_actual][0] = inst_CicloInicia;
-          lista_instrucciones[inst_actual][1] = valor;
-          inst_actual++;
+    }else if (instruccion == "CI" && comando != "CIFIN"){
+      Serial.print("Ciclo inicia: ");
+      short valor = stoi (valor_instruccion);
+      Serial.println(valor);
+      lista_instrucciones[inst_actual][0] = inst_CicloInicia;
+      lista_instrucciones[inst_actual][1] = valor;
+      inst_actual++;
 
-        }else if (instruccion == "AV"){
-          Serial.print("Avanza: ");
-          short valor = stoi (valor_instruccion);
-          Serial.println(valor);
-          lista_instrucciones[inst_actual][0] = inst_Avanzar;
-          lista_instrucciones[inst_actual][1] = valor;
-          inst_actual++;
+    }else if (instruccion == "AV"){
+      Serial.print("Avanza: ");
+      short valor = stoi (valor_instruccion);
+      Serial.println(valor);
+      lista_instrucciones[inst_actual][0] = inst_Avanzar;
+      lista_instrucciones[inst_actual][1] = valor;
+      inst_actual++;
 
-        }else if (instruccion == "RE"){
-          Serial.print("Retrocede: ");
-          short valor = stoi (valor_instruccion);
-          Serial.println(valor);
-          lista_instrucciones[inst_actual][0] = inst_Retroceder;
-          lista_instrucciones[inst_actual][1]= valor;
-          inst_actual++;
+    }else if (instruccion == "RE"){
+      Serial.print("Retrocede: ");
+      short valor = stoi (valor_instruccion);
+      Serial.println(valor);
+      lista_instrucciones[inst_actual][0] = inst_Retroceder;
+      lista_instrucciones[inst_actual][1]= valor;
+      inst_actual++;
 
-        }else if (instruccion == "GI"){
-          Serial.print("Gira izquierda: ");
-          short valor = stoi (valor_instruccion);
-          Serial.println(valor);
-          lista_instrucciones[inst_actual][0] = inst_GiroIzquierdo;
-          lista_instrucciones[inst_actual][1] = valor;
-          inst_actual++;
+    }else if (instruccion == "GI"){
+      Serial.print("Gira izquierda: ");
+      short valor = stoi (valor_instruccion);
+      Serial.println(valor);
+      lista_instrucciones[inst_actual][0] = inst_GiroIzquierdo;
+      lista_instrucciones[inst_actual][1] = valor;
+      inst_actual++;
 
-        }else if (instruccion == "GD"){
-          Serial.print("Gira derecha: ");
-          short valor = stoi (valor_instruccion);
-          Serial.println(valor);
-          lista_instrucciones[inst_actual][0] = inst_GiroDerecho;
-          lista_instrucciones[inst_actual][1] = valor;
-          inst_actual++;
-        }
+    }else if (instruccion == "GD"){
+      Serial.print("Gira derecha: ");
+      short valor = stoi (valor_instruccion);
+      Serial.println(valor);
+      lista_instrucciones[inst_actual][0] = inst_GiroDerecho;
+      lista_instrucciones[inst_actual][1] = valor;
+      inst_actual++;
+    }
         
   }
   inst_actual = 0; 
