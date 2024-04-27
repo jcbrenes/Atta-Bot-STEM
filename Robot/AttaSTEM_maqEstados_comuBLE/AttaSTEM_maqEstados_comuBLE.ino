@@ -21,7 +21,7 @@ BLEService servicio("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
 BLEStringCharacteristic caracteristico("beb5483e-36e1-4688-b7f5-ea07361b26a8", BLERead | BLEWrite, 512);
 
 //apuntadores y variables para la lista de instrucciones
-enum posibles_Instrucciones {inst_Avanzar=1, inst_Retroceder, inst_GiroIzquierdo, inst_GiroDerecho, inst_CicloInicia, inst_CicloFin, inst_ObstaculoInicia, inst_ObstaculoFin};
+enum posibles_Instrucciones {inst_Avanzar=1, inst_Retroceder, inst_GiroIzquierdo, inst_GiroDerecho, inst_CicloInicia, inst_CicloFin, inst_ObstaculoInicia, inst_ObstaculoFin, inst_FinalMsg};
 short lista_instrucciones[100][2];
 short inst_final = 0;
 short inst_actual = 0;
@@ -99,16 +99,18 @@ void loop() {
 
     case LEE_MEMORIA:  { 
 
-      if ( inst_actual != inst_final ){
-        instruccion = lista_instrucciones[inst_actual][0];
-        valor_instruccion = lista_instrucciones[inst_actual][1];
-        inst_actual++; 
-      } else {
+      instruccion = lista_instrucciones[inst_actual][0];
+      valor_instruccion = lista_instrucciones[inst_actual][1];
+
+      if ( inst_actual == inst_final ){ //Si esta en la instruccion de final, deja el apuntador en cero
         inst_actual = 0;
+      }else {
+        inst_actual++;
       }
+        
       
       //Lógica estado siguiente
-      if (digitalRead( pin_boton_Stop )  ||  inst_actual == inst_final) { 
+      if (digitalRead( pin_boton_Stop )  ||  instruccion == inst_FinalMsg) { 
         estado = ESPERA;
 
       }else if (instruccion == inst_Avanzar) {
@@ -277,10 +279,13 @@ void Interpreta_mensajeBLE (string mensaje) {
     //if (comando.compare("ATINI")==0) {
     if (comando == "ATINI"){
       Serial.println("mensaje viene bien");
+      Serial.println(inst_actual);
     
     }else if (comando == "ATFIN"){
+      inst_final = i/5 - 1;
+      lista_instrucciones[inst_actual][0] = inst_FinalMsg;
+      lista_instrucciones[inst_actual][1] = 0;
       Serial.println("Mensaje finalizado");
-      inst_final = i/5;
     
     }else if (comando == "OBINI"){
       Serial.println("Obstaculos habilitados");
@@ -342,5 +347,5 @@ void Interpreta_mensajeBLE (string mensaje) {
     }
         
   }
-  inst_actual = 0; 
+  inst_actual = 0;
 }
