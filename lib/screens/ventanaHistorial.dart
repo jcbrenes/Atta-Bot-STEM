@@ -40,31 +40,68 @@ class Historial extends ChangeNotifier {
     notifyListeners();
   }
 
+  // List<String> convertirComandos() {
+  //   List<String> resultado = [];
+  //   for (String comando in _historial) {
+  //     if (comando.startsWith('Avanzar')) {
+  //       resultado.add('AV ${comando.split(' ')[1]}');
+  //     } else if (comando.startsWith('Retroceder')) {
+  //       resultado.add('RE ${comando.split(' ')[1]}');
+  //     } else if (comando.startsWith('Girar')) {
+  //       if (comando.contains('izquierda')) {
+  //         resultado.add('GI ${comando.split(' ')[1]}');
+  //       } else {
+  //         resultado.add('GD ${comando.split(' ')[1]}');
+  //       }
+  //     } else if (comando.startsWith('Inicio de ciclo')) {
+  //       resultado.add('IN ${comando.split(' ')[3]}');
+  //     } else if (comando.startsWith('Fin del ciclo')) {
+  //       resultado.add('FI');
+  //     } else if (comando.startsWith('Detección de obstáculos activada')) {
+  //       resultado.add('IO');
+  //     } else if (comando.startsWith('Fin detección de obstáculos')) {
+  //       resultado.add('FO');
+  //     }
+  //   }
+  //
+  //   return resultado;
+  // }
   List<String> convertirComandos() {
-    List<String> resultado = [];
+    List<String> resultado = ['ATINI'];
     for (String comando in _historial) {
       if (comando.startsWith('Avanzar')) {
-        resultado.add('AV ${comando.split(' ')[1]}');
+        resultado.add('AV${_formatearNumero(comando.split(' ')[1])}');
       } else if (comando.startsWith('Retroceder')) {
-        resultado.add('RE ${comando.split(' ')[1]}');
+        resultado.add('RE${_formatearNumero(comando.split(' ')[1])}');
       } else if (comando.startsWith('Girar')) {
         if (comando.contains('izquierda')) {
-          resultado.add('GI ${comando.split(' ')[1]}');
+          resultado.add('GI${_formatearNumero(comando.split(' ')[1])}');
         } else {
-          resultado.add('GD ${comando.split(' ')[1]}');
+          resultado.add('GD${_formatearNumero(comando.split(' ')[1])}');
         }
       } else if (comando.startsWith('Inicio de ciclo')) {
-        resultado.add('IN ${comando.split(' ')[3]}');
+        resultado.add('CI${_formatearNumero(comando.split(' ')[3])}');
       } else if (comando.startsWith('Fin del ciclo')) {
-        resultado.add('FI');
+        resultado.add('CIFIN');
       } else if (comando.startsWith('Detección de obstáculos activada')) {
-        resultado.add('IO');
+        resultado.add('OBINI');
       } else if (comando.startsWith('Fin detección de obstáculos')) {
-        resultado.add('FO');
+        resultado.add('OBFIN');
       }
     }
 
+    resultado.add('ATFIN');
     return resultado;
+  }
+
+  String _formatearNumero(String numero) {
+    // Si el número tiene menos de 3 caracteres, agregar ceros a la izquierda hasta alcanzar una longitud de 3 caracteres
+    if (numero.length < 3) {
+      return int.parse(numero).toString().padLeft(3, '0');
+    } else {
+      // Si el número ya tiene 3 caracteres, no es necesario formatearlo
+      return numero;
+    }
   }
 
   Future<void> guardarArchivo(BuildContext context) async {
@@ -261,14 +298,285 @@ class botonGuardar extends StatelessWidget {
   }
 }
 
-class ventanaHistorial extends StatelessWidget {
-  const ventanaHistorial({super.key});
+class menuDesplegable extends StatelessWidget {
+  const menuDesplegable({
+    super.key,
+    required this.context,
+    required TextEditingController controller,
+    required List<String> historial,
+  })  : _controller = controller,
+        _historial = historial;
+
+  final BuildContext context;
+  final TextEditingController _controller;
+  final List<String> _historial;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.menu),
+      onPressed: () {
+        showMenu(
+          context: this.context,
+          position: RelativeRect.fromLTRB(
+            MediaQuery.of(this.context).size.width,
+            kToolbarHeight,
+            0.0,
+            0.0,
+          ),
+          items: <PopupMenuEntry>[
+            //
+            const PopupMenuItem(
+              value: 'Opción 0',
+              child: Text('¿Cómo funciono?',
+                  style: TextStyle(
+                      fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
+            ),
+            const PopupMenuItem(
+              value: 'Opción 1',
+              child: Text('Guardar Historial',
+                  style: TextStyle(
+                      fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
+            ),
+            const PopupMenuItem(
+              value: 'Opción 2',
+              child: Text('Cargar Historial',
+                  style: TextStyle(
+                      fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
+            ),
+            const PopupMenuItem(
+              value: 'Opción 3',
+              child: Text('Borrar Historial',
+                  style: TextStyle(
+                      color: Colors.red,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.bold)),
+            ),
+          ],
+          elevation: 8.0,
+        ).then((value) {
+          if (value == 'Opción 0') {
+              InfoDialog.show(context);
+          }
+          else if (value == 'Opción 1') {
+            Provider.of<Historial>(this.context,
+                    listen:
+                        false) //si se marca la opcion 1 llama a la funcion guardar archivo del historial
+                .guardarArchivo(this.context);
+          } else if (value == 'Opción 2') {
+            Provider.of<Historial>(this.context,
+                    listen:
+                        false) //si se marca la opcion 1 llama a la funcion cargar archivo del historial
+                .cargarArchivo(this.context);
+          } else if (value == 'Opción 3') {
+            showDialog(
+              context: this.context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text('Confirmación'),
+                  content: const Text(
+                      '¿Estás seguro de que quieres eliminar todo el historial?'),
+                  actions: <Widget>[
+                    TextButton(
+                      child: const Text('Cancelar'),
+                      onPressed: () {
+                        Navigator.of(context)
+                            .pop(); // Cierra el cuadro de diálogo
+                      },
+                    ),
+                    TextButton(
+                      child: const Text('OK'),
+                      onPressed: () {
+                        Provider.of<Historial>(this.context,
+                                listen:
+                                    false) //si se marca la opcion 1 llama a la funcion cargar archivo del historial
+                            .clear();
+                        Navigator.of(context).pop();
+/*                        return AlertDialog(
+                          title: const Text('Historial eliminado'),
+                        actions: <Widget>[
+                        TextButton(
+                        child: const Text('OK'),
+                        onPressed: () {
+                        Navigator.of(context).pop();
+                        },
+                        ),
+                        ],
+                        );*/
+                      },
+                    ),
+                  ],
+                );
+              },
+            );
+          }
+        });
+      },
+    );
+  }
+}
+class InfoDialog {
+  static void show(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            "¿Cómo funciono?",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          backgroundColor: Color(0xFFDDE6F7), // Establecer el color de fondo del AlertDialog
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10.0), // Ajustar la curvatura de las esquinas
+            side: BorderSide(color: Colors.white, width: 5.0), // Agregar borde blanco
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ListTile(
+                leading: Icon(Icons.arrow_upward),
+                title: RichText(
+                  text: TextSpan(
+                    text: 'Avanzar ',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF152A51)),
+                    children: <TextSpan>[
+                      TextSpan(
+                        text: 'una cantidad de centímetros indicada',
+                        style: TextStyle(fontWeight: FontWeight.normal, color: Color(0xFF152A51)
+),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              ListTile(
+                leading: Icon(Icons.arrow_downward),
+                title: RichText(
+                  text: TextSpan(
+                    text: 'Retroceder ',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF152A51)
+),
+                    children: <TextSpan>[
+                      TextSpan(
+                        text: 'una cantidad de centímetros indicada',
+                        style: TextStyle(fontWeight: FontWeight.normal, color: Color(0xFF152A51)
+),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              ListTile(
+                leading: Icon(Icons.rotate_right),
+                title: RichText(
+                  text: TextSpan(
+                    text: 'Girar a la derecha ',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF152A51)
+),
+                    children: <TextSpan>[
+                      TextSpan(
+                        text: 'una cantidad de grados indicada',
+                        style: TextStyle(fontWeight: FontWeight.normal, color: Color(0xFF152A51)
+),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              ListTile(
+                leading: Icon(Icons.rotate_left),
+                title: RichText(
+                  text: TextSpan(
+                    text: 'Girar a la izquierda ',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF152A51)
+),
+                    children: <TextSpan>[
+                      TextSpan(
+                        text: 'una cantidad de grados indicada',
+                        style: TextStyle(fontWeight: FontWeight.normal, color: Color(0xFF152A51)
+),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              ListTile(
+                leading: Icon(Icons.remove_red_eye),
+                title: RichText(
+                  text: TextSpan(
+                    text: 'Activar detección de obstáculos ',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF152A51)
+),
+                    children: <TextSpan>[
+                      TextSpan(
+                        text: 'hasta deseleccionar',
+                        style: TextStyle(fontWeight: FontWeight.normal, color: Color(0xFF152A51)
+),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              ListTile(
+                leading: Icon(Icons.autorenew),
+                title: RichText(
+                  text: TextSpan(
+                    text: 'Iniciar un ciclo, ',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF152A51)
+),
+                    children: <TextSpan>[
+                      TextSpan(
+                        text: 'una cantidad de veces',
+                        style: TextStyle(fontWeight: FontWeight.normal, color: Color(0xFF152A51)
+),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cerrar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+
+
+class ventanaHistorial extends StatefulWidget {
+  const ventanaHistorial({Key? key}) : super(key: key);
+
+  @override
+  _ventanaHistorial createState() => _ventanaHistorial();
+}
+
+class _ventanaHistorial extends State<ventanaHistorial> {
+  final TextEditingController controller = TextEditingController();
+  final List<String> historial = [];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Historial'),
+
+        actions: <Widget>[
+          menuDesplegable(
+            context: context,
+            controller: controller,
+            historial: historial,
+          ),
+        ],
       ),
       body: Consumer<Historial>(
         builder: (context, historial, child) {

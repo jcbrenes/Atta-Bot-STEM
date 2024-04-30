@@ -59,9 +59,12 @@ class _VentanaBaseState extends State<VentanaBase> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      backgroundColor: Color(0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(10.0), // Ajustar la curvatura de las esquinas
+        side: BorderSide(color: Colors.white, width: 5.0), // Agregar borde blanco
       ),
+
       title: _crearTitulo(),
       content: _crearContenido(),
       actions: _crearAcciones(context),
@@ -71,33 +74,61 @@ class _VentanaBaseState extends State<VentanaBase> {
   /// Crea el título de la ventana de diálogo.
 
   Widget _crearTitulo() {
-    return Row(
-      children: <Widget>[
-        Text(widget.titulo),
-        _crearTextField(),
-        const Text(' cm'),
-      ],
+    return Center(
+      child: Text(
+        widget.titulo,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 24, // Tamaño de la fuente
+          color: Color(0xFF152A51), // Color del texto
+        ),
+      ),
     );
   }
+
 
   /// Crea el TextField de la ventana de diálogo.
   Widget _crearTextField() {
     return SizedBox(
-      width: 70,
-      child: TextField(
-        controller: _controller,
-        keyboardType: TextInputType.number,
-        inputFormatters: [
-          FilteringTextInputFormatter.allow(RegExp(r'^\d{0,3}$')), //validacion de caracteres en el textfield
+      width: 120, // Ajusta el ancho según tus necesidades
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 65, // Ancho del TextField
+            child: TextField(
+              controller: _controller,
+              keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d{0,3}$')), //validacion de caracteres en el textfield
+              ],
+              onChanged: _onChanged,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 30, // Tamaño del texto del TextField
+                color: Color(0xFF152A51), // Color del texto del TextField
+              ),
+              decoration: InputDecoration(
+                hintText: '0', // Valores que se muestran al usuario como guía
+                border: InputBorder.none,
+              ),
+            ),
+          ),
+
+          Text(
+            'cm',
+            style: TextStyle(
+              fontSize: 30, // Tamaño del texto "cm"
+              color: Color(0xFF152A51), // Color del texto "cm"
+            ),
+          ),
         ],
-        onChanged: _onChanged,
-        decoration: const InputDecoration(
-          hintText: '0-300',//valores que se muestran al usuario como guia
-        ),
-        textAlign: TextAlign.center,
       ),
     );
   }
+
+
+
 
   /// Maneja el cambio de valor en el TextField.
   void _onChanged(String value) {
@@ -140,10 +171,17 @@ class _VentanaBaseState extends State<VentanaBase> {
   List<Widget> _crearAcciones(BuildContext context) {
     return <Widget>[
       TextButton(
-        child: Text(widget.accion),
-        onPressed: () {  
-          Provider.of<Historial>(context, listen: false)// Se obtiene una instancia del proveedor 'Historial' y se añade un nuevo evento a este. 
+        child: Text('Aceptar'),
+        onPressed: () {
+          Provider.of<Historial>(context, listen: false)// Se obtiene una instancia del proveedor 'Historial' y se añade un nuevo evento a este.
               .addEvento('${widget.accion} $numero cm');// El evento es una cadena de texto que contiene la acción realizada y la distancia en centímetros.
+          Navigator.of(context).pop();
+        },
+      ),
+      TextButton(
+        child: Text('Cancelar'),
+        onPressed: () {
+
           Navigator.of(context).pop();
         },
       ),
@@ -153,9 +191,12 @@ class _VentanaBaseState extends State<VentanaBase> {
   /// Crea el contenido de la ventana de diálogo.
   Widget _crearContenido() {
     return Row(
+
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: <Widget>[
         _crearBoton(-1, Icons.remove),
+        _crearTextField(),
+
         _crearBoton(1, Icons.add),
       ],
     );
@@ -167,22 +208,34 @@ class _VentanaBaseState extends State<VentanaBase> {
       onTapDown: (_) => _cambiarNumero(cambio),
       onTapUp: (_) => _pararTiempo(),
       onTapCancel: () => _pararTiempo(),
-      child: IconButton(
-        icon: Icon(icono),
-        onPressed: () {
-          setState(() {
-            numero += cambio;
-            if (numero < 0) {
-              numero = 0;
-            } else if (numero > 300) {
-              numero = 300;
-            }
-            _controller.text = numero.toString();
-          });
-        },
+      child: Container(
+        width: 50, // Ancho del círculo
+        height: 50, // Alto del círculo
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Color(0xFF1C74B5), // Color del círculo azul
+        ),
+        child: IconButton(
+          icon: Icon(
+            icono,
+            color: Colors.white, // Color blanco para el icono
+          ),
+          onPressed: () {
+            setState(() {
+              numero += cambio;
+              if (numero < 0) {
+                numero = 0;
+              } else if (numero > 300) {
+                numero = 300;
+              }
+              _controller.text = numero.toString();
+            });
+          },
+        ),
       ),
     );
   }
+
 }
 
 
@@ -207,4 +260,5 @@ class ventanaRetroceder extends VentanaBase {
 
   @override
   String get accion => 'Retroceder';
+
 }

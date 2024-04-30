@@ -9,8 +9,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-    
- 
 
   provider: ^6.0.1
 
@@ -43,7 +41,15 @@ flutter:
 
   assets:
     - assets/AttaBotLogo.png
+    - assets/AttaBotRobot_uno.png
     - assets/AttaBotRobot.png
 
-
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: fonts/Poppins-Regular.ttf
+        - asset: fonts/Poppins-Italic.ttf
+        - asset: fonts/Poppins-Bold.ttf
+        - asset: fonts/Poppins-ExtraBold.ttf
+          style: italic
 
