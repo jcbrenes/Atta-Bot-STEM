@@ -1,5 +1,3 @@
-// ignore_for_file: camel_case_types, use_build_context_synchronously
-
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -193,6 +191,7 @@ class botonComenzarInicio extends StatelessWidget {
                   builder: (context) => const pantallaControlRobot()),
             );
           }
+
         } else if (Platform.isAndroid) {//verifica si es ios y valida el bluethoot
           // Solicita los permisos de Bluetooth y GPS
           //bool permisosConcedidos = await pedirPermisos();

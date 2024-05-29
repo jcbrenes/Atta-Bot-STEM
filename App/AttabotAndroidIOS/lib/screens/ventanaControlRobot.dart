@@ -1,16 +1,14 @@
-// ignore_for_file: file_names, camel_case_types, library_private_types_in_public_api, unused_field, use_build_context_synchronously
-
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart' as flutter_blue;
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_tec/screens/ventanaGirarDerecha.dart';
 import 'package:proyecto_tec/screens/ventanaHistorial.dart';
 import 'package:proyecto_tec/screens/ventanaGirarIzquierda.dart';
-
+//import 'package:flutter_blue/flutter_blue.dart';
 import 'ventanaAvanzarRetroceder.dart';
 
 // Pantalla principal de control del robot.
@@ -67,7 +65,23 @@ class _pantallaControlRobotState extends State<pantallaControlRobot> {
               child: const Column(
                 children: <Widget>[
                   SizedBox(height: 60), //Esto es para poner margenes aunque creo que se deberia hacer de otra forma
-                  textoInicio(),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal:6.0),
+                child: Row(
+                  children: <Widget>[
+                    Spacer(flex: 3,),
+                    Expanded(
+                      flex: 8,
+                      child: Center(child: textoInicio()),
+                    ),
+                    Spacer(),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 0.0), // Margen a la derecha
+                      child: botonInfo(),
+                    ),
+                  ],
+                ),
+                  ),
                   Expanded(
                     child: Center(
                       child: Column(
@@ -309,6 +323,11 @@ class botonIzquierda extends StatelessWidget {
             context: context,
             builder: (BuildContext context) {
               return AlertDialog(
+                backgroundColor: const Color(0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.0), // Ajustar la curvatura de las esquinas
+                  side: const BorderSide(color: Colors.white, width: 5.0), // Agregar borde blanco
+                ),
                 content: SizedBox(
                   width: MediaQuery.of(context).size.width * 0.8,
                   height: MediaQuery.of(context).size.height * 0.5,
@@ -323,7 +342,175 @@ class botonIzquierda extends StatelessWidget {
     );
   }
 }
+class botonInfo extends StatelessWidget {
+  const botonInfo({
+    super.key,
+  });
 
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 40,  // Ancho del container
+      height: 40, // Alto del container
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20), // Ajusta el radio según el tamaño del container
+        border: Border.all(
+          color: Colors.white,
+          width: 3,
+        ),
+      ),
+      child: IconButton(
+        icon: const Icon(Icons.question_mark_outlined),
+        color: Colors.white,
+        onPressed: () {
+          InfoDialog.show(context);
+        },
+        iconSize: 20, // Ajusta el tamaño del icono
+        padding: EdgeInsets.zero, // Elimina el padding interno del IconButton
+        constraints: BoxConstraints(
+          maxHeight: 40, // Asegura que el tamaño del IconButton coincida con el Container
+          maxWidth: 40,
+        ),
+      ),
+    );
+  }
+}
+class InfoDialog {
+  static void show(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            "¿Cómo funciono?",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          backgroundColor: const Color(0xFFDDE6F7), // Establecer el color de fondo del AlertDialog
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10.0), // Ajustar la curvatura de las esquinas
+            side: const BorderSide(color: Colors.white, width: 5.0), // Agregar borde blanco
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.arrow_upward),
+                title: RichText(
+                  text: const TextSpan(
+                    text: 'Avanzar ',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF152A51)),
+                    children: <TextSpan>[
+                      TextSpan(
+                        text: 'una cantidad de centímetros indicada',
+                        style: TextStyle(fontWeight: FontWeight.normal, color: Color(0xFF152A51)
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.arrow_downward),
+                title: RichText(
+                  text: const TextSpan(
+                    text: 'Retroceder ',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF152A51)
+                    ),
+                    children: <TextSpan>[
+                      TextSpan(
+                        text: 'una cantidad de centímetros indicada',
+                        style: TextStyle(fontWeight: FontWeight.normal, color: Color(0xFF152A51)
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.rotate_right),
+                title: RichText(
+                  text: const TextSpan(
+                    text: 'Girar a la derecha ',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF152A51)
+                    ),
+                    children: <TextSpan>[
+                      TextSpan(
+                        text: 'una cantidad de grados indicada',
+                        style: TextStyle(fontWeight: FontWeight.normal, color: Color(0xFF152A51)
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.rotate_left),
+                title: RichText(
+                  text: const TextSpan(
+                    text: 'Girar a la izquierda ',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF152A51)
+                    ),
+                    children: <TextSpan>[
+                      TextSpan(
+                        text: 'una cantidad de grados indicada',
+                        style: TextStyle(fontWeight: FontWeight.normal, color: Color(0xFF152A51)
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.remove_red_eye),
+                title: RichText(
+                  text: const TextSpan(
+                    text: 'Activar detección de obstáculos ',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF152A51)
+                    ),
+                    children: <TextSpan>[
+                      TextSpan(
+                        text: 'hasta deseleccionar',
+                        style: TextStyle(fontWeight: FontWeight.normal, color: Color(0xFF152A51)
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.autorenew),
+                title: RichText(
+                  text: const TextSpan(
+                    text: 'Iniciar un ciclo, ',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF152A51)
+                    ),
+                    children: <TextSpan>[
+                      TextSpan(
+                        text: 'una cantidad de veces',
+                        style: TextStyle(fontWeight: FontWeight.normal, color: Color(0xFF152A51)
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cerrar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
 //botón para mover el robot hacia la arriba, es la parte grafica del boton
 class botonArriba extends StatelessWidget {
   const botonArriba({
@@ -355,64 +542,17 @@ class botonArriba extends StatelessWidget {
         ));
   }
 }
-String RECORDATORIO =
-    "Esto se puede eliminar//////////////////////////////"
-    "///////////////////////////////////////////////////";
-//botón para eliminar el historial
-// class botonBorrarHistorial extends StatelessWidget {
-//   const botonBorrarHistorial({
-//     super.key,
-//   });
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       //width: 60,
-//       decoration: BoxDecoration(
-//         borderRadius: BorderRadius.circular(10),
-//         border: Border.all(color: Colors.white,width: 3.0), // Bordes blancos
-//       ),
-//       child: ElevatedButton(
-//         onPressed: () {
-//           Provider.of<Historial>(context, listen: false)
-//               .clear(); //aca es donde elimina el historial
-//           showDialog(
-//             context: context,
-//             builder: (BuildContext context) {
-//               return AlertDialog(
-//                 title: const Text('Historial eliminado'),
-//                 actions: <Widget>[
-//                   TextButton(
-//                     child: const Text('OK'),
-//                     onPressed: () {
-//                       Navigator.of(context).pop();
-//                     },
-//                   ),
-//                 ],
-//               );
-//             },
-//           );
-//         },
-//         style: ElevatedButton.styleFrom(
-//           backgroundColor: Colors.transparent,
-//           shape: RoundedRectangleBorder(
-//             borderRadius: BorderRadius.circular(10),
-//           ),
-//         ),
-//         child: Center(
-//           child: Icon(
-//             Icons.delete_forever,
-//             color: Colors.white,
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
 
-//botón para enviar el historial atraves de bluethoot al esp32
-class BotonEjecutar extends StatelessWidget {
+// Define un StatefulWidget para BotonEjecutar
+class BotonEjecutar extends StatefulWidget {
   const BotonEjecutar({Key? key}) : super(key: key);
+
+  @override
+  _BotonEjecutarState createState() => _BotonEjecutarState();
+}
+
+class _BotonEjecutarState extends State<BotonEjecutar> {
+  String _selectedOption = 'AttaBotSTEM1'; // Opción seleccionada por defecto
 
   @override
   Widget build(BuildContext context) {
@@ -420,46 +560,106 @@ class BotonEjecutar extends StatelessWidget {
       width: 75,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white,width: 3), // Bordes blancos
+        border: Border.all(color: Colors.white, width: 3), // Bordes blancos
       ),
-      child: IconButton(
-          icon: const Icon(Icons.play_circle_outline),
-          color: Colors.white,
-          onPressed: () async {
-            final flutterReactiveBle = FlutterReactiveBle();
-            await FlutterBluePlus.adapterState.first;
-            String idDispositivo = "";
-
-            if (Platform.isIOS) {
-              idDispositivo =
-                  "FF8C3368-6EB6-D271-2BE5-AC5CCEBB578A"; //ID de dispositivo esp32 solo se usa si es Ios el dispositivo
-            }
-            BluetoothDevice dispositivo =
-                BluetoothDevice(remoteId: DeviceIdentifier(idDispositivo));
-
-            if (Platform.isIOS) {
-              conexionIos(dispositivo,
-                  context); // si es Ios llama a esta funcion para hacer la conexion
-            } else if (Platform.isAndroid) {
-              conexionAndroid(context,
-                  flutterReactiveBle); // si es android llama a esta funcion para hacer la conexion
-            }
-          }),
+      child: Column(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.play_circle_outline),
+            color: Colors.white,
+            onPressed: _showOptionsDialog, // Mostrar el diálogo al presionar el botón
+          ),
+        ],
+      ),
     );
   }
 
+  // Método para mostrar el diálogo de opciones
+  void _showOptionsDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: const Text('Seleccionar opción'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _optionRadioTile(setState, 'AttaBotSTEM1'),
+                  _optionRadioTile(setState, 'AttaBotSTEM2'),
+                  _optionRadioTile(setState, 'AttaBotSTEM3'),
+                  _optionRadioTile(setState, 'AttaBotSTEM4'),
+                  _optionRadioTile(setState, 'AttaBotSTEM5'),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Cerrar el diálogo sin ejecutar nada
+                  },
+                  child: const Text('Cancelar'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _executeAction(_selectedOption); // Ejecutar la acción seleccionada
+                  },
+                  child: const Text('Ejecutar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // Método para construir un RadioListTile para cada opción
+  Widget _optionRadioTile(StateSetter setState, String option) {
+    return RadioListTile(
+      title: Text(option),
+      value: option,
+      groupValue: _selectedOption,
+      onChanged: (String? value) {
+        setState(() {
+          _selectedOption = value!; // Actualizar la opción seleccionada
+        });
+      },
+    );
+  }
+  // Método para ejecutar la acción correspondiente a la opción seleccionada
+  void _executeAction(idDispositivoBuscado) async {
+    final flutterReactiveBle = FlutterReactiveBle();
+    await flutter_blue.FlutterBluePlus.adapterState.first;
+    String idDispositivo = '';
+
+    if (Platform.isIOS) {
+      idDispositivo = "FF8C3368-6EB6-D271-2BE5-AC5CCEBB578A"; // ID de dispositivo esp32 solo se usa si es iOS el dispositivo
+    }
+    flutter_blue.BluetoothDevice dispositivo =
+    flutter_blue.BluetoothDevice(remoteId: flutter_blue.DeviceIdentifier(idDispositivo));
+
+    if (Platform.isIOS) {
+      conexionIos(dispositivo, context); // si es iOS llama a esta función para hacer la conexión
+    } else if (Platform.isAndroid) {
+      conexionAndroid(context, flutterReactiveBle,idDispositivoBuscado); // si es android llama a esta función para hacer la conexión
+    }
+  }
+
+
 //funcion que me permite enviar los datos si el dispositivo es ios
 //rastrea primero los dispositivos para emparejar, usa un caracteristico y un servicio ya que se usa BLE bluethoot de baja frecuencia
-  Future<void> conexionIos(BluetoothDevice device, BuildContext context) async {
+  Future<void> conexionIos(flutter_blue.BluetoothDevice device, BuildContext context) async {
     await device.connect();
 
-    List<BluetoothService> servicios = await device.discoverServices();
-    BluetoothService servicio = servicios.firstWhere((service) =>
-        service.uuid == Guid("4fafc201-1fb5-459e-8fcc-c5c9c331914b"));
-    BluetoothCharacteristic caracteristico = servicio.characteristics
+    List<flutter_blue.BluetoothService> servicios = await device.discoverServices();
+    flutter_blue.BluetoothService servicio = servicios.firstWhere((service) =>
+        service.uuid == flutter_blue.Guid("4fafc201-1fb5-459e-8fcc-c5c9c331914b"));
+    flutter_blue.BluetoothCharacteristic caracteristico = servicio.characteristics
         .firstWhere((characteristic) =>
             characteristic.uuid ==
-            Guid("beb5483e-36e1-4688-b7f5-ea07361b26a8"));
+                flutter_blue.Guid("beb5483e-36e1-4688-b7f5-ea07361b26a8"));
 
     List<String> historial = Provider.of<Historial>(context, listen: false)
         .convertirComandos(); //codifica los comandos primeros tipo nemonicos antes de enviarlos
@@ -475,26 +675,112 @@ class BotonEjecutar extends StatelessWidget {
 Future<void> conexionAndroid(
   BuildContext context,
   FlutterReactiveBle flutterReactiveBle,
+    idDispositivoBuscado
 ) async {
   // Obtener 'historial' cada vez que se presiona el botón
   var historial =
       Provider.of<Historial>(context, listen: false).convertirComandos();
+  //80:64:6f:11:32:c8 //direccion mac del esp32 antes de sumarle 2 al ultimo digito
+  //const dispositivoID = 'D4:D4:DA:16:AC:CA'; //direccion mac del esp32
+//80:64:6F:11:32:CA
+  //const dispositivoID = 'D4:8A:FC:B6:5C:F2';
 
-  const dispositivoID = '80:64:6F:11:32:CA'; //direccion mac del esp32
-  final dispositivoConectado =
-      flutterReactiveBle.connectToDevice(id: dispositivoID);
-  final caracteristico = QualifiedCharacteristic(
-      serviceId: Uuid.parse('4fafc201-1fb5-459e-8fcc-c5c9c331914b'),
-      characteristicId: Uuid.parse('beb5483e-36e1-4688-b7f5-ea07361b26a8'),
-      deviceId: dispositivoID);
+  try {
+    var dispositivoID = await startScan(flutterReactiveBle,idDispositivoBuscado);
+    print("dispositivoID:");
+    print(dispositivoID);
 
-  // Unir todos los elementos de la lista en una sola cadena
-  var historialString = historial.join("");
-  print(historialString);
-  flutterReactiveBle.writeCharacteristicWithResponse(caracteristico,
-      value: utf8.encode(
-          historialString)); //envia los datos al esp32 de igual forma que en ios
+    final connectionStream = flutterReactiveBle.connectToDevice(id: dispositivoID);
+
+    // Manejar la suscripción al stream
+    StreamSubscription<ConnectionStateUpdate>? connectionSubscription;
+
+    connectionSubscription = connectionStream.listen((state) async {
+      if (state.connectionState == DeviceConnectionState.connected) {
+        print('Dispositivo conectado: $dispositivoID');
+
+        final caracteristico = QualifiedCharacteristic(
+          serviceId: Uuid.parse('4fafc201-1fb5-459e-8fcc-c5c9c331914b'),
+          characteristicId: Uuid.parse('beb5483e-36e1-4688-b7f5-ea07361b26a8'),
+          deviceId: dispositivoID,
+        );
+
+        // Unir todos los elementos de la lista en una sola cadena
+        var historialString = historial.join("");
+        print(historialString);
+
+        try {
+          print("escribiendo característico");
+          await flutterReactiveBle.writeCharacteristicWithResponse(
+            caracteristico,
+            value: utf8.encode(historialString),
+          );
+          print('Escritura exitosa');
+        } catch (e) {
+          print('Error al escribir: $e');
+        }
+
+        // Cancelar la suscripción después de escribir
+        await connectionSubscription?.cancel();
+      } else if (state.connectionState == DeviceConnectionState.disconnected) {
+        print('Dispositivo desconectado: $dispositivoID');
+        await connectionSubscription?.cancel(); // Cancelar la suscripción si se desconecta
+      }
+    });
+  } catch (e) {
+    print('Error durante el proceso: $e');
+  }
 }
+
+Future<String> startScan(FlutterReactiveBle flutterReactiveBle,idDispositivoBuscado) async {
+  print(idDispositivoBuscado);
+  List<DiscoveredDevice> devices = [];
+  StreamController<List<DiscoveredDevice>> controller = StreamController();
+  String idDispositivo = '';
+  Completer<String> completer = Completer<String>();
+
+  final subscription = flutterReactiveBle.scanForDevices(
+    withServices: [],
+    scanMode: ScanMode.lowLatency,
+  ).listen((device) {
+    if (!devices.any((d) => d.id == device.id)) {
+      devices.add(device);
+      print('Dispositivo encontrado: ${device.name}, ID: ${device.id}');
+      if (device.name.toString() == idDispositivoBuscado) {
+        print('Se encontró a AttaBot');
+        idDispositivo = device.id;
+        if (!completer.isCompleted) {
+          completer.complete(idDispositivo); // Completar el completer
+        }
+        //subscription.cancel(); // Cancelar la suscripción al stream
+        if (!controller.isClosed) {
+          controller.close(); // Cerrar el controlador
+        }
+        return;
+      }
+      if (!controller.isClosed) {
+        controller.add(List.from(devices));
+      }
+    }
+  }, onError: (error) {
+    print('Error durante el escaneo: $error');
+    if (!controller.isClosed) {
+      controller.addError(error);
+      controller.close();  // Cerrar el controlador en caso de error
+    }
+    if (!completer.isCompleted) {
+      completer.completeError(error); // Completar el completer con el error
+    }
+  }, onDone: () {
+    if (!controller.isClosed) {
+      controller.close();  // Cerrar el controlador cuando el escaneo termine
+    }
+  });
+
+  return completer.future; // Devolver el future del completer
+}
+
+
 
 //
 // //menu desplegable arriba derecha de la pantalla, contiene las funcionalidades de guardar y cargar datos

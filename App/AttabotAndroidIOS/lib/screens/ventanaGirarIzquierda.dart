@@ -1,29 +1,21 @@
-// ignore_for_file: camel_case_types, library_private_types_in_public_api
-
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:proyecto_tec/screens/ventanaGirarDerecha.dart';
 import 'package:proyecto_tec/screens/ventanaHistorial.dart';
 
-/// Punto de entrada de la aplicación.
 void main() {
-  runApp(const ventanaGirarIzquierda());
+  runApp(const VentanaGirarIzquierda());
 }
 
-/// Clase para la ventana principal de la aplicación.
-class ventanaGirarIzquierda extends StatelessWidget {
-  const ventanaGirarIzquierda({Key? key}) : super(key: key);
+class VentanaGirarIzquierda extends StatelessWidget {
+  const VentanaGirarIzquierda({Key? key}) : super(key: key);
 
-
-
-  /// Construye la interfaz de usuario de la aplicación.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: const Text('Rueda Giratoria Izquierda'),
+          title: const Text('Rueda Giratoria'),
         ),
         body: const Center(
           child: RotacionIzquierda(),
@@ -33,153 +25,148 @@ class ventanaGirarIzquierda extends StatelessWidget {
   }
 }
 
-/// Clase para el widget de rotación a la izquierda.
 class RotacionIzquierda extends StatefulWidget {
   const RotacionIzquierda({Key? key}) : super(key: key);
 
-  /// Crea el estado para este widget.
   @override
   _RotacionIzquierdaState createState() => _RotacionIzquierdaState();
 }
 
-
-/// Clase para el estado del widget de rotación a la izquierda.
 class _RotacionIzquierdaState extends State<RotacionIzquierda> {
-  double _rotacion = 0.0; // Inicia en 0 grados
+  double _rotacion = 0.0;
   final _controlador = TextEditingController();
+  Offset _centro = Offset.zero;
+  double _anguloPrevio = 0.0;
 
-
-  /// Construye la interfaz de usuario para este widget.
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        Container(
-          alignment: Alignment.center,
-          child: const Text(
-            '0°',
-            style: TextStyle(fontSize: 20),
-          ),
-        ),
-        const SizedBox(height: 10),
-        GestureDetector(
-          onPanUpdate: (details) {
-            setState(() {
-              _rotacion += details.delta.dx / 1000; // Cambia a suma para giro antihorario
-              _rotacion = (_rotacion < 0.0) ? 0.0 : _rotacion; // Limita a 0 grados
-              _rotacion = (_rotacion > 1.0) ? 1.0 : _rotacion; // Limita a 360 grados
-            });
-          },
-          child: Stack(
-            alignment: Alignment.center,
-            children: <Widget>[
-        
-              RotacionTrianguloInterno(rotacion: _rotacion),
-           
-              Container(
-                width: 200,
-                height: 200,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.grey,
-                ),
-                child: const Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    LineaCentro(),
-                    
-                  ],
-                ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        _centro = Offset(constraints.maxWidth / 2, constraints.maxHeight / 2);
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Container(
+              alignment: Alignment.center,
+              child: Text(
+                '${(_rotacion * 360).toStringAsFixed(0)}°',
+                style: const TextStyle(fontSize: 20),
               ),
-    
-              Transform.rotate(
-                angle: _rotacion * math.pi * -2, // Cambio de dirección
-                child: CustomPaint(
-                  painter: TrianglePainter(),
-                  child: const SizedBox(
+            ),
+            const SizedBox(height: 10),
+            GestureDetector(
+              onPanStart: (details) {
+                final toque = details.localPosition;
+                final delta = toque - _centro;
+                _anguloPrevio = math.atan2(delta.dy, delta.dx);
+              },
+              onPanUpdate: (details) {
+                setState(() {
+                  final toque = details.localPosition;
+                  final delta = toque - _centro;
+                  final anguloActual = math.atan2(delta.dy, delta.dx);
+                  final diferenciaAngular = anguloActual - _anguloPrevio;
+
+                  _rotacion -= diferenciaAngular / (2 * math.pi);
+                  _rotacion = _rotacion % 1.0;
+                  _anguloPrevio = anguloActual;
+                });
+              },
+              child: Stack(
+                alignment: Alignment.center,
+                children: <Widget>[
+                  RotacionTrianguloInterno(rotacion: _rotacion),
+                  Container(
                     width: 200,
                     height: 200,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                    ),
+                    child: LineaCentro(rotacion: _rotacion),
                   ),
-                ),
-              ),
-    
-              ArcoGrados(rotacion: _rotacion),
-      
-              LineaMovil(rotacion: _rotacion),
-            ],
-          ),
-        ),
-        const SizedBox(height: 30),
-        Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              const Text(
-                'Girar ',
-                style: TextStyle(fontSize: 20),
-              ),
-              SizedBox(
-                width: 50, 
-                child: TextField(
-                  controller: _controlador,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    hintText: (_rotacion * 360).toStringAsFixed(0),
+                  LineaMovil(rotacion: _rotacion),
+                  ArcoGrados(rotacion: _rotacion),
+                  Transform.rotate(
+                    angle: -_rotacion * math.pi * 2,
+                    child: CustomPaint(
+                      painter: TrianglePainter(),
+                      child: const SizedBox(
+                        width: 200,
+                        height: 200,
+                      ),
+                    ),
                   ),
-                  textAlign: TextAlign.center,
-                  onChanged: (value) {
-                    final numero = int.tryParse(value);
-                    if (numero != null && numero >= 0 && numero <= 360) {
-                      setState(() {
-                        _rotacion = numero / 360;
-                      });
-                    } else {
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          return AlertDialog(
-                            title: const Text('Error'),
-                            content: const Text(
-                                'Por favor, ingrese valores entre 0 y 360.'),
-                            actions: <Widget>[
-                              TextButton(
-                                child: const Text('OK'),
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                              ),
-                            ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            Center(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  const Text(
+                    'Girar ',
+                    style: TextStyle(fontSize: 20),
+                  ),
+                  SizedBox(
+                    width: 50,
+                    child: TextField(
+                      controller: _controlador,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        hintText: (_rotacion * 360).toStringAsFixed(0),
+                      ),
+                      textAlign: TextAlign.center,
+                      onChanged: (value) {
+                        final numeroGrados = int.tryParse(value);
+                        if (numeroGrados != null && numeroGrados >= 0 && numeroGrados <= 360) {
+                          setState(() {
+                            _rotacion = numeroGrados / 360;
+                          });
+                        } else {
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: const Text('Error'),
+                                content: const Text('Por favor, ingrese valores entre 0 y 360.'),
+                                actions: <Widget>[
+                                  TextButton(
+                                    child: const Text('OK'),
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                  ),
+                                ],
+                              );
+                            },
                           );
-                        },
-                      );
-                    }
-                  },
-                ),
+                        }
+                      },
+                    ),
+                  ),
+                  const Text(
+                    '° a la izquierda',
+                    style: TextStyle(fontSize: 20),
+                  ),
+                ],
               ),
-              const Text(
-                '° a la izquierda',
-                style: TextStyle(fontSize: 20),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 30),
-        botonGirarIzquierda(rotacion: _rotacion),
-      ],
+            ),
+            const SizedBox(height: 30),
+            BotonGirarIzquierda(rotacion: _rotacion),
+          ],
+        );
+      },
     );
   }
 }
 
-
-/// Clase para el botón de girar a la izquierda.
-class botonGirarIzquierda extends StatelessWidget {
-  const botonGirarIzquierda({super.key, 
-    required this.rotacion,
-  });
+class BotonGirarIzquierda extends StatelessWidget {
+  const BotonGirarIzquierda({super.key, required this.rotacion});
 
   final double rotacion;
-  /// Construye la interfaz de usuario para este widget.
+
   @override
   Widget build(BuildContext context) {
     return TextButton(
@@ -204,40 +191,42 @@ class botonGirarIzquierda extends StatelessWidget {
     );
   }
 }
-/// Clase para la línea central del widget de rotación.
+
 class LineaCentro extends StatelessWidget {
-  const LineaCentro({
-    super.key,
-  });
+  const LineaCentro({super.key, required this.rotacion});
+
+  final double rotacion;
 
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      top: 0,
-      child: Container(
-        width: 2, // Ancho de la línea
-        height: 100, // Largo de la línea
-        color: Colors.black, // Color de la línea
-      ),
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Positioned(
+          top: 0,
+          child: Container(
+            width: 2,
+            height: 100,
+            color: Colors.black,
+          ),
+        ),
+      ],
     );
   }
 }
 
 class RotacionTrianguloInterno extends StatelessWidget {
-  const RotacionTrianguloInterno({
-    super.key,
-    required double rotacion,
-  }) : _rotacion = rotacion;
+  const RotacionTrianguloInterno({super.key, required this.rotacion});
 
-  final double _rotacion;
+  final double rotacion;
 
   @override
   Widget build(BuildContext context) {
     return Transform.rotate(
-      angle: _rotacion * math.pi * -2, // Cambio de dirección
+      angle: -rotacion * math.pi * 2,  // Rotación en sentido antihorario
       child: Container(
         width: 100,
-        height: 1,
+        height: 100,
         color: Colors.black,
         margin: const EdgeInsets.only(top: 50),
       ),
@@ -245,24 +234,36 @@ class RotacionTrianguloInterno extends StatelessWidget {
   }
 }
 
+class TrianglePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = Colors.black;
+    final path = Path();
+    path.moveTo(size.width / 2, 0);
+    path.lineTo(size.width / 2 - 10, 20);
+    path.lineTo(size.width / 2 + 10, 20);
+    path.close();
+    canvas.drawPath(path, paint);
+  }
 
-//clase para la linea movil
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
+}
+
 class LineaMovil extends StatelessWidget {
-  const LineaMovil({super.key, 
-    required this.rotacion,
-  });
+  const LineaMovil({super.key, required this.rotacion});
 
   final double rotacion;
 
   @override
   Widget build(BuildContext context) {
     return Transform.rotate(
-      angle: rotacion * math.pi * -2, // Cambio de dirección
+      angle: -rotacion * math.pi * 2,  // Rotación en sentido antihorario
       child: Transform.translate(
-        offset: const Offset(0.0, -50.0), // Posicion
+        offset: const Offset(0.0, -50.0),
         child: Container(
           width: 2,
-          height: 100, 
+          height: 100,
           color: Colors.black,
         ),
       ),
@@ -270,27 +271,24 @@ class LineaMovil extends StatelessWidget {
   }
 }
 
-//realiza el arco de la linea movil e inmovil
 class ArcoGrados extends StatelessWidget {
-  const ArcoGrados({super.key, 
-    required this.rotacion,
-  });
+  const ArcoGrados({super.key, required this.rotacion});
 
   final double rotacion;
 
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      size: const Size(200, 200), // Tamaño del CustomPainter
-      painter: ArcoPainter(rotacion: rotacion),
+      size: const Size(200, 200),
+      painter: ArcoPainter(rotation: rotacion),
     );
   }
 }
 
 class ArcoPainter extends CustomPainter {
-  ArcoPainter({required this.rotacion});
+  ArcoPainter({required this.rotation});
 
-  final double rotacion;
+  final double rotation;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -301,12 +299,12 @@ class ArcoPainter extends CustomPainter {
 
     final rect = Rect.fromCenter(
       center: Offset(size.width / 2, size.height / 2),
-      width: size.width - 150, 
-      height: size.height - 150, 
+      width: size.width - 150,
+      height: size.height - 150,
     );
 
-    // Dibuja un arco desde la línea vertical inmóvil hasta el ángulo de rotación
-    canvas.drawArc(rect, -math.pi / 2, -rotacion * 2 * math.pi, false, paint);
+    // Dibuja un arco desde 0 hasta el ángulo de rotación
+    canvas.drawArc(rect, -math.pi / 2, -rotation * 2 * math.pi, false, paint);  // Arco antihorario
   }
 
   @override

@@ -1,5 +1,3 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -122,13 +120,13 @@ class Historial extends ChangeNotifier {
               ),
             ),
             actions: <Widget>[
-              botonGuardar(controller: controller, historial: _historial),
               TextButton(
                 child: const Text('Cancelar'),
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
               ),
+              botonGuardar(controller: controller, historial: _historial),
             ],
           ),
         );
@@ -235,6 +233,29 @@ class botonGuardar extends StatelessWidget {
       child: const Text('Guardar'),
       onPressed: () async {
         String nombre = _controller.text;
+        if (_historial.isEmpty) {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('Error'),
+                content: const SingleChildScrollView(
+                  child: Text(
+                      'No se pueden guardar listas de instrucciones vacīas.'),
+                ),
+                actions: <Widget>[
+                  TextButton(
+                    child: const Text('OK'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              );
+            },
+          );
+          return;
+        }
         if (nombre.length > 20 || !RegExp(r'^[a-z0-9_-]+$').hasMatch(nombre)) {
           showDialog(
             context: context,
@@ -327,12 +348,6 @@ class menuDesplegable extends StatelessWidget {
           items: <PopupMenuEntry>[
             //
             const PopupMenuItem(
-              value: 'Opción 0',
-              child: Text('¿Cómo funciono?',
-                  style: TextStyle(
-                      fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
-            ),
-            const PopupMenuItem(
               value: 'Opción 1',
               child: Text('Guardar Historial',
                   style: TextStyle(
@@ -355,10 +370,7 @@ class menuDesplegable extends StatelessWidget {
           ],
           elevation: 8.0,
         ).then((value) {
-          if (value == 'Opción 0') {
-              InfoDialog.show(context);
-          }
-          else if (value == 'Opción 1') {
+          if (value == 'Opción 1') {
             Provider.of<Historial>(this.context,
                     listen:
                         false) //si se marca la opcion 1 llama a la funcion guardar archivo del historial
@@ -415,142 +427,6 @@ class menuDesplegable extends StatelessWidget {
     );
   }
 }
-class InfoDialog {
-  static void show(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text(
-            "¿Cómo funciono?",
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          backgroundColor: const Color(0xFFDDE6F7), // Establecer el color de fondo del AlertDialog
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10.0), // Ajustar la curvatura de las esquinas
-            side: const BorderSide(color: Colors.white, width: 5.0), // Agregar borde blanco
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.arrow_upward),
-                title: RichText(
-                  text: const TextSpan(
-                    text: 'Avanzar ',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF152A51)),
-                    children: <TextSpan>[
-                      TextSpan(
-                        text: 'una cantidad de centímetros indicada',
-                        style: TextStyle(fontWeight: FontWeight.normal, color: Color(0xFF152A51)
-),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.arrow_downward),
-                title: RichText(
-                  text: const TextSpan(
-                    text: 'Retroceder ',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF152A51)
-),
-                    children: <TextSpan>[
-                      TextSpan(
-                        text: 'una cantidad de centímetros indicada',
-                        style: TextStyle(fontWeight: FontWeight.normal, color: Color(0xFF152A51)
-),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.rotate_right),
-                title: RichText(
-                  text: const TextSpan(
-                    text: 'Girar a la derecha ',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF152A51)
-),
-                    children: <TextSpan>[
-                      TextSpan(
-                        text: 'una cantidad de grados indicada',
-                        style: TextStyle(fontWeight: FontWeight.normal, color: Color(0xFF152A51)
-),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.rotate_left),
-                title: RichText(
-                  text: const TextSpan(
-                    text: 'Girar a la izquierda ',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF152A51)
-),
-                    children: <TextSpan>[
-                      TextSpan(
-                        text: 'una cantidad de grados indicada',
-                        style: TextStyle(fontWeight: FontWeight.normal, color: Color(0xFF152A51)
-),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.remove_red_eye),
-                title: RichText(
-                  text: const TextSpan(
-                    text: 'Activar detección de obstáculos ',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF152A51)
-),
-                    children: <TextSpan>[
-                      TextSpan(
-                        text: 'hasta deseleccionar',
-                        style: TextStyle(fontWeight: FontWeight.normal, color: Color(0xFF152A51)
-),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.autorenew),
-                title: RichText(
-                  text: const TextSpan(
-                    text: 'Iniciar un ciclo, ',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF152A51)
-),
-                    children: <TextSpan>[
-                      TextSpan(
-                        text: 'una cantidad de veces',
-                        style: TextStyle(fontWeight: FontWeight.normal, color: Color(0xFF152A51)
-),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cerrar'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
 
 
 class ventanaHistorial extends StatefulWidget {
@@ -568,7 +444,7 @@ class _ventanaHistorial extends State<ventanaHistorial> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Historial'),
+        title: const Text('Instrucciones'),
 
         actions: <Widget>[
           menuDesplegable(
