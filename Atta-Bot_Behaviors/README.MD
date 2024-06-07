@@ -1,4 +1,4 @@
-Atta-Bots: Adaptaciones, comportamientos y funcionalidades en el marco de los proyectos PROE
+**Atta-Bots: Adaptaciones, comportamientos y funcionalidades en el marco de los proyectos PROE**
 
 
 Proyecto de investigación Atta-Bots del Tecnológico de Costa Rica (código VIE 5402-1440-5101), con participación de la Escuela de Matemática y la Escuela de Ingeniería Mecatrónica.
