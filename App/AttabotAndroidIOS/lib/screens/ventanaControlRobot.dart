@@ -10,6 +10,9 @@ import 'package:proyecto_tec/screens/ventanaHistorial.dart';
 import 'package:proyecto_tec/screens/ventanaGirarIzquierda.dart';
 //import 'package:flutter_blue/flutter_blue.dart';
 import 'ventanaAvanzarRetroceder.dart';
+import 'globals.dart' as globals;
+
+
 
 // Pantalla principal de control del robot.
 class pantallaControlRobot extends StatefulWidget {
@@ -19,6 +22,8 @@ class pantallaControlRobot extends StatefulWidget {
   _pantallaControlRobotState createState() => _pantallaControlRobotState();
 }
 
+final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+
 // Incluye la lógica para manejar los gestos de deslizamiento y construir la interfaz de usuario.
 class _pantallaControlRobotState extends State<pantallaControlRobot> {
   final TextEditingController controller = TextEditingController();
@@ -27,7 +32,8 @@ class _pantallaControlRobotState extends State<pantallaControlRobot> {
   // maneja los gestos de deslizamiento en la aplicación.
   void _onSwipe(DragEndDetails detalles) {
     if (detalles.primaryVelocity! < 0) {
-      Scaffold.of(context).openEndDrawer();
+      scaffoldKey.currentState?.openEndDrawer();
+      //Scaffold.of(context).openEndDrawer();
     }
   }
 
@@ -37,6 +43,7 @@ class _pantallaControlRobotState extends State<pantallaControlRobot> {
     return MaterialApp(
         debugShowCheckedModeBanner: false,
         home: Scaffold(
+          key: scaffoldKey,
           resizeToAvoidBottomInset: false,
           // cuando salia el teclado para ingresar datos me generaba un overflow en la pantalla, esta linea lo soluciona
           // appBar: AppBar(
@@ -69,15 +76,16 @@ class _pantallaControlRobotState extends State<pantallaControlRobot> {
                 padding: const EdgeInsets.symmetric(horizontal:6.0),
                 child: Row(
                   children: <Widget>[
-                    Spacer(flex: 3,),
-                    Expanded(
-                      flex: 8,
-                      child: Center(child: textoInicio()),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8.0), // Margen a la derecha
+                      child: botonInfo(),
                     ),
                     Spacer(),
+                    textoInicio(),
+                    Spacer(),
                     Padding(
-                      padding: const EdgeInsets.only(right: 0.0), // Margen a la derecha
-                      child: botonInfo(),
+                      padding: const EdgeInsets.only(left: 8.0), // Margen a la izquierda
+                      child: botonAbrirMenu(),
                     ),
                   ],
                 ),
@@ -376,6 +384,41 @@ class botonInfo extends StatelessWidget {
     );
   }
 }
+class botonAbrirMenu extends StatelessWidget {
+
+  const botonAbrirMenu({
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.white,
+          width: 3,
+        ),
+      ),
+      child: IconButton(
+        icon: Icon(Icons.article_rounded),
+        color: Colors.white,
+        onPressed: () {
+          scaffoldKey.currentState?.openEndDrawer();
+        },
+        iconSize: 20,
+        padding: EdgeInsets.zero,
+        constraints: BoxConstraints(
+          maxHeight: 40,
+          maxWidth: 40,
+        ),
+      ),
+    );
+  }
+}
 class InfoDialog {
   static void show(BuildContext context) {
     showDialog(
@@ -602,8 +645,34 @@ class _BotonEjecutarState extends State<BotonEjecutar> {
                 ),
                 TextButton(
                   onPressed: () {
-                    Navigator.of(context).pop();
-                    _executeAction(_selectedOption); // Ejecutar la acción seleccionada
+                    if (!globals.isPressed){
+                      Navigator.of(context).pop();
+                      _executeAction(_selectedOption);// Ejecutar la acción seleccionada
+                    }
+                    else{
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+
+                            title: const Text('Debe cerrar el ciclo antes de poder ejecutar las instrucciones'),
+                            backgroundColor: const Color(0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30.0), // Ajustar la curvatura de las esquinas
+                              side: const BorderSide(color: Colors.white, width: 5.0), // Agregar borde blanco
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop(); // Cerrar el diálogo sin ejecutar nada
+                                },
+                                child: const Text('Ok'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    }
                   },
                   child: const Text('Ejecutar'),
                 ),
@@ -686,7 +755,7 @@ Future<void> conexionAndroid(
   //const dispositivoID = 'D4:8A:FC:B6:5C:F2';
 
   try {
-    var dispositivoID = await startScan(flutterReactiveBle,idDispositivoBuscado);
+    var dispositivoID = await startScan(flutterReactiveBle,idDispositivoBuscado,context);
     print("dispositivoID:");
     print(dispositivoID);
 
@@ -716,8 +785,54 @@ Future<void> conexionAndroid(
             value: utf8.encode(historialString),
           );
           print('Escritura exitosa');
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('Se enviaron las instrucciones correctamente'),
+                backgroundColor: const Color(0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30.0), // Ajustar la curvatura de las esquinas
+                  side: const BorderSide(color: Colors.white, width: 5.0), // Agregar borde blanco
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Cerrar el diálogo sin ejecutar nada
+                    },
+                    child: const Text('Ok'),
+                  ),
+                ],
+              );
+            },
+          );
         } catch (e) {
           print('Error al escribir: $e');
+
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+
+                title: const Text('Error al enviar las instrucciones'),
+                content: Text(
+                    'error: $e'),
+                backgroundColor: const Color(0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30.0), // Ajustar la curvatura de las esquinas
+                  side: const BorderSide(color: Colors.white, width: 5.0), // Agregar borde blanco
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Cerrar el diálogo sin ejecutar nada
+                    },
+                    child: const Text('Ok'),
+                  ),
+                ],
+              );
+            },
+          );
         }
 
         // Cancelar la suscripción después de escribir
@@ -732,7 +847,7 @@ Future<void> conexionAndroid(
   }
 }
 
-Future<String> startScan(FlutterReactiveBle flutterReactiveBle,idDispositivoBuscado) async {
+Future<String> startScan(FlutterReactiveBle flutterReactiveBle,idDispositivoBuscado,context) async {
   print(idDispositivoBuscado);
   List<DiscoveredDevice> devices = [];
   StreamController<List<DiscoveredDevice>> controller = StreamController();
@@ -764,6 +879,30 @@ Future<String> startScan(FlutterReactiveBle flutterReactiveBle,idDispositivoBusc
     }
   }, onError: (error) {
     print('Error durante el escaneo: $error');
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+
+          title: const Text('Error durante el escaneo'),
+          content: Text(
+              'error: $error'),
+          backgroundColor: const Color(0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30.0), // Ajustar la curvatura de las esquinas
+            side: const BorderSide(color: Colors.white, width: 5.0), // Agregar borde blanco
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cerrar el diálogo sin ejecutar nada
+              },
+              child: const Text('Ok'),
+            ),
+          ],
+        );
+      },
+    );
     if (!controller.isClosed) {
       controller.addError(error);
       controller.close();  // Cerrar el controlador en caso de error
@@ -843,8 +982,9 @@ class BotonCambioColorCiclo extends StatefulWidget {
   _BotonCambioColorCicloState createState() => _BotonCambioColorCicloState();
 }
 
+
 class _BotonCambioColorCicloState extends State<BotonCambioColorCiclo> {
-  bool _isPressed = false;
+
 
   @override
   Widget build(BuildContext context) {
@@ -858,10 +998,8 @@ class _BotonCambioColorCicloState extends State<BotonCambioColorCiclo> {
           icon: const Icon(Icons.autorenew),
           color: Colors.white,
           onPressed: () {
-            setState(() {
-              _isPressed = !_isPressed;
-            });
-            if (_isPressed) {
+
+            if (!globals.isPressed) {
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
@@ -869,6 +1007,7 @@ class _BotonCambioColorCicloState extends State<BotonCambioColorCiclo> {
                 },
               );
             } else {
+              globals.isPressed = !globals.isPressed;
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
@@ -950,6 +1089,7 @@ class _DialogoCicloState extends State<DialogoCiclo> {
         TextButton(
           child: const Text('Realizar ciclo'),
           onPressed: () {
+            globals.isPressed = !globals.isPressed;
             Provider.of<Historial>(context, listen: false).addEvento(
                 'Inicio de ciclo, $cantidadDeVeces ciclos'); // envia la info al historial
             Navigator.of(context).pop();

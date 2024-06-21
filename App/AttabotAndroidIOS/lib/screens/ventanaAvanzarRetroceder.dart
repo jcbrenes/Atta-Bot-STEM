@@ -171,17 +171,17 @@ class _VentanaBaseState extends State<VentanaBase> {
   List<Widget> _crearAcciones(BuildContext context) {
     return <Widget>[
       TextButton(
-        child: const Text('Aceptar'),
+        child: const Text('Cancelar'),
         onPressed: () {
-          Provider.of<Historial>(context, listen: false)// Se obtiene una instancia del proveedor 'Historial' y se añade un nuevo evento a este.
-              .addEvento('${widget.accion} $numero cm');// El evento es una cadena de texto que contiene la acción realizada y la distancia en centímetros.
+
           Navigator.of(context).pop();
         },
       ),
       TextButton(
-        child: const Text('Cancelar'),
+        child: const Text('Aceptar'),
         onPressed: () {
-
+          Provider.of<Historial>(context, listen: false)// Se obtiene una instancia del proveedor 'Historial' y se añade un nuevo evento a este.
+              .addEvento('${widget.accion} $numero cm');// El evento es una cadena de texto que contiene la acción realizada y la distancia en centímetros.
           Navigator.of(context).pop();
         },
       ),

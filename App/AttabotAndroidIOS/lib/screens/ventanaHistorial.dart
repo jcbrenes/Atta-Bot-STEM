@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'globals.dart' as globals;
 
 class Historial extends ChangeNotifier {
   List<String> _historial = [];
@@ -241,7 +242,7 @@ class botonGuardar extends StatelessWidget {
                 title: const Text('Error'),
                 content: const SingleChildScrollView(
                   child: Text(
-                      'No se pueden guardar listas de instrucciones vacīas.'),
+                      'No se pueden guardar listas de instrucciones vacías.'),
                 ),
                 actions: <Widget>[
                   TextButton(
@@ -249,6 +250,31 @@ class botonGuardar extends StatelessWidget {
                     onPressed: () {
                       Navigator.of(context).pop();
                     },
+                  ),
+                ],
+              );
+            },
+          );
+          return;
+        }
+        if (globals.isPressed){
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+
+                title: const Text('Debe cerrar el ciclo antes de poder guardar las instrucciones'),
+                backgroundColor: const Color(0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30.0), // Ajustar la curvatura de las esquinas
+                  side: const BorderSide(color: Colors.white, width: 5.0), // Agregar borde blanco
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Cerrar el diálogo sin ejecutar nada
+                    },
+                    child: const Text('Ok'),
                   ),
                 ],
               );
@@ -280,15 +306,46 @@ class botonGuardar extends StatelessWidget {
           return;
         }
 
-        Navigator.of(context).pop();
         final directorio =
-            await getApplicationDocumentsDirectory(); //final directorio = await getExternalStorageDirectory(); android
+        await getApplicationDocumentsDirectory(); //final directorio = await getExternalStorageDirectory(); android
         final String nuevaUbicacion = '${directorio.path}/historial';
         final nuevoDirectorio = Directory(nuevaUbicacion);
         if (!await nuevoDirectorio.exists()) {
           await nuevoDirectorio.create();
         }
+
         final File archivo = File('$nuevaUbicacion/${_controller.text}.dat');
+
+        if (await archivo.exists()) {
+          bool? sobrescribir = await showDialog<bool>(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('Confirmar Sobrescritura'),
+                content: const Text('Ya existe un archivo con este nombre. ¿Desea sobrescribirlo?'),
+                actions: <Widget>[
+                  TextButton(
+                    child: const Text('No'),
+                    onPressed: () {
+                      Navigator.of(context).pop(false);
+                    },
+                  ),
+                  TextButton(
+                    child: const Text('Sí'),
+                    onPressed: () {
+                      Navigator.of(context).pop(true);
+                    },
+                  ),
+                ],
+              );
+            },
+          );
+
+          if (sobrescribir != true) {
+            return;
+          }
+        }
+
         await archivo.writeAsString(jsonEncode(_historial));
 
         showDialog(
@@ -318,6 +375,7 @@ class botonGuardar extends StatelessWidget {
     );
   }
 }
+
 
 class menuDesplegable extends StatelessWidget {
   const menuDesplegable({
@@ -349,19 +407,19 @@ class menuDesplegable extends StatelessWidget {
             //
             const PopupMenuItem(
               value: 'Opción 1',
-              child: Text('Guardar Historial',
+              child: Text('Guardar Instrucciones',
                   style: TextStyle(
                       fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
             ),
             const PopupMenuItem(
               value: 'Opción 2',
-              child: Text('Cargar Historial',
+              child: Text('Cargar Instrucciones',
                   style: TextStyle(
                       fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
             ),
             const PopupMenuItem(
               value: 'Opción 3',
-              child: Text('Borrar Historial',
+              child: Text('Borrar Instrucciones',
                   style: TextStyle(
                       color: Colors.red,
                       fontFamily: 'Poppins',
@@ -444,8 +502,14 @@ class _ventanaHistorial extends State<ventanaHistorial> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Instrucciones'),
-
+        title: Text(
+        'Instrucciones',
+          style: TextStyle(
+          fontWeight: FontWeight.bold,
+          ),
+        ),
+        foregroundColor: Colors.white,
+        backgroundColor: Color(0xFF586B8F),
         actions: <Widget>[
           menuDesplegable(
             context: context,
@@ -454,7 +518,15 @@ class _ventanaHistorial extends State<ventanaHistorial> {
           ),
         ],
       ),
-      body: Consumer<Historial>(
+    body: Container(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topRight,
+        end: Alignment.bottomLeft,
+        colors: [Color(0xFF798DB1), Color(0xFF586B8F)],
+      ),
+    ),
+      child: Consumer<Historial>(
         builder: (context, historial, child) {
           bool inicioCiclo = false;
           bool deteccionObstaculos = false;
@@ -464,10 +536,10 @@ class _ventanaHistorial extends State<ventanaHistorial> {
               Color? color;
               double padding = 8.0;
               if (historial.historial[index].contains('Inicio de ciclo')) {
-                color = const Color.fromARGB(255, 158, 11, 158);
+                color = const Color(0xFFF2B100);
                 inicioCiclo = true;
               } else if (historial.historial[index].contains('Fin del ciclo')) {
-                color = const Color.fromARGB(255, 158, 11, 158);
+                color = const Color(0xFFF2B100);
                 inicioCiclo = false;
               } else if (historial.historial[index]
                   .contains('Detección de obstáculos activada')) {
@@ -480,34 +552,46 @@ class _ventanaHistorial extends State<ventanaHistorial> {
               } else if (inicioCiclo || deteccionObstaculos) {
                 padding = 50.0;
                 if (historial.historial[index].contains('Avanzar')) {
-                  color = Colors.lightGreen[100];
+                  color = Color(0XFF006DBD);
                 } else if (historial.historial[index].contains('Retroceder')) {
-                  color = Colors.red[100];
+                  color = Color(0xFF006DBD);
                 } else if (historial.historial[index].contains('derecha')) {
-                  color = Colors.lightBlue[100];
+                  color = Color(0xFFF47E3E);
                 } else if (historial.historial[index].contains('izquierda')) {
-                  color = Colors.yellow[100];
+                  color = Color(0xFFF47E3E);
                 }
               } else {
                 if (historial.historial[index].contains('Avanzar')) {
-                  color = Colors.lightGreen[100];
+                  color = Color(0XFF006DBD);
                 } else if (historial.historial[index].contains('Retroceder')) {
-                  color = Colors.red[100];
+                  color = Color(0xFF006DBD);
                 } else if (historial.historial[index].contains('derecha')) {
-                  color = Colors.lightBlue[100];
+                  color = Color(0xFFF47E3E);
                 } else if (historial.historial[index].contains('izquierda')) {
-                  color = Colors.yellow[100];
+                  color = Color(0xFFF47E3E);
                 }
               }
               return Container(
                 decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: Colors.white,
+                    width: 3,
+                  ),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [color!, Color.fromRGBO(245, 248, 249, 0.6)],//Color(0xFFF5F8F9)],
+                  ),
                 ),
                 margin: EdgeInsets.fromLTRB(padding, 8.0, 8.0, 8.0),
                 child: ListTile(
-                  title: Text(historial.historial[index]),
-                  trailing: IconButton(
+                  title: Text(historial.historial[index],style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF152A51),
+                  ),),
+                  trailing: !historial.historial[index].contains('Fin del ciclo')
+                      ? IconButton(
                     icon: const Icon(Icons.delete),
                     onPressed: () {
                       showDialog(
@@ -539,13 +623,14 @@ class _ventanaHistorial extends State<ventanaHistorial> {
                         },
                       );
                     },
-                  ),
+                  ): null,
                 ),
               );
             },
           );
         },
       ),
+    ),
     );
   }
 }
