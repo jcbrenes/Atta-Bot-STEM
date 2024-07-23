@@ -673,8 +673,9 @@ class _BotonEjecutarState extends State<BotonEjecutar> {
                         /// Opens a dialog with the bot simulation
                         showDialog(
                           context: context,
-                          builder: (BuildContext context) => const Dialog(
-                            child: PlaneSimulation(),
+                          builder: (BuildContext context) => const AlertDialog(
+                            title: Text("Simulación"),
+                            content: PlaneSimulation(),
                           ),
                         );
                       }
