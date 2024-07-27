@@ -7,7 +7,7 @@ import 'package:permission_handler/permission_handler.dart';
 
 import 'package:proyecto_tec/screens/ventanaControlRobot.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
-import 'package:proyecto_tec/shared/components/ui/buttons/text_/button_factory.dart';
+import 'package:proyecto_tec/shared/components/ui/buttons/text/button_factory.dart';
 
 // //funcion que permite pedir permisos al sistema
 // Future<bool> pedirPermisos() async {
@@ -25,6 +25,80 @@ import 'package:proyecto_tec/shared/components/ui/buttons/text_/button_factory.d
 class pantallaInicio extends StatelessWidget {
   const pantallaInicio({super.key});
 
+  void startApp(BuildContext context) async {
+        if (Platform.isIOS) {
+          //verifica si es ios y valida el bluethoot
+          await FlutterBluePlus.adapterState.first;
+          // Para iOS, usa Flutter Blue Plus
+          if (await FlutterBluePlus.adapterState.first !=
+              BluetoothAdapterState.on) {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text('Bluetooth apagado'),
+                  content: const Text(
+                      'Por favor, activa el Bluetooth en tu dispositivo y el GPS'),
+                  actions: <Widget>[
+                    TextButton(
+                      child: const Text('OK'),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ],
+                );
+              },
+            );
+          } else {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const pantallaControlRobot()),
+            );
+          }
+        } else if (Platform.isAndroid) {
+          //verifica si es ios y valida el bluethoot
+          // Solicita los permisos de Bluetooth y GPS
+          //bool permisosConcedidos = await pedirPermisos();
+
+          //if (permisosConcedidos) {
+          // Para Android, usa Flutter Reactive Ble
+          //var status = await flutterReactiveBle.statusStream.first;
+
+          "estas dos lineas de codigo son medio dudosas, pero funciona";
+          var permission = await Permission.bluetooth.request();
+          var status = BleStatus.ready;
+
+          if (status != BleStatus.ready) {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text('Bluetooth apagado'),
+                  content: const Text(
+                      'Por favor, activa el Bluetooth en tu dispositivo'),
+                  actions: <Widget>[
+                    TextButton(
+                      child: const Text('OK'),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ],
+                );
+              },
+            );
+          } else {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const pantallaControlRobot()),
+            );
+          }
+        } else {}
+      }
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,9 +132,7 @@ class pantallaInicio extends StatelessWidget {
             TextButtonFactory.getButton(
                 type: TextButtonType.filled,
                 text: 'Comenzar',
-                handleButtonPress: () {
-                  print('Comenzar');
-                }),
+                handleButtonPress: () => startApp(context)),
           ],
         ),
       ),
@@ -68,26 +140,7 @@ class pantallaInicio extends StatelessWidget {
   }
 }
 
-//logo que se muestra al inicio
-class imagenInicio extends StatelessWidget {
-  const imagenInicio({
-    super.key,
-  });
 
-  @override
-  Widget build(BuildContext context) {
-    return ColorFiltered(
-        colorFilter: const ColorFilter.mode(
-          Colors.white, // Color transparente
-          BlendMode
-              .softLight, // Modo de mezcla para combinar con el color de fondo
-        ),
-        child: Image.asset(
-          'assets/AttaBotLogo.png', //aca es donde se carga la imagen
-          fit: BoxFit.cover,
-        ));
-  }
-}
 
 //texto de inicio
 class textoInicio extends StatelessWidget {
@@ -163,79 +216,7 @@ class botonComenzarInicio extends StatelessWidget {
           ),
         ),
       ),
-      onPressed: () async {
-        if (Platform.isIOS) {
-          //verifica si es ios y valida el bluethoot
-          await FlutterBluePlus.adapterState.first;
-          // Para iOS, usa Flutter Blue Plus
-          if (await FlutterBluePlus.adapterState.first !=
-              BluetoothAdapterState.on) {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: const Text('Bluetooth apagado'),
-                  content: const Text(
-                      'Por favor, activa el Bluetooth en tu dispositivo y el GPS'),
-                  actions: <Widget>[
-                    TextButton(
-                      child: const Text('OK'),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                  ],
-                );
-              },
-            );
-          } else {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const pantallaControlRobot()),
-            );
-          }
-        } else if (Platform.isAndroid) {
-          //verifica si es ios y valida el bluethoot
-          // Solicita los permisos de Bluetooth y GPS
-          //bool permisosConcedidos = await pedirPermisos();
-
-          //if (permisosConcedidos) {
-          // Para Android, usa Flutter Reactive Ble
-          //var status = await flutterReactiveBle.statusStream.first;
-
-          "estas dos lineas de codigo son medio dudosas, pero funciona";
-          var permission = await Permission.bluetooth.request();
-          var status = BleStatus.ready;
-
-          if (status != BleStatus.ready) {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: const Text('Bluetooth apagado'),
-                  content: const Text(
-                      'Por favor, activa el Bluetooth en tu dispositivo'),
-                  actions: <Widget>[
-                    TextButton(
-                      child: const Text('OK'),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                  ],
-                );
-              },
-            );
-          } else {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const pantallaControlRobot()),
-            );
-          }
-        } else {}
-      },
+      onPressed: (){},
       //},
       child: const Text(
         'Comenzar',
