@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 //import 'package:permission_handler/permission_handler.dart';
-import 'package:permission_handler/permission_handler.dart';
+// import 'package:permission_handler/permission_handler.dart';
 
 import 'package:proyecto_tec/screens/ventanaControlRobot.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
@@ -67,7 +67,7 @@ class pantallaInicio extends StatelessWidget {
           //var status = await flutterReactiveBle.statusStream.first;
 
           "estas dos lineas de codigo son medio dudosas, pero funciona";
-          var permission = await Permission.bluetooth.request();
+          // var permission = await Permission.bluetooth.request();
           var status = BleStatus.ready;
 
           if (status != BleStatus.ready) {
