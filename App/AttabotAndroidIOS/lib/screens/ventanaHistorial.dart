@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:proyecto_tec/features/instruction-history/components/instruction_tile.dart';
 import 'globals.dart' as globals;
 
 class Historial extends ChangeNotifier {
@@ -257,22 +258,26 @@ class botonGuardar extends StatelessWidget {
           );
           return;
         }
-        if (globals.isPressed){
+        if (globals.isPressed) {
           showDialog(
             context: context,
             builder: (BuildContext context) {
               return AlertDialog(
-
-                title: const Text('Debe cerrar el ciclo antes de poder guardar las instrucciones'),
-                backgroundColor: const Color(0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
+                title: const Text(
+                    'Debe cerrar el ciclo antes de poder guardar las instrucciones'),
+                backgroundColor: const Color(
+                    0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30.0), // Ajustar la curvatura de las esquinas
-                  side: const BorderSide(color: Colors.white, width: 5.0), // Agregar borde blanco
+                  borderRadius: BorderRadius.circular(
+                      30.0), // Ajustar la curvatura de las esquinas
+                  side: const BorderSide(
+                      color: Colors.white, width: 5.0), // Agregar borde blanco
                 ),
                 actions: [
                   TextButton(
                     onPressed: () {
-                      Navigator.of(context).pop(); // Cerrar el diálogo sin ejecutar nada
+                      Navigator.of(context)
+                          .pop(); // Cerrar el diálogo sin ejecutar nada
                     },
                     child: const Text('Ok'),
                   ),
@@ -307,7 +312,7 @@ class botonGuardar extends StatelessWidget {
         }
 
         final directorio =
-        await getApplicationDocumentsDirectory(); //final directorio = await getExternalStorageDirectory(); android
+            await getApplicationDocumentsDirectory(); //final directorio = await getExternalStorageDirectory(); android
         final String nuevaUbicacion = '${directorio.path}/historial';
         final nuevoDirectorio = Directory(nuevaUbicacion);
         if (!await nuevoDirectorio.exists()) {
@@ -322,7 +327,8 @@ class botonGuardar extends StatelessWidget {
             builder: (BuildContext context) {
               return AlertDialog(
                 title: const Text('Confirmar Sobrescritura'),
-                content: const Text('Ya existe un archivo con este nombre. ¿Desea sobrescribirlo?'),
+                content: const Text(
+                    'Ya existe un archivo con este nombre. ¿Desea sobrescribirlo?'),
                 actions: <Widget>[
                   TextButton(
                     child: const Text('No'),
@@ -375,7 +381,6 @@ class botonGuardar extends StatelessWidget {
     );
   }
 }
-
 
 class menuDesplegable extends StatelessWidget {
   const menuDesplegable({
@@ -486,7 +491,6 @@ class menuDesplegable extends StatelessWidget {
   }
 }
 
-
 class ventanaHistorial extends StatefulWidget {
   const ventanaHistorial({Key? key}) : super(key: key);
 
@@ -503,9 +507,9 @@ class _ventanaHistorial extends State<ventanaHistorial> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-        'Instrucciones',
+          'Instrucciones',
           style: TextStyle(
-          fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.bold,
           ),
         ),
         foregroundColor: Colors.white,
@@ -518,119 +522,122 @@ class _ventanaHistorial extends State<ventanaHistorial> {
           ),
         ],
       ),
-    body: Container(
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topRight,
-        end: Alignment.bottomLeft,
-        colors: [Color(0xFF798DB1), Color(0xFF586B8F)],
-      ),
-    ),
-      child: Consumer<Historial>(
-        builder: (context, historial, child) {
-          bool inicioCiclo = false;
-          bool deteccionObstaculos = false;
-          return ListView.builder(
-            itemCount: historial.historial.length,
-            itemBuilder: (context, index) {
-              Color? color;
-              double padding = 8.0;
-              if (historial.historial[index].contains('Inicio de ciclo')) {
-                color = const Color(0xFFF2B100);
-                inicioCiclo = true;
-              } else if (historial.historial[index].contains('Fin del ciclo')) {
-                color = const Color(0xFFF2B100);
-                inicioCiclo = false;
-              } else if (historial.historial[index]
-                  .contains('Detección de obstáculos activada')) {
-                color = const Color.fromARGB(255, 11, 158, 158);
-                deteccionObstaculos = true;
-              } else if (historial.historial[index]
-                  .contains('Fin detección de obstáculos')) {
-                color = const Color.fromARGB(255, 11, 158, 158);
-                deteccionObstaculos = false;
-              } else if (inicioCiclo || deteccionObstaculos) {
-                padding = 50.0;
-                if (historial.historial[index].contains('Avanzar')) {
-                  color = Color(0XFF006DBD);
-                } else if (historial.historial[index].contains('Retroceder')) {
-                  color = Color(0xFF006DBD);
-                } else if (historial.historial[index].contains('derecha')) {
-                  color = Color(0xFFF47E3E);
-                } else if (historial.historial[index].contains('izquierda')) {
-                  color = Color(0xFFF47E3E);
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topRight,
+            end: Alignment.bottomLeft,
+            colors: [Color(0xFF798DB1), Color(0xFF586B8F)],
+          ),
+        ),
+        child: Consumer<Historial>(
+          builder: (context, historial, child) {
+            bool inicioCiclo = false;
+            bool deteccionObstaculos = false;
+            return ListView.builder(
+              itemCount: historial.historial.length,
+              itemBuilder: (context, index) {
+                Color? color;
+                double padding = 8.0;
+                if (historial.historial[index].contains('Inicio de ciclo')) {
+                  color = const Color(0xFFF2B100);
+                  inicioCiclo = true;
+                } else if (historial.historial[index]
+                    .contains('Fin del ciclo')) {
+                  color = const Color(0xFFF2B100);
+                  inicioCiclo = false;
+                } else if (historial.historial[index]
+                    .contains('Detección de obstáculos activada')) {
+                  color = const Color.fromARGB(255, 11, 158, 158);
+                  deteccionObstaculos = true;
+                } else if (historial.historial[index]
+                    .contains('Fin detección de obstáculos')) {
+                  color = const Color.fromARGB(255, 11, 158, 158);
+                  deteccionObstaculos = false;
+                } else if (inicioCiclo || deteccionObstaculos) {
+                  padding = 50.0;
+                  if (historial.historial[index].contains('Avanzar')) {
+                    color = Color(0XFF006DBD);
+                  } else if (historial.historial[index]
+                      .contains('Retroceder')) {
+                    color = Color(0xFF006DBD);
+                  } else if (historial.historial[index].contains('derecha')) {
+                    color = Color(0xFFF47E3E);
+                  } else if (historial.historial[index].contains('izquierda')) {
+                    color = Color(0xFFF47E3E);
+                  }
+                } else {
+                  if (historial.historial[index].contains('Avanzar')) {
+                    color = Color(0XFF006DBD);
+                  } else if (historial.historial[index]
+                      .contains('Retroceder')) {
+                    color = Color(0xFF006DBD);
+                  } else if (historial.historial[index].contains('derecha')) {
+                    color = Color(0xFFF47E3E);
+                  } else if (historial.historial[index].contains('izquierda')) {
+                    color = Color(0xFFF47E3E);
+                  }
                 }
-              } else {
-                if (historial.historial[index].contains('Avanzar')) {
-                  color = Color(0XFF006DBD);
-                } else if (historial.historial[index].contains('Retroceder')) {
-                  color = Color(0xFF006DBD);
-                } else if (historial.historial[index].contains('derecha')) {
-                  color = Color(0xFFF47E3E);
-                } else if (historial.historial[index].contains('izquierda')) {
-                  color = Color(0xFFF47E3E);
-                }
-              }
-              return Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: Colors.white,
-                    width: 3,
+                return Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: Colors.white,
+                      width: 3,
+                    ),
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [color!, Color.fromRGBO(245, 248, 249, 0.6)],//Color(0xFFF5F8F9)],
+                    ),
                   ),
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [color!, Color.fromRGBO(245, 248, 249, 0.6)],//Color(0xFFF5F8F9)],
+                  margin: EdgeInsets.fromLTRB(padding, 8.0, 8.0, 8.0),
+                  child: ListTile(
+                    title: Text(historial.historial[index],style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF152A51),
+                    ),),
+                    trailing: !historial.historial[index].contains('Fin del ciclo')
+                        ? IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: const Text('Confirmación'),
+                              content: const Text(
+                                  '¿Estás seguro de que quieres eliminar este elemento?'),
+                              actions: <Widget>[
+                                TextButton(
+                                  child: const Text('Cancelar'),
+                                  onPressed: () {
+                                    Navigator.of(context)
+                                        .pop(); // Cierra el cuadro de diálogo
+                                  },
+                                ),
+                                TextButton(
+                                  child: const Text('OK'),
+                                  onPressed: () {
+                                    historial.removeEvento(
+                                        index); // Elimina el elemento
+                                    Navigator.of(context)
+                                        .pop(); // Cierra el cuadro de diálogo
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                    ): null,
                   ),
-                ),
-                margin: EdgeInsets.fromLTRB(padding, 8.0, 8.0, 8.0),
-                child: ListTile(
-                  title: Text(historial.historial[index],style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF152A51),
-                  ),),
-                  trailing: !historial.historial[index].contains('Fin del ciclo')
-                      ? IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: const Text('Confirmación'),
-                            content: const Text(
-                                '¿Estás seguro de que quieres eliminar este elemento?'),
-                            actions: <Widget>[
-                              TextButton(
-                                child: const Text('Cancelar'),
-                                onPressed: () {
-                                  Navigator.of(context)
-                                      .pop(); // Cierra el cuadro de diálogo
-                                },
-                              ),
-                              TextButton(
-                                child: const Text('OK'),
-                                onPressed: () {
-                                  historial.removeEvento(
-                                      index); // Elimina el elemento
-                                  Navigator.of(context)
-                                      .pop(); // Cierra el cuadro de diálogo
-                                },
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    },
-                  ): null,
-                ),
-              );
-            },
-          );
-        },
+                );
+              },
+            );
+          },
+        ),
       ),
-    ),
     );
   }
 }
