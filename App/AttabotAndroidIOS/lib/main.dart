@@ -2,13 +2,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:proyecto_tec/features/instruction-history/services/history_service.dart';
 import 'package:proyecto_tec/pages/home_page.dart';
-import 'package:proyecto_tec/screens/ventanaHistorial.dart';
 
 void main() {
   runApp(
     ChangeNotifierProvider(
-      create: (context) => Historial(),
+      create: (context) => HistoryService(),
       child: const AttaBotApp(),
     ),
   );

@@ -10,6 +10,31 @@ class InstructionHistoryDropdown extends StatelessWidget {
 
   final BuildContext context;
 
+  final List<PopupMenuEntry> menuItems = const [
+    PopupMenuItem(
+      value: 'Opción 1',
+      child: Text('Guardar Instrucciones',
+          style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
+    ),
+    PopupMenuItem(
+      value: 'Opción 2',
+      child: Text('Cargar Instrucciones',
+          style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
+    ),
+    PopupMenuItem(
+      value: 'Opción 3',
+      child: Text('Borrar Instrucciones',
+          style: TextStyle(
+              color: Colors.red,
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.bold)),
+    )
+  ];
+
+  void saveNewFile() {}
+  void loadFile() {}
+  void clearHistory() {}
+
   @override
   Widget build(BuildContext context) {
     return IconButton(
@@ -23,29 +48,7 @@ class InstructionHistoryDropdown extends StatelessWidget {
             0.0,
             0.0,
           ),
-          items: <PopupMenuEntry>[
-            //
-            const PopupMenuItem(
-              value: 'Opción 1',
-              child: Text('Guardar Instrucciones',
-                  style: TextStyle(
-                      fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
-            ),
-            const PopupMenuItem(
-              value: 'Opción 2',
-              child: Text('Cargar Instrucciones',
-                  style: TextStyle(
-                      fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
-            ),
-            const PopupMenuItem(
-              value: 'Opción 3',
-              child: Text('Borrar Instrucciones',
-                  style: TextStyle(
-                      color: Colors.red,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.bold)),
-            ),
-          ],
+          items: menuItems,
           elevation: 8.0,
         ).then((value) {
           if (value == 'Opción 1') {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_tec/features/instruction-history/components/instruction_tile.dart';
 import 'package:proyecto_tec/features/instruction-history/components/instructions_dropdown_menu.dart';
+import 'package:proyecto_tec/features/instruction-history/services/history_service.dart';
 import 'package:proyecto_tec/screens/ventanaHistorial.dart';
 
 class HistoryPage extends StatefulWidget {
@@ -12,12 +13,14 @@ class HistoryPage extends StatefulWidget {
 }
 
 class _HistoryPageState extends State<HistoryPage> {
+  
   final Text pageTitle = const Text(
     'Instrucciones',
     style: TextStyle(
       fontWeight: FontWeight.bold,
     ),
   );
+
   final Map<String, Color> appbarColors = {
     'foreground': Colors.white,
     'background': const Color(0xFF586B8F),
@@ -44,6 +47,20 @@ class _HistoryPageState extends State<HistoryPage> {
     'derecha': const Color(0xFFF47E3E),
     'izquierda': const Color(0xFFF47E3E),
   };
+
+  AnimatedBuilder reorderingAnimation(child, index, animation) {
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (BuildContext context, Widget? child) {
+        return Material(
+          elevation: 0,
+          color: Colors.transparent,
+          child: child,
+        );
+      },
+      child: child,
+    );
+  }
 
   Color processInstruction(String instruction) {
     List<String> instructionParts;
@@ -92,6 +109,8 @@ class _HistoryPageState extends State<HistoryPage> {
         });
   }
 
+//TODO: implement history service
+//Fix dropdown menu
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -102,15 +121,16 @@ class _HistoryPageState extends State<HistoryPage> {
             actions: <Widget>[InstructionHistoryDropdown(context: context)]),
         body: Container(
           decoration: bodyDecoration,
-          child: Consumer<Historial>(
+          child: Consumer<HistoryService>(
             builder: (context, historial, child) {
               return ListView.builder(
-                itemCount: historial.historial.length,
+                itemCount: historial.historyValue.length,
                 itemBuilder: (context, index) {
                   return InstructionTile(
-                      color: processInstruction(historial.historial[index]),
-                      title: historial.historial[index],
-                      trailing: setTrailing(historial.historial[index]));
+                      key: ValueKey(historial.historyValue[index]),
+                      color: processInstruction(historial.historyValue[index]),
+                      title: historial.historyValue[index],
+                      trailing: setTrailing(historial.historyValue[index]));
                 },
               );
             },

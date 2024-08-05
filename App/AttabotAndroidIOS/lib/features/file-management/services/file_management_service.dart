@@ -13,7 +13,6 @@ enum FileManagementErrors {
   noFilesFound,
 }
 
-//TODO: ask to close cycles before saving
 class FileManagementService {
   final Map<String, bool> _fileOverWriteStatus = {};
 
@@ -21,7 +20,6 @@ class FileManagementService {
 
   Future<void> saveNewFile(
       String fileName, List<String> saveData) async {
-    //validate file name and data
     if (!_validateFileName(fileName)) {
       throw FileManagementErrors.invalidFileName;
     }
@@ -67,7 +65,6 @@ class FileManagementService {
   }
 
   Future<List<String>> getSavedFilesList() async {
-    //todo implement file loading see `ventanaHistorial.dart 139`
     final Directory workingDirectory = await getApplicationDocumentsDirectory();
     final Directory loadDir = Directory('${workingDirectory.path}$savePath');
 
