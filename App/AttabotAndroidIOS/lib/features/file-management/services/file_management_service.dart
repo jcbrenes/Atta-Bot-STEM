@@ -64,6 +64,9 @@ class FileManagementService {
 
   }
 
+  /// Retrieves a list of strings of all the current saved files
+  /// throws [FileManagementErrors.noFilesFound] if no files are found
+  /// returns a list of file names if files are found
   Future<List<String>> getSavedFilesList() async {
     final Directory workingDirectory = await getApplicationDocumentsDirectory();
     final Directory loadDir = Directory('${workingDirectory.path}$savePath');

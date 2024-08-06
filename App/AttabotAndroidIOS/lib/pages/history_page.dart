@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:proyecto_tec/features/instruction-history/components/instruction_tile.dart';
 import 'package:proyecto_tec/features/instruction-history/components/instructions_dropdown_menu.dart';
 import 'package:proyecto_tec/features/instruction-history/services/history_service.dart';
-import 'package:proyecto_tec/screens/ventanaHistorial.dart';
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
@@ -109,8 +108,6 @@ class _HistoryPageState extends State<HistoryPage> {
         });
   }
 
-//TODO: implement history service
-//Fix dropdown menu
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -118,7 +115,7 @@ class _HistoryPageState extends State<HistoryPage> {
             title: pageTitle,
             foregroundColor: appbarColors['foreground'],
             backgroundColor: appbarColors['background'],
-            actions: <Widget>[InstructionHistoryDropdown(context: context)]),
+            actions: const <Widget>[InstructionHistoryDropdown()]),
         body: Container(
           decoration: bodyDecoration,
           child: Consumer<HistoryService>(

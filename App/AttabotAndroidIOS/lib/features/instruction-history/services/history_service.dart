@@ -9,6 +9,12 @@ class HistoryService extends ChangeNotifier {
     notifyListeners();
   }
 
+  void loadInstructionSet(List<String> instructions) {
+    _history.clear();
+    _history.addAll(instructions);
+    notifyListeners();
+  }
+
   void removeInstruction(int index) {
     if (_history[index].contains('Inicio de ciclo') ||
         _history[index].contains('Detección de obstáculos activada')) {
