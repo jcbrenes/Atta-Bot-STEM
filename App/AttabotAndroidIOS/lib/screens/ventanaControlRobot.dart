@@ -73,18 +73,18 @@ class _pantallaControlRobotState extends State<pantallaControlRobot> {
                 children: <Widget>[
                   SizedBox(height: 60), //Esto es para poner margenes aunque creo que se deberia hacer de otra forma
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal:6.0),
+                padding: EdgeInsets.symmetric(horizontal:6.0),
                 child: Row(
                   children: <Widget>[
                     Padding(
-                      padding: const EdgeInsets.only(right: 8.0), // Margen a la derecha
+                      padding: EdgeInsets.only(right: 8.0), // Margen a la derecha
                       child: botonInfo(),
                     ),
                     Spacer(),
                     textoInicio(),
                     Spacer(),
                     Padding(
-                      padding: const EdgeInsets.only(left: 8.0), // Margen a la izquierda
+                      padding: EdgeInsets.only(left: 8.0), // Margen a la izquierda
                       child: botonAbrirMenu(),
                     ),
                   ],
@@ -376,7 +376,7 @@ class botonInfo extends StatelessWidget {
         },
         iconSize: 20, // Ajusta el tamaño del icono
         padding: EdgeInsets.zero, // Elimina el padding interno del IconButton
-        constraints: BoxConstraints(
+        constraints: const BoxConstraints(
           maxHeight: 40, // Asegura que el tamaño del IconButton coincida con el Container
           maxWidth: 40,
         ),
@@ -404,14 +404,14 @@ class botonAbrirMenu extends StatelessWidget {
         ),
       ),
       child: IconButton(
-        icon: Icon(Icons.article_rounded),
+        icon: const Icon(Icons.article_rounded),
         color: Colors.white,
         onPressed: () {
           scaffoldKey.currentState?.openEndDrawer();
         },
         iconSize: 20,
         padding: EdgeInsets.zero,
-        constraints: BoxConstraints(
+        constraints: const BoxConstraints(
           maxHeight: 40,
           maxWidth: 40,
         ),

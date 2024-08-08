@@ -199,16 +199,16 @@ class botonComenzarInicio extends StatelessWidget {
     final flutterReactiveBle = FlutterReactiveBle();
     return ElevatedButton(
       style: ButtonStyle(
-        foregroundColor: MaterialStateProperty.all(Colors.white),
-        backgroundColor: MaterialStateProperty.resolveWith<Color>(
-            (Set<MaterialState> states) {
-          if (states.contains(MaterialState.pressed)) {
+        foregroundColor: WidgetStateProperty.all(Colors.white),
+        backgroundColor: WidgetStateProperty.resolveWith<Color>(
+            (Set<WidgetState> states) {
+          if (states.contains(WidgetState.pressed)) {
             return Colors
                 .orange; // Cambia el color de fondo al naranja cuando se presiona el botón
           }
           return Colors.transparent; // Fondo transparente
         }),
-        shape: MaterialStateProperty.all(
+        shape: WidgetStateProperty.all(
           RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(32.0),
             side: const BorderSide(

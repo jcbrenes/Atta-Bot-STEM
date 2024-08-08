@@ -502,14 +502,14 @@ class _ventanaHistorial extends State<ventanaHistorial> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
         'Instrucciones',
           style: TextStyle(
           fontWeight: FontWeight.bold,
           ),
         ),
         foregroundColor: Colors.white,
-        backgroundColor: Color(0xFF586B8F),
+        backgroundColor: const Color(0xFF586B8F),
         actions: <Widget>[
           menuDesplegable(
             context: context,
@@ -519,7 +519,7 @@ class _ventanaHistorial extends State<ventanaHistorial> {
         ],
       ),
     body: Container(
-    decoration: BoxDecoration(
+    decoration: const BoxDecoration(
       gradient: LinearGradient(
         begin: Alignment.topRight,
         end: Alignment.bottomLeft,
@@ -552,23 +552,23 @@ class _ventanaHistorial extends State<ventanaHistorial> {
               } else if (inicioCiclo || deteccionObstaculos) {
                 padding = 50.0;
                 if (historial.historial[index].contains('Avanzar')) {
-                  color = Color(0XFF006DBD);
+                  color = const Color(0XFF006DBD);
                 } else if (historial.historial[index].contains('Retroceder')) {
-                  color = Color(0xFF006DBD);
+                  color = const Color(0xFF006DBD);
                 } else if (historial.historial[index].contains('derecha')) {
-                  color = Color(0xFFF47E3E);
+                  color = const Color(0xFFF47E3E);
                 } else if (historial.historial[index].contains('izquierda')) {
-                  color = Color(0xFFF47E3E);
+                  color = const Color(0xFFF47E3E);
                 }
               } else {
                 if (historial.historial[index].contains('Avanzar')) {
-                  color = Color(0XFF006DBD);
+                  color = const Color(0XFF006DBD);
                 } else if (historial.historial[index].contains('Retroceder')) {
-                  color = Color(0xFF006DBD);
+                  color = const Color(0xFF006DBD);
                 } else if (historial.historial[index].contains('derecha')) {
-                  color = Color(0xFFF47E3E);
+                  color = const Color(0xFFF47E3E);
                 } else if (historial.historial[index].contains('izquierda')) {
-                  color = Color(0xFFF47E3E);
+                  color = const Color(0xFFF47E3E);
                 }
               }
               return Container(
@@ -581,12 +581,12 @@ class _ventanaHistorial extends State<ventanaHistorial> {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [color!, Color.fromRGBO(245, 248, 249, 0.6)],//Color(0xFFF5F8F9)],
+                    colors: [color!, const Color.fromRGBO(245, 248, 249, 0.6)],//Color(0xFFF5F8F9)],
                   ),
                 ),
                 margin: EdgeInsets.fromLTRB(padding, 8.0, 8.0, 8.0),
                 child: ListTile(
-                  title: Text(historial.historial[index],style: TextStyle(
+                  title: Text(historial.historial[index],style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF152A51),
                   ),),

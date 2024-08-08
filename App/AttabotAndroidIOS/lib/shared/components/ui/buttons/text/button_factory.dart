@@ -44,17 +44,17 @@ class TextButtonFactory {
     } else {
       ButtonStyle materialButtonStyle = ButtonStyle(
         backgroundColor: backgroundColor != null
-            ? MaterialStateProperty.all<Color>(backgroundColor)
+            ? WidgetStateProperty.all<Color>(backgroundColor)
             : null,
         foregroundColor: textColor != null
-            ? MaterialStateProperty.all<Color>(textColor)
+            ? WidgetStateProperty.all<Color>(textColor)
             : null,
         side: borderColor != null
-            ? MaterialStateProperty.all<BorderSide>(
+            ? WidgetStateProperty.all<BorderSide>(
                 BorderSide(color: borderColor))
             : null,
         textStyle: textSize != null
-            ? MaterialStateProperty.all<TextStyle>(
+            ? WidgetStateProperty.all<TextStyle>(
                 TextStyle(fontSize: textSize))
             : null,
       );
