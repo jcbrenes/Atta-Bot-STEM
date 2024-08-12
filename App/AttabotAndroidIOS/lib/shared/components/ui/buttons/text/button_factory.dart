@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 
-enum TextButtonType { raised, filled, outline, text }
+enum TextButtonType { raised, filled, outline, text, warning }
 
 /// A factory for creating text buttons. returns a Material or Cupertino button based on the platform.
 class TextButtonFactory {
@@ -58,7 +58,10 @@ class TextButtonFactory {
                 TextStyle(fontSize: textSize))
             : null,
       );
-
+      ButtonStyle warningButtonStyle = ButtonStyle(
+        backgroundColor: MaterialStateProperty.all<Color>(Colors.red),
+        foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+      );
       Map<TextButtonType, Widget> buttons = {
         TextButtonType.raised: ElevatedButton(
           onPressed: disabled ? null : handleButtonPress,
@@ -78,6 +81,11 @@ class TextButtonFactory {
         TextButtonType.text: TextButton(
           onPressed: disabled ? null : handleButtonPress,
           style: materialButtonStyle,
+          child: buttonText,
+        ),
+        TextButtonType.warning: ElevatedButton(
+          onPressed: disabled ? null : handleButtonPress,
+          style: warningButtonStyle,
           child: buttonText,
         ),
       };

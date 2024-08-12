@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart' as flutter_blue;
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:provider/provider.dart';
+import 'package:proyecto_tec/features/instruction-history/services/history_service.dart';
 import 'package:proyecto_tec/pages/history_page.dart';
 import 'package:proyecto_tec/screens/ventanaGirarDerecha.dart';
 import 'package:proyecto_tec/screens/ventanaHistorial.dart';
@@ -160,13 +161,13 @@ class textfieldUltimaAccion extends StatelessWidget {
         // Delineado blanco en el contorno
         color: Colors.transparent,
       ),
-      child: Consumer<Historial>(
+      child: Consumer<HistoryService>(
         builder: (context, historial, child) {
           return Center(
             child: Text(
               // lo fillea con la ultima accion del historial
-              historial.historial.isNotEmpty
-                  ? historial.historial.last
+              historial.historyValue.isNotEmpty
+                  ? historial.historyValue.last
                   : 'No hay acciones recientes',
               style: const TextStyle(
                 color: Colors.white,
@@ -1023,10 +1024,10 @@ class _BotonCambioColorCicloState extends State<BotonCambioColorCiclo> {
                   );
                 },
               );
-              Provider.of<Historial>(context,
+              Provider.of<HistoryService>(context,
                       listen:
                           false) //agrega Fin del ciclo al historial si se toco 2 veces
-                  .addEvento('Fin del ciclo');
+                  .addInstruction('Fin del ciclo');
             }
           },
           style: ElevatedButton.styleFrom(
@@ -1091,7 +1092,7 @@ class _DialogoCicloState extends State<DialogoCiclo> {
           child: const Text('Realizar ciclo'),
           onPressed: () {
             globals.isPressed = !globals.isPressed;
-            Provider.of<Historial>(context, listen: false).addEvento(
+            Provider.of<HistoryService>(context, listen: false).addInstruction(
                 'Inicio de ciclo, $cantidadDeVeces ciclos'); // envia la info al historial
             Navigator.of(context).pop();
           },
@@ -1128,7 +1129,7 @@ class _BotonDeteccionObstaculosState extends State<BotonDeteccionObstaculos> {
           setState(() {
             _isActivated = !_isActivated;
           });
-          Provider.of<Historial>(context, listen: false).addEvento(
+          Provider.of<HistoryService>(context, listen: false).addInstruction(
               _isActivated //envia la informacion aca si se activa o se desactiva
                   ? 'Detección de obstáculos activada'
                   : 'Fin detección de obstáculos');

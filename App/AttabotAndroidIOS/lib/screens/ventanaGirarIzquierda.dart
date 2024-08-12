@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:proyecto_tec/features/instruction-history/services/history_service.dart';
 import 'package:proyecto_tec/screens/ventanaHistorial.dart';
 
 void main() {
@@ -180,8 +181,8 @@ class BotonGirarIzquierda extends StatelessWidget {
         ),
       ),
       onPressed: () {
-        Provider.of<Historial>(context, listen: false)
-            .addEvento("Girar ${(rotacion * 360).truncate()} grados izquierda");
+        Provider.of<HistoryService>(context, listen: false)
+            .addInstruction("Girar ${(rotacion * 360).truncate()} grados izquierda");
         Navigator.of(context).pop();
       },
       child: const Text(

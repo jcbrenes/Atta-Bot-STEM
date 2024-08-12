@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:proyecto_tec/features/instruction-history/components/instruction_tile.dart';
 import 'package:proyecto_tec/features/instruction-history/components/instructions_dropdown_menu.dart';
 import 'package:proyecto_tec/features/instruction-history/services/history_service.dart';
+import 'package:proyecto_tec/shared/components/ui/buttons/text/button_factory.dart';
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
@@ -12,7 +13,6 @@ class HistoryPage extends StatefulWidget {
 }
 
 class _HistoryPageState extends State<HistoryPage> {
-  
   final Text pageTitle = const Text(
     'Instrucciones',
     style: TextStyle(
@@ -73,7 +73,7 @@ class _HistoryPageState extends State<HistoryPage> {
     return stateInstructions[instructionParts.first] ?? Colors.white;
   }
 
-  Widget? setTrailing(String instruction) {
+  Widget? setTrailing(String instruction, index) {
     if (instruction.contains('Fin del ciclo')) return null;
 
     return IconButton(
@@ -87,20 +87,18 @@ class _HistoryPageState extends State<HistoryPage> {
                 content: const Text(
                     '¿Estás seguro de que quieres eliminar este elemento?'),
                 actions: <Widget>[
-                  TextButton(
-                    child: const Text('Cancelar'),
-                    onPressed: () {
+                  TextButtonFactory.getButton(
+                      type: TextButtonType.text,
+                      text: "Cancelar",
+                      handleButtonPress: () => Navigator.of(context).pop()),
+                  TextButtonFactory.getButton(
+                    type: TextButtonType.warning,
+                    text: "Eliminar",
+                    handleButtonPress: () {
+                      context.read<HistoryService>().removeInstruction(index);
                       Navigator.of(context).pop();
                     },
-                  ),
-                  TextButton(
-                    child: const Text('OK'),
-                    onPressed: () {
-                      // historial.removeEvento(
-                      //     index); // Elimina el elemento
-                      Navigator.of(context).pop();
-                    },
-                  ),
+                  )
                 ],
               );
             },
@@ -127,7 +125,8 @@ class _HistoryPageState extends State<HistoryPage> {
                       key: ValueKey(historial.historyValue[index]),
                       color: processInstruction(historial.historyValue[index]),
                       title: historial.historyValue[index],
-                      trailing: setTrailing(historial.historyValue[index]));
+                      trailing:
+                          setTrailing(historial.historyValue[index], index));
                 },
               );
             },

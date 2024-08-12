@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:proyecto_tec/features/instruction-history/services/history_service.dart';
 import 'package:proyecto_tec/screens/ventanaHistorial.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
@@ -180,8 +181,8 @@ class _VentanaBaseState extends State<VentanaBase> {
       TextButton(
         child: const Text('Aceptar'),
         onPressed: () {
-          Provider.of<Historial>(context, listen: false)// Se obtiene una instancia del proveedor 'Historial' y se añade un nuevo evento a este.
-              .addEvento('${widget.accion} $numero cm');// El evento es una cadena de texto que contiene la acción realizada y la distancia en centímetros.
+          Provider.of<HistoryService>(context, listen: false)// Se obtiene una instancia del proveedor 'Historial' y se añade un nuevo evento a este.
+              .addInstruction('${widget.accion} $numero cm');// El evento es una cadena de texto que contiene la acción realizada y la distancia en centímetros.
           Navigator.of(context).pop();
         },
       ),

@@ -18,6 +18,7 @@ class _InstructionHistoryDropdownState
     extends State<InstructionHistoryDropdown> {
   final FileManagementService fmService = FileManagementService();
 
+  final GlobalKey<FormState> _fileNameKey = GlobalKey<FormState>();
   final TextEditingController fileNameController = TextEditingController();
 
   final List<PopupMenuEntry> menuItems = const [
@@ -41,16 +42,22 @@ class _InstructionHistoryDropdownState
     )
   ];
 
-  void saveNewFile() {
-    showDialog(
+  Future<void> saveNewFile() async {
+    await showDialog(
         context: context,
         builder: (context) => AlertDialog(
               title: const Text('Guardar Instrucciones'),
               content: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text('Ingresa el nombre del archivo:'),
-                  TextField(
-                    controller: fileNameController,
+                  Form(
+                    key: _fileNameKey,
+                    child: TextFormField(
+                      controller: fileNameController,
+                      validator: (value) =>
+                          value!.isEmpty ? 'Campo requerido' : null,
+                    ),
                   )
                 ],
               ),
@@ -65,16 +72,38 @@ class _InstructionHistoryDropdownState
                 TextButtonFactory.getButton(
                   type: TextButtonType.filled,
                   text: "Guardar",
-                  disabled: fileNameController.text.isEmpty,
                   handleButtonPress: () async {
+                    if (!_fileNameKey.currentState!.validate()) return;
                     final fileName = fileNameController.text;
                     final fileData =
-                        context.watch<HistoryService>().historyValue;
+                        context.read<HistoryService>().historyValue;
+
                     try {
                       await fmService.saveNewFile(fileName, fileData);
-                    } catch (e) {
-                      overWriteFile();
+                    } catch (error) {
+                      switch (error) {
+                        case FileManagementErrors.fileAlreadyExists:
+                          await overWriteFile();
+                          break;
+                        case FileManagementErrors.saveDataEmpty:
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  behavior: SnackBarBehavior.floating,
+                                  content: Text('No hay instrucciones para guardar')));
+                          break;
+                        default:
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  behavior: SnackBarBehavior.floating,
+                                  content: Text('Error al guardar archivo')));
+                          break;
+                      }
+                      
                     }
+                    fileNameController.clear();
+
                     if (!mounted) return;
                     Navigator.of(context).pop();
                   },
@@ -83,8 +112,8 @@ class _InstructionHistoryDropdownState
             ));
   }
 
-  void overWriteFile() {
-    showDialog(
+  Future<void> overWriteFile() async {
+    await showDialog(
         context: context,
         builder: (context) => AlertDialog(
               title: const Text('Sobrescribir Instrucciones'),
@@ -104,7 +133,7 @@ class _InstructionHistoryDropdownState
                   handleButtonPress: () async {
                     final fileName = fileNameController.text;
                     final fileData =
-                        context.watch<HistoryService>().historyValue;
+                        context.read<HistoryService>().historyValue;
                     try {
                       await fmService.overwriteFile(fileName, fileData);
                     } catch (e) {
@@ -133,29 +162,31 @@ class _InstructionHistoryDropdownState
         context: context,
         builder: (context) => AlertDialog(
               title: const Text('Cargar Instrucciones'),
-              content: Column(children: [
-                const Text('Selecciona el archivo que deseas cargar:'),
-                const SizedBox(height: 10),
-                fileNames.isEmpty
-                    ? const Text('No hay archivos guardados')
-                    : ListView.builder(
-                        itemCount: fileNames.length,
-                        itemBuilder: (context, index) {
-                          return ListTile(
-                            title: Text(fileNames[index]),
-                            onTap: () async {
-                              final fileData =
-                                  await fmService.loadFile(fileNames[index]);
-                              if (!mounted) return;
-                              context
-                                  .watch<HistoryService>()
-                                  .loadInstructionSet(fileData);
-                              Navigator.of(context).pop();
-                            },
-                          );
-                        },
-                      )
-              ]),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      ListView.builder(
+                        shrinkWrap: true,
+                            itemCount: fileNames.length,
+                            itemBuilder: (context, index) {
+                              return ListTile(
+                                title: Text(fileNames[index]),
+                                onTap: () async {
+                                  final fileData =
+                                      await fmService.loadFile(fileNames[index]);
+                                  if (!mounted) return;
+                                  context
+                                      .read<HistoryService>()
+                                      .loadInstructionSet(fileData);
+                                  Navigator.of(context).pop();
+                                },
+                              );}),
+                    ],
+                  ),
+                )
+              )
             ));
   }
 
@@ -176,11 +207,10 @@ class _InstructionHistoryDropdownState
                 },
               ),
               TextButtonFactory.getButton(
-                  type: TextButtonType.filled,
+                  type: TextButtonType.warning,
                   text: "Borrar",
-                  textColor: Colors.red,
                   handleButtonPress: () {
-                    context.watch<HistoryService>().clearHistory();
+                    context.read<HistoryService>().clearHistory();
                     Navigator.of(context).pop();
                   })
             ],
