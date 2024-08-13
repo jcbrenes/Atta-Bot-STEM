@@ -43,14 +43,7 @@ class _InstructionHistoryDropdownState
     )
   ];
 
-  void showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(message),
-      behavior: SnackBarBehavior.floating,
-    ));
-  }
-
-  Future<void> saveNewFile() async {
+  Future<void> openSaveFileDialog() async {
     await showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -80,36 +73,12 @@ class _InstructionHistoryDropdownState
                 TextButtonFactory.getButton(
                     type: TextButtonType.filled,
                     text: "Guardar",
-                    handleButtonPress: () async {
-                      if (!_fileNameKey.currentState!.validate()) return;
-                      final fileName = fileNameController.text;
-                      final fileData =
-                          context.read<HistoryService>().historyValue;
-
-                      try {
-                        await fmService.saveNewFile(fileName, fileData);
-                      } catch (error) {
-                        switch (error) {
-                          case FileManagementErrors.fileAlreadyExists:
-                            await overWriteFile();
-                            break;
-                          case FileManagementErrors.saveDataEmpty:
-                            showSnackBar('No hay instrucciones para guardar');
-                            break;
-                          default:
-                            showSnackBar('Error al guardar archivo');
-                            break;
-                        }
-                      }
-                      fileNameController.clear();
-                      if (!mounted) return;
-                      Navigator.of(context).pop();
-                    })
+                    handleButtonPress: onSaveFile)
               ],
             ));
   }
 
-  Future<void> overWriteFile() async {
+  Future<void> openOverwiteFileDialog() async {
     await showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -127,27 +96,13 @@ class _InstructionHistoryDropdownState
                 TextButtonFactory.getButton(
                   type: TextButtonType.filled,
                   text: "Aceptar",
-                  handleButtonPress: () async {
-                    final fileName = fileNameController.text;
-                    final fileData =
-                        context.read<HistoryService>().historyValue;
-                    try {
-                      await fmService.overwriteFile(fileName, fileData);
-                    } catch (e) {
-                      if (!mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                          behavior: SnackBarBehavior.floating,
-                          content: Text('Error al sobrescribir archivo')));
-                    }
-                    if (!mounted) return;
-                    Navigator.of(context).pop();
-                  },
+                  handleButtonPress: onOverwriteFile,
                 )
               ],
             ));
   }
 
-  Future<void> loadFile() async {
+  Future<void> openLoadFileDialog() async {
     List<String> fileNames;
     try {
       fileNames = await fmService.getSavedFilesList();
@@ -162,32 +117,20 @@ class _InstructionHistoryDropdownState
             content: SizedBox(
                 width: double.maxFinite,
                 child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: fileNames.length,
-                          itemBuilder: (context, index) {
-                            return ListTile(
-                              title: Text(fileNames[index]),
-                              onTap: () async {
-                                final fileData =
-                                    await fmService.loadFile(fileNames[index]);
-                                if (!mounted) return;
-                                context
-                                    .read<HistoryService>()
-                                    .loadInstructionSet(fileData);
-                                Navigator.of(context).pop();
-                              },
-                            );
-                          }),
-                    ],
-                  ),
+                  child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: fileNames.length,
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          title: Text(fileNames[index]),
+                          onTap: () => onLoadFile(fileNames[index]),
+                        );
+                      }),
                 ))));
   }
 
-  void clearInstructionHistory() {
-    showDialog(
+  Future<void> openClearInstructionsDialog() async {
+    await showDialog(
         context: context,
         builder: (context) {
           return AlertDialog(
@@ -205,13 +148,69 @@ class _InstructionHistoryDropdownState
               TextButtonFactory.getButton(
                   type: TextButtonType.warning,
                   text: "Borrar",
-                  handleButtonPress: () {
-                    context.read<HistoryService>().clearHistory();
-                    Navigator.of(context).pop();
-                  })
+                  handleButtonPress: onClearInstructions)
             ],
           );
         });
+  }
+
+  void onSaveFile() async {
+    if (!_fileNameKey.currentState!.validate()) return;
+    final fileName = fileNameController.text;
+    final fileData = context.read<HistoryService>().historyValue;
+
+    try {
+      await fmService.saveNewFile(fileName, fileData);
+    } catch (error) {
+      switch (error) {
+        case FileManagementErrors.fileAlreadyExists:
+          await openOverwiteFileDialog();
+          break;
+        case FileManagementErrors.saveDataEmpty:
+          showSnackBar('No hay instrucciones para guardar');
+          break;
+        default:
+          showSnackBar('Error al guardar archivo');
+          break;
+      }
+    }
+    fileNameController.clear();
+    if (!mounted) return;
+    Navigator.of(context).pop();
+  }
+
+  void onOverwriteFile() async {
+    final fileName = fileNameController.text;
+    final fileData = context.read<HistoryService>().historyValue;
+    try {
+      await fmService.overwriteFile(fileName, fileData);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          behavior: SnackBarBehavior.floating,
+          content: Text('Error al sobrescribir archivo')));
+    }
+    if (!mounted) return;
+    Navigator.of(context).pop();
+  }
+
+  void onLoadFile(String fileName) async {
+    final fileData = await fmService.loadFile(fileName);
+    if (!mounted) return;
+    context.read<HistoryService>().loadInstructionSet(fileData);
+    Navigator.of(context).pop();
+  }
+
+  void onClearInstructions() async {
+    context.read<HistoryService>().clearHistory();
+    Navigator.of(context).pop();
+  }
+
+  void showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(message),
+      behavior: SnackBarBehavior.floating,
+    ));
   }
 
   @override
@@ -233,13 +232,13 @@ class _InstructionHistoryDropdownState
 
         switch (value) {
           case 1:
-            saveNewFile();
+            openSaveFileDialog();
             break;
           case 2:
-            loadFile();
+            openLoadFileDialog();
             break;
           case 3:
-            clearInstructionHistory();
+            openClearInstructionsDialog();
             break;
           default:
             break;
