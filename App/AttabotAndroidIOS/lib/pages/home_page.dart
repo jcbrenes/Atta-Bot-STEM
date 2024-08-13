@@ -55,6 +55,7 @@ class _HomePageState extends State<HomePage> {
         decoration: pageDecoration,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.max,
           children: [
             HomePageTitle(title: pageTitle, version: version),
             SeparatorFactory.getSeparator(type: SeparatorType.context),

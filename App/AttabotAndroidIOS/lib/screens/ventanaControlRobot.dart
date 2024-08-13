@@ -135,10 +135,6 @@ class _pantallaControlRobotState extends State<pantallaControlRobot> {
               ),
             ),
           ),
-          endDrawer: SizedBox(
-            width: MediaQuery.of(context).size.width * 1,
-            child: const HistoryPage(),
-          ),
         ));
   }
 }
@@ -409,7 +405,11 @@ class botonAbrirMenu extends StatelessWidget {
         icon: Icon(Icons.article_rounded),
         color: Colors.white,
         onPressed: () {
-          scaffoldKey.currentState?.openEndDrawer();
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const HistoryPage(),
+            ),
+          );
         },
         iconSize: 20,
         padding: EdgeInsets.zero,

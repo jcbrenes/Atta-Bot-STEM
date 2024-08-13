@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:proyecto_tec/config/app_config.dart';
 import 'package:proyecto_tec/features/file-management/services/file_management_service.dart';
 import 'package:proyecto_tec/features/instruction-history/services/history_service.dart';
 import 'package:proyecto_tec/shared/components/ui/buttons/text/button_factory.dart';
@@ -42,6 +43,13 @@ class _InstructionHistoryDropdownState
     )
   ];
 
+  void showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(message),
+      behavior: SnackBarBehavior.floating,
+    ));
+  }
+
   Future<void> saveNewFile() async {
     await showDialog(
         context: context,
@@ -50,11 +58,13 @@ class _InstructionHistoryDropdownState
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('Ingresa el nombre del archivo:'),
                   Form(
                     key: _fileNameKey,
                     child: TextFormField(
                       controller: fileNameController,
+                      decoration: const InputDecoration(
+                          border: AppConfig.textFormFieldBorder,
+                          label: Text("Nombre del archivo")),
                       validator: (value) =>
                           value!.isEmpty ? 'Campo requerido' : null,
                     ),
@@ -65,49 +75,36 @@ class _InstructionHistoryDropdownState
                 TextButtonFactory.getButton(
                   type: TextButtonType.outline,
                   text: "Cancelar",
-                  handleButtonPress: () {
-                    Navigator.of(context).pop();
-                  },
+                  handleButtonPress: () => Navigator.of(context).pop(),
                 ),
                 TextButtonFactory.getButton(
-                  type: TextButtonType.filled,
-                  text: "Guardar",
-                  handleButtonPress: () async {
-                    if (!_fileNameKey.currentState!.validate()) return;
-                    final fileName = fileNameController.text;
-                    final fileData =
-                        context.read<HistoryService>().historyValue;
+                    type: TextButtonType.filled,
+                    text: "Guardar",
+                    handleButtonPress: () async {
+                      if (!_fileNameKey.currentState!.validate()) return;
+                      final fileName = fileNameController.text;
+                      final fileData =
+                          context.read<HistoryService>().historyValue;
 
-                    try {
-                      await fmService.saveNewFile(fileName, fileData);
-                    } catch (error) {
-                      switch (error) {
-                        case FileManagementErrors.fileAlreadyExists:
-                          await overWriteFile();
-                          break;
-                        case FileManagementErrors.saveDataEmpty:
-                          if (!mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  behavior: SnackBarBehavior.floating,
-                                  content: Text('No hay instrucciones para guardar')));
-                          break;
-                        default:
-                          if (!mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  behavior: SnackBarBehavior.floating,
-                                  content: Text('Error al guardar archivo')));
-                          break;
+                      try {
+                        await fmService.saveNewFile(fileName, fileData);
+                      } catch (error) {
+                        switch (error) {
+                          case FileManagementErrors.fileAlreadyExists:
+                            await overWriteFile();
+                            break;
+                          case FileManagementErrors.saveDataEmpty:
+                            showSnackBar('No hay instrucciones para guardar');
+                            break;
+                          default:
+                            showSnackBar('Error al guardar archivo');
+                            break;
+                        }
                       }
-                      
-                    }
-                    fileNameController.clear();
-
-                    if (!mounted) return;
-                    Navigator.of(context).pop();
-                  },
-                )
+                      fileNameController.clear();
+                      if (!mounted) return;
+                      Navigator.of(context).pop();
+                    })
               ],
             ));
   }
@@ -161,33 +158,32 @@ class _InstructionHistoryDropdownState
     showDialog(
         context: context,
         builder: (context) => AlertDialog(
-              title: const Text('Cargar Instrucciones'),
-              content: SizedBox(
+            title: const Text('Cargar Instrucciones'),
+            content: SizedBox(
                 width: double.maxFinite,
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
                       ListView.builder(
-                        shrinkWrap: true,
-                            itemCount: fileNames.length,
-                            itemBuilder: (context, index) {
-                              return ListTile(
-                                title: Text(fileNames[index]),
-                                onTap: () async {
-                                  final fileData =
-                                      await fmService.loadFile(fileNames[index]);
-                                  if (!mounted) return;
-                                  context
-                                      .read<HistoryService>()
-                                      .loadInstructionSet(fileData);
-                                  Navigator.of(context).pop();
-                                },
-                              );}),
+                          shrinkWrap: true,
+                          itemCount: fileNames.length,
+                          itemBuilder: (context, index) {
+                            return ListTile(
+                              title: Text(fileNames[index]),
+                              onTap: () async {
+                                final fileData =
+                                    await fmService.loadFile(fileNames[index]);
+                                if (!mounted) return;
+                                context
+                                    .read<HistoryService>()
+                                    .loadInstructionSet(fileData);
+                                Navigator.of(context).pop();
+                              },
+                            );
+                          }),
                     ],
                   ),
-                )
-              )
-            ));
+                ))));
   }
 
   void clearInstructionHistory() {
