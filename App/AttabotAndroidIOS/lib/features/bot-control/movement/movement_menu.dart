@@ -41,7 +41,7 @@ class MovementMenu extends StatelessWidget {
             showDialog(
               context: context,
               builder: (BuildContext context) {
-                return const Rotation();
+                return const Rotation(direction: "left");
               },
             );
             },
@@ -65,7 +65,7 @@ class MovementMenu extends StatelessWidget {
             showDialog(
               context: context,
               builder: (BuildContext context) {
-                return const Rotation();
+                return const Rotation(direction: "right",);
               },
             );
             },

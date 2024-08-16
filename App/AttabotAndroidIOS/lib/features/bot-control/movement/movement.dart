@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:proyecto_tec/features/bot-control/movement/distance_input.dart';
 
 class Movement extends StatelessWidget {
   const Movement({super.key, required this.direction});
-  
+
   final String direction;
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(
-        direction == 'upward' ? 'Avanzar' : 'Retroceder', textAlign: TextAlign.center,),
+        direction == 'upward' ? 'Avanzar' : 'Retroceder',
+        textAlign: TextAlign.center,
+      ),
       backgroundColor: const Color(
           0xFFDDE6F7), // Establecer el color de fondo del AlertDialog
       shape: RoundedRectangleBorder(
@@ -18,7 +21,13 @@ class Movement extends StatelessWidget {
         side: const BorderSide(
             color: Colors.white, width: 5.0), // Agregar borde blanco
       ),
-      content: const Placeholder(),
+      content: const Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(height: 15),
+          DistanceInput()
+        ],
+      ),
       actions: [
         TextButton(
           child: const Text("Cancelar"),
@@ -34,6 +43,5 @@ class Movement extends StatelessWidget {
         ),
       ],
     );
-    ;
   }
 }

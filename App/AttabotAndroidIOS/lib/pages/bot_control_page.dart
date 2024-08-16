@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:proyecto_tec/features/bot-control/components/help_dialog.dart';
+import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog.dart';
 import 'package:proyecto_tec/features/bot-control/actions/action_menu.dart';
 import 'package:proyecto_tec/features/bot-control/history/history_menu.dart';
 import 'package:proyecto_tec/features/bot-control/movement/movement_menu.dart';
