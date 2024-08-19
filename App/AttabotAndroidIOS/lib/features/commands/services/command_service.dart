@@ -4,15 +4,33 @@ import 'package:proyecto_tec/features/commands/models/command.dart';
 
 class CommandService extends ChangeNotifier {
   final List<String> _history = [];
-  final List<Command> _commands = [];
   List<String> get historyValue => _history;
+
+  final List<Command> _commands = [];
   List<Command> get commandsValue => _commands;
 
-
-//TODO: implement command based loadInstructions, removeInstruction, validateCommandHistory
+//TODO: implement command based loadInstructions, validateCommandHistory
 
   void clearCommands() {
     _commands.clear();
+    notifyListeners();
+  }
+
+  void removeCommand(int index) {
+    Command command = _commands[index];
+    int? endCommandPairIndex;
+    if (command.action == CommandType.initCycle) {
+      endCommandPairIndex = _commands
+          .sublist(index)
+          .indexWhere((element) => element.action == CommandType.endCycle);
+    } else if (command.action == CommandType.activateObjectDetection) {
+      endCommandPairIndex = _commands.sublist(index).indexWhere(
+          (element) => element.action == CommandType.deactivateObjectDetection);
+    }
+
+    if (endCommandPairIndex == null) _commands.removeAt(index);
+
+    _commands.removeRange(index, endCommandPairIndex! + 1);
     notifyListeners();
   }
 
