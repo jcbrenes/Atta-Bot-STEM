@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:proyecto_tec/features/instruction-history/components/instruction_tile.dart';
-import 'package:proyecto_tec/features/instruction-history/components/instructions_dropdown_menu.dart';
-import 'package:proyecto_tec/features/instruction-history/services/history_service.dart';
+import 'package:proyecto_tec/features/commands/components/instruction_tile.dart';
+import 'package:proyecto_tec/features/commands/components/history_dropdown_menu.dart';
+import 'package:proyecto_tec/features/commands/services/command_service.dart';
 import 'package:proyecto_tec/shared/components/ui/buttons/text/button_factory.dart';
 
 class HistoryPage extends StatefulWidget {
@@ -13,7 +13,6 @@ class HistoryPage extends StatefulWidget {
 }
 
 class _HistoryPageState extends State<HistoryPage> {
-
   final Text pageTitle = const Text(
     'Instrucciones',
     style: TextStyle(
@@ -96,7 +95,7 @@ class _HistoryPageState extends State<HistoryPage> {
                     type: TextButtonType.warning,
                     text: "Eliminar",
                     handleButtonPress: () {
-                      context.read<HistoryService>().removeInstruction(index);
+                      context.read<CommandService>().removeInstruction(index);
                       Navigator.of(context).pop();
                     },
                   )
@@ -114,20 +113,28 @@ class _HistoryPageState extends State<HistoryPage> {
             title: pageTitle,
             foregroundColor: appbarColors['foreground'],
             backgroundColor: appbarColors['background'],
-            actions: <Widget>[InstructionHistoryDropdown()]),
+            actions: const <Widget>[InstructionHistoryDropdown()]),
         body: Container(
           decoration: bodyDecoration,
-          child: Consumer<HistoryService>(
+          child: Consumer<CommandService>(
             builder: (context, historial, child) {
               return ListView.builder(
-                itemCount: historial.historyValue.length,
+                itemCount: historial.commandsValue.length,
                 itemBuilder: (context, index) {
-                  return InstructionTile(
-                      key: ValueKey(historial.historyValue[index]),
-                      color: processInstruction(historial.historyValue[index]),
-                      title: historial.historyValue[index],
-                      trailing:
-                          setTrailing(historial.historyValue[index], index));
+                  return Column(
+                    children: [
+                      //TODO:Remove text item
+                      Text(historial.commandsValue[index].toBotString()), 
+                      InstructionTile(
+                          key: ValueKey(historial.commandsValue[index]),
+                          color: processInstruction(
+                              historial.commandsValue[index].toUiString()),
+                          title: historial.commandsValue[index].toUiString(),
+                          trailing: setTrailing(
+                              historial.commandsValue[index].toUiString(),
+                              index)),
+                    ],
+                  );
                 },
               );
             },

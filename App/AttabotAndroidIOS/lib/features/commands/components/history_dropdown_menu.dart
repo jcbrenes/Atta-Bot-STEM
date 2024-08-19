@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_tec/config/app_config.dart';
 import 'package:proyecto_tec/features/file-management/services/file_management_service.dart';
-import 'package:proyecto_tec/features/instruction-history/services/history_service.dart';
+import 'package:proyecto_tec/features/commands/services/command_service.dart';
 import 'package:proyecto_tec/shared/components/ui/buttons/text/button_factory.dart';
 
 class InstructionHistoryDropdown extends StatefulWidget {
@@ -157,7 +157,7 @@ class _InstructionHistoryDropdownState
   void onSaveFile() async {
     if (!_fileNameKey.currentState!.validate()) return;
     final fileName = fileNameController.text;
-    final fileData = context.read<HistoryService>().historyValue;
+    final fileData = context.read<CommandService>().historyValue;
 
     try {
       await fmService.saveNewFile(fileName, fileData);
@@ -181,7 +181,7 @@ class _InstructionHistoryDropdownState
 
   void onOverwriteFile() async {
     final fileName = fileNameController.text;
-    final fileData = context.read<HistoryService>().historyValue;
+    final fileData = context.read<CommandService>().historyValue;
     try {
       await fmService.overwriteFile(fileName, fileData);
     } catch (e) {
@@ -197,12 +197,12 @@ class _InstructionHistoryDropdownState
   void onLoadFile(String fileName) async {
     final fileData = await fmService.loadFile(fileName);
     if (!mounted) return;
-    context.read<HistoryService>().loadInstructionSet(fileData);
+    context.read<CommandService>().loadInstructionSet(fileData);
     Navigator.of(context).pop();
   }
 
   void onClearInstructions() async {
-    context.read<HistoryService>().clearHistory();
+    context.read<CommandService>().clearHistory();
     Navigator.of(context).pop();
   }
 

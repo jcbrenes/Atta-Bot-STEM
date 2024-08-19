@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:proyecto_tec/features/instruction-history/components/instruction_tile.dart';
+import 'package:proyecto_tec/features/commands/components/instruction_tile.dart';
 import 'globals.dart' as globals;
 
 class Historial extends ChangeNotifier {

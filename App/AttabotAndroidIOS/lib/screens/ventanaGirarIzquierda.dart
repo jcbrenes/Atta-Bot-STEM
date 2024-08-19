@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:proyecto_tec/features/instruction-history/services/history_service.dart';
+import 'package:proyecto_tec/features/commands/services/command_service.dart';
 import 'package:proyecto_tec/screens/ventanaHistorial.dart';
 
 void main() {
@@ -121,7 +121,9 @@ class _RotacionIzquierdaState extends State<RotacionIzquierda> {
                       textAlign: TextAlign.center,
                       onChanged: (value) {
                         final numeroGrados = int.tryParse(value);
-                        if (numeroGrados != null && numeroGrados >= 0 && numeroGrados <= 360) {
+                        if (numeroGrados != null &&
+                            numeroGrados >= 0 &&
+                            numeroGrados <= 360) {
                           setState(() {
                             _rotacion = numeroGrados / 360;
                           });
@@ -131,7 +133,8 @@ class _RotacionIzquierdaState extends State<RotacionIzquierda> {
                             builder: (context) {
                               return AlertDialog(
                                 title: const Text('Error'),
-                                content: const Text('Por favor, ingrese valores entre 0 y 360.'),
+                                content: const Text(
+                                    'Por favor, ingrese valores entre 0 y 360.'),
                                 actions: <Widget>[
                                   TextButton(
                                     child: const Text('OK'),
@@ -181,8 +184,8 @@ class BotonGirarIzquierda extends StatelessWidget {
         ),
       ),
       onPressed: () {
-        Provider.of<HistoryService>(context, listen: false)
-            .addInstruction("Girar ${(rotacion * 360).truncate()} grados izquierda");
+        Provider.of<CommandService>(context, listen: false).addInstruction(
+            "Girar ${(rotacion * 360).truncate()} grados izquierda");
         Navigator.of(context).pop();
       },
       child: const Text(
@@ -224,7 +227,7 @@ class RotacionTrianguloInterno extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Transform.rotate(
-      angle: -rotacion * math.pi * 2,  // Rotación en sentido antihorario
+      angle: -rotacion * math.pi * 2, // Rotación en sentido antihorario
       child: Container(
         width: 100,
         height: 100,
@@ -259,7 +262,7 @@ class LineaMovil extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Transform.rotate(
-      angle: -rotacion * math.pi * 2,  // Rotación en sentido antihorario
+      angle: -rotacion * math.pi * 2, // Rotación en sentido antihorario
       child: Transform.translate(
         offset: const Offset(0.0, -50.0),
         child: Container(
@@ -305,10 +308,10 @@ class ArcoPainter extends CustomPainter {
     );
 
     // Dibuja un arco desde 0 hasta el ángulo de rotación
-    canvas.drawArc(rect, -math.pi / 2, -rotation * 2 * math.pi, false, paint);  // Arco antihorario
+    canvas.drawArc(rect, -math.pi / 2, -rotation * 2 * math.pi, false,
+        paint); // Arco antihorario
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
-

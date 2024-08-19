@@ -1,8 +1,70 @@
 import 'package:flutter/material.dart';
+import 'package:proyecto_tec/features/commands/enums/command_types.dart';
+import 'package:proyecto_tec/features/commands/models/command.dart';
 
-class HistoryService extends ChangeNotifier {
+class CommandService extends ChangeNotifier {
   final List<String> _history = [];
+  final List<Command> _commands = [];
   List<String> get historyValue => _history;
+  List<Command> get commandsValue => _commands;
+
+
+//TODO: implement command based loadInstructions, removeInstruction, validateCommandHistory
+
+  void clearCommands() {
+    _commands.clear();
+    notifyListeners();
+  }
+
+// ==========================================================================
+  void moveForward(int distance) {
+    Command command = Command(CommandType.moveForward, distance);
+    _commands.add(command);
+    notifyListeners();
+  }
+
+  void moveBackward(int distance) {
+    Command command = Command(CommandType.moveBackward, distance);
+    _commands.add(command);
+    notifyListeners();
+  }
+
+  void rotateLeft(int degrees) {
+    Command command = Command(CommandType.rotateLeft, degrees);
+    _commands.add(command);
+    notifyListeners();
+  }
+
+  void rotateRight(int degrees) {
+    Command command = Command(CommandType.rotateRight, degrees);
+    _commands.add(command);
+    notifyListeners();
+  }
+
+  void initCycle(int cycles) {
+    Command command = Command(CommandType.initCycle, cycles);
+    _commands.add(command);
+    notifyListeners();
+  }
+
+  void endCycle() {
+    Command command = Command(CommandType.endCycle, null);
+    _commands.add(command);
+    notifyListeners();
+  }
+
+  void activateObjectDetection() {
+    Command command = Command(CommandType.activateObjectDetection, null);
+    _commands.add(command);
+    notifyListeners();
+  }
+
+  void deactivateObjectDetection() {
+    Command command = Command(CommandType.deactivateObjectDetection, null);
+    _commands.add(command);
+    notifyListeners();
+  }
+// ==========================================================================
 
   void addInstruction(String instruction) {
     _history.add(instruction);
