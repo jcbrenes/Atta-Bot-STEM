@@ -95,7 +95,7 @@ class _HistoryPageState extends State<HistoryPage> {
                     type: TextButtonType.warning,
                     text: "Eliminar",
                     handleButtonPress: () {
-                      context.read<CommandService>().removeInstruction(index);
+                      context.read<CommandService>().removeCommand(index);
                       Navigator.of(context).pop();
                     },
                   )
@@ -119,19 +119,19 @@ class _HistoryPageState extends State<HistoryPage> {
           child: Consumer<CommandService>(
             builder: (context, historial, child) {
               return ListView.builder(
-                itemCount: historial.commandsValue.length,
+                itemCount: historial.commandHistory.length,
                 itemBuilder: (context, index) {
                   return Column(
                     children: [
                       //TODO:Remove text item
-                      Text(historial.commandsValue[index].toBotString()), 
+                      Text(historial.commandHistory[index].toBotString()),
                       InstructionTile(
-                          key: ValueKey(historial.commandsValue[index]),
+                          key: ValueKey(historial.commandHistory[index]),
                           color: processInstruction(
-                              historial.commandsValue[index].toUiString()),
-                          title: historial.commandsValue[index].toUiString(),
+                              historial.commandHistory[index].toUiString()),
+                          title: historial.commandHistory[index].toUiString(),
                           trailing: setTrailing(
-                              historial.commandsValue[index].toUiString(),
+                              historial.commandHistory[index].toUiString(),
                               index)),
                     ],
                   );

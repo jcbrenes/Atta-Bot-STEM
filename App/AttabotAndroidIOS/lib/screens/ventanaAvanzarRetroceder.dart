@@ -178,11 +178,14 @@ class _VentanaBaseState extends State<VentanaBase> {
       TextButton(
         child: const Text('Aceptar'),
         onPressed: () {
-          Provider.of<CommandService>(context,
-                  listen:
-                      false) // Se obtiene una instancia del proveedor 'Historial' y se añade un nuevo evento a este.
-              .addInstruction(
-                  '${widget.accion} $numero cm'); // El evento es una cadena de texto que contiene la acción realizada y la distancia en centímetros.
+          switch (widget.accion) {
+            case 'Avanzar':
+              context.read<CommandService>().moveForward(numero);
+              break;
+            case 'Retroceder':
+              context.read<CommandService>().moveBackward(numero);
+              break;
+          }
           Navigator.of(context).pop();
         },
       ),

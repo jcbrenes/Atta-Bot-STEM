@@ -184,8 +184,7 @@ class BotonGirarIzquierda extends StatelessWidget {
         ),
       ),
       onPressed: () {
-        Provider.of<CommandService>(context, listen: false).addInstruction(
-            "Girar ${(rotacion * 360).truncate()} grados izquierda");
+        context.read<CommandService>().rotateLeft((rotacion * 360).truncate());
         Navigator.of(context).pop();
       },
       child: const Text(
