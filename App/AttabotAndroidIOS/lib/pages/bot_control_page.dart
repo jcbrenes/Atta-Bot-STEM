@@ -12,6 +12,16 @@ class BotControlPage extends StatefulWidget {
 }
 
 class _BotControlPageState extends State<BotControlPage> {
+
+    final List<String> _history = [];
+
+  void _addAction(String action) {
+    setState(() {
+      _history.add(action);
+      print('Action: $action');
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -27,12 +37,12 @@ class _BotControlPageState extends State<BotControlPage> {
           ),
         ],
       ),
-      body: const Column(
+      body: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-        MovementMenu(),
-        SizedBox(height: 75),
+        MovementMenu(onAction: _addAction),
+        const SizedBox(height: 75),
         HistoryMenu(),
         ActionMenu(),
       ]),

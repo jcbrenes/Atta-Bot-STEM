@@ -3,7 +3,16 @@ import 'package:proyecto_tec/features/bot-control/movement/rotation.dart';
 import 'package:proyecto_tec/features/bot-control/movement/movement.dart';
 
 class MovementMenu extends StatelessWidget {
-  const MovementMenu({super.key});
+
+  final Function(String) onAction;
+
+  const MovementMenu({super.key, required this.onAction});
+
+  onMove(String direction, int distance) {
+    print(direction);
+    print(distance);
+    onAction('${direction == 'upward' ? 'Avanzar' : 'Retroceder'} $distance centímetros');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +31,10 @@ class MovementMenu extends StatelessWidget {
             showDialog(
               context: context,
               builder: (BuildContext context) {
-                return const Movement(direction: "upward",);
+                return Movement(
+                  direction: "upward",
+                  onMove: onMove,
+                );
               },
             );
           },
@@ -38,12 +50,12 @@ class MovementMenu extends StatelessWidget {
               )),
             ),
             onPressed: () {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return const Rotation(direction: "left");
-              },
-            );
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return const Rotation(direction: "left");
+                },
+              );
             },
             child: const Icon(Icons.rotate_left),
           ),
@@ -62,12 +74,14 @@ class MovementMenu extends StatelessWidget {
               )),
             ),
             onPressed: () {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return const Rotation(direction: "right",);
-              },
-            );
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return const Rotation(
+                    direction: "right",
+                  );
+                },
+              );
             },
             child: const Icon(Icons.rotate_right),
           ),
@@ -84,7 +98,7 @@ class MovementMenu extends StatelessWidget {
             showDialog(
               context: context,
               builder: (BuildContext context) {
-                return const Movement(direction: "downward");
+                return Movement(direction: "downward", onMove: onMove,);
               },
             );
           },

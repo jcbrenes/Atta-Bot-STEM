@@ -2,13 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class DistanceInput extends StatefulWidget {
-  const DistanceInput({super.key});
+  final Function(int) onDistanceSelected;
+
+  const DistanceInput({super.key, required this.onDistanceSelected});
 
   @override
   State<DistanceInput> createState() => _DistanceInputState();
 }
 
 class _DistanceInputState extends State<DistanceInput> {
+
+  void handleOnChanged(String value) {
+    int newValue = int.tryParse(value) ?? 0;
+    widget.onDistanceSelected(newValue);
+  }
+
   final TextEditingController _controller = TextEditingController(text: "0");
   final FocusNode _focusNode = FocusNode();
 
@@ -40,6 +48,7 @@ class _DistanceInputState extends State<DistanceInput> {
             if (currentValue > 0) {
               currentValue--;
               _controller.text = currentValue.toString();
+              handleOnChanged(_controller.text);
             }
           },
           icon: const Icon(Icons.remove),
@@ -59,6 +68,7 @@ class _DistanceInputState extends State<DistanceInput> {
               LengthLimitingTextInputFormatter(3), // Limit to 3 digits
               FilteringTextInputFormatter.digitsOnly, // Allow only digits
             ],
+            onChanged: handleOnChanged
           ),
         ),
         IconButton(
@@ -66,6 +76,7 @@ class _DistanceInputState extends State<DistanceInput> {
             int currentValue = int.parse(_controller.text);
             currentValue++;
             _controller.text = currentValue.toString();
+            handleOnChanged(_controller.text);
           },
           icon: const Icon(Icons.add),
         ),
