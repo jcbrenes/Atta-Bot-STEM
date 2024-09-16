@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class DistanceInput extends StatefulWidget {
-  final Function(int) onDistanceSelected;
+  final Function(int) onSetDistance;
 
-  const DistanceInput({super.key, required this.onDistanceSelected});
+  const DistanceInput({super.key, required this.onSetDistance});
 
   @override
   State<DistanceInput> createState() => _DistanceInputState();
@@ -13,7 +13,7 @@ class DistanceInput extends StatefulWidget {
 class _DistanceInputState extends State<DistanceInput> {
   void handleOnChanged(String value) {
     int newValue = int.tryParse(value) ?? 0;
-    widget.onDistanceSelected(newValue);
+    widget.onSetDistance(newValue);
   }
 
   final TextEditingController _controller = TextEditingController(text: "0");

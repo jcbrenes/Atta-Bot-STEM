@@ -3,10 +3,7 @@ import 'package:proyecto_tec/features/bot-control/movement/rotation.dart';
 import 'package:proyecto_tec/features/bot-control/movement/movement.dart';
 
 class MovementMenu extends StatelessWidget {
-  // Callback function to save the instruction
-  final Function(String) onAddInstruction;
-
-  const MovementMenu({super.key, required this.onAddInstruction});
+  const MovementMenu({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +27,7 @@ class MovementMenu extends StatelessWidget {
             showDialog(
               context: context,
               builder: (BuildContext context) {
-                return Movement(direction: "forward", onAddInstruction: onAddInstruction);
+                return const Movement(direction: "forward");
               },
             );
           },
@@ -110,10 +107,7 @@ class MovementMenu extends StatelessWidget {
             showDialog(
               context: context,
               builder: (BuildContext context) {
-                return Movement(
-                  direction: "backward",
-                  onAddInstruction: onAddInstruction,
-                );
+                return const Movement(direction: "backward");
               },
             );
           },

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:proyecto_tec/features/home-page/components/attabot_image.dart';
 import 'package:proyecto_tec/features/home-page/components/home_page_title.dart';
-import 'package:proyecto_tec/screens/ventanaControlRobot.dart';
 import 'package:proyecto_tec/pages/bot_control_page.dart';
 import 'package:proyecto_tec/shared/components/ui/buttons/text/button_factory.dart';
 import 'package:proyecto_tec/shared/components/ui/separators/separator_factory.dart';

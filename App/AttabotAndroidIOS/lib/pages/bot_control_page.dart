@@ -11,17 +11,7 @@ class BotControlPage extends StatefulWidget {
 }
 
 class _BotControlPageState extends State<BotControlPage> {
-
-  // Stored instructions
-  final List<String> _instructions = [];
-
-  // Function to save the instructions
-  void _addInstruction(String instruction) {
-    setState(() {
-      _instructions.add(instruction);
-    });
-  }
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,12 +42,12 @@ class _BotControlPageState extends State<BotControlPage> {
             ],
           ),
         ),
-        child: Column(
+        child: const Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-          MovementMenu(onAddInstruction: _addInstruction),
-          const SizedBox(height: 20),
+          MovementMenu(),
+          SizedBox(height: 20),
           HistoryMenu(),
           ActionMenu(),
         ]),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
-import 'package:flutter/services.dart';
+// import provider and service commands
+import 'package:provider/provider.dart';
+import 'package:proyecto_tec/features/commands/services/command_service.dart';
 
 class Rotation extends StatefulWidget {
   const Rotation({super.key, required this.direction});
@@ -187,31 +189,15 @@ class _RotationState extends State<Rotation> {
         TextButton(
           child: const Text("Aceptar"),
           onPressed: () {
+            if (widget.direction == 'right') {
+              context.read<CommandService>().rotateRight(_pointerValue.toInt());
+            } else {
+              context.read<CommandService>().rotateLeft(_pointerValue.toInt());
+            }
             Navigator.of(context).pop();
           },
         ),
       ],
     );
-  }
-}
-
-class _RangeTextInputFormatter extends TextInputFormatter {
-  final int min;
-  final int max;
-
-  _RangeTextInputFormatter(this.min, this.max);
-
-  @override
-  TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue, TextEditingValue newValue) {
-    if (newValue.text.isEmpty) {
-      return newValue;
-    }
-
-    final int? value = int.tryParse(newValue.text);
-    if (value == null || value < min || value > max) {
-      return oldValue;
-    }
-    return newValue;
   }
 }
