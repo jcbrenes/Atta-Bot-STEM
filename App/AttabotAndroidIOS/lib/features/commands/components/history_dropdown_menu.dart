@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_tec/config/app_config.dart';
+import 'package:proyecto_tec/features/commands/models/command.dart';
 import 'package:proyecto_tec/features/file-management/services/file_management_service.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
 import 'package:proyecto_tec/shared/components/ui/buttons/text/button_factory.dart';
@@ -73,7 +74,10 @@ class _InstructionHistoryDropdownState
                 TextButtonFactory.getButton(
                     type: TextButtonType.filled,
                     text: "Guardar",
-                    handleButtonPress: onSaveFile)
+                    handleButtonPress: () {
+                      onSaveFile();
+                      Navigator.of(context).pop();
+                    })
               ],
             ));
   }
@@ -96,7 +100,10 @@ class _InstructionHistoryDropdownState
                 TextButtonFactory.getButton(
                   type: TextButtonType.filled,
                   text: "Aceptar",
-                  handleButtonPress: onOverwriteFile,
+                  handleButtonPress: () {
+                    onOverwriteFile();
+                    Navigator.of(context).pop();
+                  },
                 )
               ],
             ));
@@ -123,7 +130,10 @@ class _InstructionHistoryDropdownState
                       itemBuilder: (context, index) {
                         return ListTile(
                           title: Text(fileNames[index]),
-                          onTap: () => onLoadFile(fileNames[index]),
+                          onTap: () {
+                            onLoadFile(fileNames[index]);
+                            Navigator.of(context).pop();
+                          },
                         );
                       }),
                 ))));
@@ -148,7 +158,10 @@ class _InstructionHistoryDropdownState
               TextButtonFactory.getButton(
                   type: TextButtonType.warning,
                   text: "Borrar",
-                  handleButtonPress: onClearInstructions)
+                  handleButtonPress: () {
+                    onClearInstructions();
+                    Navigator.of(context).pop();
+                  })
             ],
           );
         });
@@ -157,7 +170,11 @@ class _InstructionHistoryDropdownState
   void onSaveFile() async {
     if (!_fileNameKey.currentState!.validate()) return;
     final fileName = fileNameController.text;
-    final fileData = context.read<CommandService>().historyValue;
+    final fileData = context
+        .read<CommandService>()
+        .commandHistory
+        .map((Command element) => element.toBotString())
+        .toList();
 
     try {
       await fmService.saveNewFile(fileName, fileData);
@@ -175,13 +192,15 @@ class _InstructionHistoryDropdownState
       }
     }
     fileNameController.clear();
-    if (!mounted) return;
-    Navigator.of(context).pop();
   }
 
   void onOverwriteFile() async {
     final fileName = fileNameController.text;
-    final fileData = context.read<CommandService>().historyValue;
+    final fileData = context
+        .read<CommandService>()
+        .commandHistory
+        .map((Command element) => element.toBotString())
+        .toList();
     try {
       await fmService.overwriteFile(fileName, fileData);
     } catch (e) {
@@ -190,20 +209,16 @@ class _InstructionHistoryDropdownState
           behavior: SnackBarBehavior.floating,
           content: Text('Error al sobrescribir archivo')));
     }
-    if (!mounted) return;
-    Navigator.of(context).pop();
   }
 
   void onLoadFile(String fileName) async {
     final fileData = await fmService.loadFile(fileName);
     if (!mounted) return;
-    context.read<CommandService>().loadInstructionSet(fileData);
-    Navigator.of(context).pop();
+    context.read<CommandService>().loadCommands(fileData);
   }
 
-  void onClearInstructions() async {
-    context.read<CommandService>().clearHistory();
-    Navigator.of(context).pop();
+  void onClearInstructions() {
+    context.read<CommandService>().clearCommands();
   }
 
   void showSnackBar(String message) {

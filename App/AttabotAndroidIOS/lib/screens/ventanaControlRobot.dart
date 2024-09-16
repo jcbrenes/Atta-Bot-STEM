@@ -159,8 +159,8 @@ class textfieldUltimaAccion extends StatelessWidget {
           return Center(
             child: Text(
               // lo fillea con la ultima accion del historial
-              historial.historyValue.isNotEmpty
-                  ? historial.historyValue.last
+              historial.commandHistory.isNotEmpty
+                  ? historial.commandHistory.last.toUiString()
                   : 'No hay acciones recientes',
               style: const TextStyle(
                 color: Colors.white,
@@ -1062,10 +1062,7 @@ class _BotonCambioColorCicloState extends State<BotonCambioColorCiclo> {
                 );
               },
             );
-            Provider.of<CommandService>(context,
-                    listen:
-                        false) //agrega Fin del ciclo al historial si se toco 2 veces
-                .addInstruction('Fin del ciclo');
+            context.read<CommandService>().endCycle();
           }
         },
         style: ElevatedButton.styleFrom(
@@ -1133,8 +1130,7 @@ class _DialogoCicloState extends State<DialogoCiclo> {
           child: const Text('Realizar ciclo'),
           onPressed: () {
             globals.isPressed = !globals.isPressed;
-            Provider.of<CommandService>(context, listen: false).addInstruction(
-                'Inicio de ciclo, $cantidadDeVeces ciclos'); // envia la info al historial
+            context.read<CommandService>().initCycle(cantidadDeVeces); // envia la info al historial
             Navigator.of(context).pop();
           },
         ),
@@ -1170,10 +1166,14 @@ class _BotonDeteccionObstaculosState extends State<BotonDeteccionObstaculos> {
           setState(() {
             _isActivated = !_isActivated;
           });
-          Provider.of<CommandService>(context, listen: false).addInstruction(
-              _isActivated //envia la informacion aca si se activa o se desactiva
-                  ? 'Detección de obstáculos activada'
-                  : 'Fin detección de obstáculos');
+          switch (_isActivated) {
+            case true:
+              context.read<CommandService>().activateObjectDetection();
+              break;
+            case false:
+              context.read<CommandService>().deactivateObjectDetection();
+              break;
+          }
           showDialog(
             context: context,
             builder: (BuildContext context) {
