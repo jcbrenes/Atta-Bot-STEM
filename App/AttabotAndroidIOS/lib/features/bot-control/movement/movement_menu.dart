@@ -3,16 +3,10 @@ import 'package:proyecto_tec/features/bot-control/movement/rotation.dart';
 import 'package:proyecto_tec/features/bot-control/movement/movement.dart';
 
 class MovementMenu extends StatelessWidget {
+  // Callback function to save the instruction
+  final Function(String) onAddInstruction;
 
-  final Function(String) onAction;
-
-  const MovementMenu({super.key, required this.onAction});
-
-  onMove(String direction, int distance) {
-    print(direction);
-    print(distance);
-    onAction('${direction == 'upward' ? 'Avanzar' : 'Retroceder'} $distance centímetros');
-  }
+  const MovementMenu({super.key, required this.onAddInstruction});
 
   @override
   Widget build(BuildContext context) {
@@ -21,20 +15,22 @@ class MovementMenu extends StatelessWidget {
       child: Column(children: [
         OutlinedButton(
           style: ButtonStyle(
-            iconColor: WidgetStateProperty.all(Colors.black),
-            fixedSize: const WidgetStatePropertyAll(Size(70, 70)),
+            padding: WidgetStateProperty.all(const EdgeInsets.all(15)),
+            iconColor: WidgetStateProperty.all(const Color(0xFFF5F8F9)),
+            iconSize: WidgetStateProperty.all(35),
+            alignment: Alignment.center,
             shape: WidgetStateProperty.all(RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             )),
+            side: WidgetStateProperty.all(
+              const BorderSide(color: Colors.white, width: 2.0),
+            ),
           ),
           onPressed: () {
             showDialog(
               context: context,
               builder: (BuildContext context) {
-                return Movement(
-                  direction: "upward",
-                  onMove: onMove,
-                );
+                return Movement(direction: "forward", onAddInstruction: onAddInstruction);
               },
             );
           },
@@ -43,11 +39,16 @@ class MovementMenu extends StatelessWidget {
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           OutlinedButton(
             style: ButtonStyle(
-              iconColor: WidgetStateProperty.all(Colors.black),
-              fixedSize: const WidgetStatePropertyAll(Size(70, 70)),
+              padding: WidgetStateProperty.all(const EdgeInsets.all(15)),
+              iconColor: WidgetStateProperty.all(const Color(0xFFF5F8F9)),
+              iconSize: WidgetStateProperty.all(35),
+              alignment: Alignment.center,
               shape: WidgetStateProperty.all(RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               )),
+              side: WidgetStateProperty.all(
+                const BorderSide(color: Colors.white, width: 2.0),
+              ),
             ),
             onPressed: () {
               showDialog(
@@ -60,26 +61,32 @@ class MovementMenu extends StatelessWidget {
             child: const Icon(Icons.rotate_left),
           ),
           Expanded(
-            child: Image.asset(
-              'assets/AttaBotRobot_uno.png',
-              fit: BoxFit.cover,
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Image.asset(
+                'assets/AttaBotUpperView.png',
+                fit: BoxFit.contain,
+              ),
             ),
           ),
           OutlinedButton(
             style: ButtonStyle(
-              iconColor: WidgetStateProperty.all(Colors.black),
-              fixedSize: const WidgetStatePropertyAll(Size(70, 70)),
+              padding: WidgetStateProperty.all(const EdgeInsets.all(15)),
+              iconColor: WidgetStateProperty.all(const Color(0xFFF5F8F9)),
+              iconSize: WidgetStateProperty.all(35),
+              alignment: Alignment.center,
               shape: WidgetStateProperty.all(RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               )),
+              side: WidgetStateProperty.all(
+                const BorderSide(color: Colors.white, width: 2.0),
+              ),
             ),
             onPressed: () {
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
-                  return const Rotation(
-                    direction: "right",
-                  );
+                  return const Rotation(direction: "right");
                 },
               );
             },
@@ -88,17 +95,25 @@ class MovementMenu extends StatelessWidget {
         ]),
         OutlinedButton(
           style: ButtonStyle(
-            iconColor: WidgetStateProperty.all(Colors.black),
-            fixedSize: const WidgetStatePropertyAll(Size(70, 70)),
+            padding: WidgetStateProperty.all(const EdgeInsets.all(15)),
+            iconColor: WidgetStateProperty.all(const Color(0xFFF5F8F9)),
+            iconSize: WidgetStateProperty.all(35),
+            alignment: Alignment.center,
             shape: WidgetStateProperty.all(RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             )),
+            side: WidgetStateProperty.all(
+              const BorderSide(color: Colors.white, width: 2.0),
+            ),
           ),
           onPressed: () {
             showDialog(
               context: context,
               builder: (BuildContext context) {
-                return Movement(direction: "downward", onMove: onMove,);
+                return Movement(
+                  direction: "backward",
+                  onAddInstruction: onAddInstruction,
+                );
               },
             );
           },

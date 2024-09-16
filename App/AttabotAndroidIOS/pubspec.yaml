@@ -20,7 +20,7 @@ dependencies:
   flutter_blue: ^0.8.0
   flutter_blue_plus: ^1.31.13
   flutter_reactive_ble: ^5.3.0
-  syncfusion_flutter_gauges: ^26.2.9
+  syncfusion_flutter_gauges: ^26.2.11
   
 
 dev_dependencies:
@@ -32,9 +32,7 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/AttaBotLogo.png
-    - assets/AttaBotRobot_uno.png
-    - assets/AttaBotRoboInicio.png
+    - assets/
 
   fonts:
     - family: Poppins

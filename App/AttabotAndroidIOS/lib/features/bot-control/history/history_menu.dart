@@ -14,9 +14,10 @@ class HistoryMenu extends StatelessWidget {
         children: [
         const Text(
           'No hay acciones recientes',
-          style: TextStyle(fontSize: 16),
+          style: TextStyle(fontSize: 16, color: Colors.white),
         ),
         IconButton(
+          color: Colors.white,
           onPressed: () {
             // Add your button 1 logic here
           },

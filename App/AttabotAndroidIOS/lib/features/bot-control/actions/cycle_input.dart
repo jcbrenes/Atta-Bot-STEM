@@ -1,39 +1,51 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class DistanceInput extends StatefulWidget {
-  final Function(int) onDistanceSelected;
+class CycleInput extends StatefulWidget {
+  final Function(int) onCycleSelected;
 
-  const DistanceInput({super.key, required this.onDistanceSelected});
+  const CycleInput({super.key, required this.onCycleSelected});
 
   @override
-  State<DistanceInput> createState() => _DistanceInputState();
+  State<CycleInput> createState() => _CycleInputState();
 }
 
-class _DistanceInputState extends State<DistanceInput> {
-  void handleOnChanged(String value) {
-    int newValue = int.tryParse(value) ?? 0;
-    widget.onDistanceSelected(newValue);
-  }
+class _CycleInputState extends State<CycleInput> {
 
-  final TextEditingController _controller = TextEditingController(text: "0");
+  final TextEditingController _controller = TextEditingController(text: "1");
   final FocusNode _focusNode = FocusNode();
+
+  int value = 1;
 
   @override
   void initState() {
     super.initState();
     _focusNode.addListener(() {
-      if (_focusNode.hasFocus && _controller.text == "0") {
+      if (_focusNode.hasFocus && _controller.text == "1") {
         _controller.clear();
       }
     });
+    _controller.addListener(_updateSuffixText);
   }
 
   @override
   void dispose() {
+    _controller.removeListener(_updateSuffixText);
     _focusNode.dispose();
     _controller.dispose();
     super.dispose();
+  }
+
+  void handleOnChanged(String value) {
+    int newValue = int.tryParse(value) ?? 1;
+    widget.onCycleSelected(newValue);
+    _controller.text = value;
+  }
+
+  void _updateSuffixText() {
+    setState(() {
+      value = int.tryParse(_controller.text) ?? 0;
+    });
   }
 
   @override
@@ -50,8 +62,8 @@ class _DistanceInputState extends State<DistanceInput> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Color(0xFF1C74B5),
-                  Color(0xFF669BC2),
+                  Color(0xFFE9AB01),
+                  Color(0xFF8D6903),
                 ],
               ),
               shape: BoxShape.circle,
@@ -66,7 +78,7 @@ class _DistanceInputState extends State<DistanceInput> {
               ),
               onPressed: () {
                 int currentValue = int.parse(_controller.text);
-                if (currentValue > 0) {
+                if (currentValue > 1) {
                   currentValue--;
                   _controller.text = currentValue.toString();
                   handleOnChanged(_controller.text);
@@ -82,15 +94,15 @@ class _DistanceInputState extends State<DistanceInput> {
               controller: _controller,
               focusNode: _focusNode,
               keyboardType: TextInputType.number,
-              style: const TextStyle(color: Colors.black, fontSize: 20),
-              decoration: const InputDecoration(
+              style: TextStyle(color: Colors.black, fontSize: 20),
+              decoration: InputDecoration(
                 border: InputBorder.none,
-                suffixText: " cm",
+                suffixText: value == 1 ? " vez" : " veces",
                 suffixStyle: TextStyle(color: Colors.black, fontSize: 20),
               ),
               inputFormatters: [
-                LengthLimitingTextInputFormatter(3), // Limit to 3 digits
-                FilteringTextInputFormatter.digitsOnly, // Allow only digits
+                LengthLimitingTextInputFormatter(3),
+                FilteringTextInputFormatter.digitsOnly,
               ],
               onChanged: handleOnChanged),
         ),
@@ -104,8 +116,8 @@ class _DistanceInputState extends State<DistanceInput> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Color(0xFF1C74B5),
-                  Color(0xFF669BC2),
+                  Color(0xFFE9AB01),
+                  Color(0xFF8D6903),
                 ],
               ),
               shape: BoxShape.circle,
