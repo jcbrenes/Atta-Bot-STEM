@@ -5,14 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart' as flutter_blue;
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:provider/provider.dart';
+import 'package:proyecto_tec/features/commands/services/command_service.dart';
+import 'package:proyecto_tec/pages/history_page.dart';
 import 'package:proyecto_tec/screens/ventanaGirarDerecha.dart';
 import 'package:proyecto_tec/screens/ventanaHistorial.dart';
 import 'package:proyecto_tec/screens/ventanaGirarIzquierda.dart';
 //import 'package:flutter_blue/flutter_blue.dart';
 import 'ventanaAvanzarRetroceder.dart';
 import 'globals.dart' as globals;
-
-
 
 // Pantalla principal de control del robot.
 class pantallaControlRobot extends StatefulWidget {
@@ -71,33 +71,34 @@ class _pantallaControlRobotState extends State<pantallaControlRobot> {
 
               child: const Column(
                 children: <Widget>[
-                  SizedBox(height: 60), //Esto es para poner margenes aunque creo que se deberia hacer de otra forma
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal:6.0),
-                child: Row(
-                  children: <Widget>[
-                    Padding(
-                      padding: EdgeInsets.only(right: 8.0), // Margen a la derecha
-                      child: botonInfo(),
+                  SizedBox(
+                      height:
+                          60), //Esto es para poner margenes aunque creo que se deberia hacer de otra forma
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6.0),
+                    child: Row(
+                      children: <Widget>[
+                        Padding(
+                          padding: const EdgeInsets.only(
+                              right: 8.0), // Margen a la derecha
+                          child: botonInfo(),
+                        ),
+                        Spacer(),
+                        textoInicio(),
+                        Spacer(),
+                        Padding(
+                          padding: const EdgeInsets.only(
+                              left: 8.0), // Margen a la izquierda
+                          child: botonAbrirMenu(),
+                        ),
+                      ],
                     ),
-                    Spacer(),
-                    textoInicio(),
-                    Spacer(),
-                    Padding(
-                      padding: EdgeInsets.only(left: 8.0), // Margen a la izquierda
-                      child: botonAbrirMenu(),
-                    ),
-                  ],
-                ),
                   ),
                   Expanded(
                     child: Center(
                       child: Column(
-
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
-
-
                           botonArriba(),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -118,9 +119,7 @@ class _pantallaControlRobotState extends State<pantallaControlRobot> {
                                   BotonDeteccionObstaculos(),
                                   BotonEjecutar(),
                                   BotonCambioColorCiclo(),
-
                                 ],
-
                               ),
                               SizedBox(height: 60),
                             ],
@@ -132,10 +131,6 @@ class _pantallaControlRobotState extends State<pantallaControlRobot> {
                 ],
               ),
             ),
-          ),
-          endDrawer: SizedBox(
-            width: MediaQuery.of(context).size.width * 1,
-            child: const ventanaHistorial(),
           ),
         ));
   }
@@ -155,17 +150,17 @@ class textfieldUltimaAccion extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
         // Borde redondeado
-        border: Border.all(color: Colors.white,width:3.0),
+        border: Border.all(color: Colors.white, width: 3.0),
         // Delineado blanco en el contorno
         color: Colors.transparent,
       ),
-      child: Consumer<Historial>(
+      child: Consumer<CommandService>(
         builder: (context, historial, child) {
           return Center(
             child: Text(
               // lo fillea con la ultima accion del historial
-              historial.historial.isNotEmpty
-                  ? historial.historial.last
+              historial.commandHistory.isNotEmpty
+                  ? historial.commandHistory.last.toUiString()
                   : 'No hay acciones recientes',
               style: const TextStyle(
                 color: Colors.white,
@@ -240,10 +235,13 @@ class botonDerecha extends StatelessWidget {
             context: context,
             builder: (BuildContext context) {
               return AlertDialog(
-                backgroundColor: const Color(0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
+                backgroundColor: const Color(
+                    0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10.0), // Ajustar la curvatura de las esquinas
-                  side: const BorderSide(color: Colors.white, width: 5.0), // Agregar borde blanco
+                  borderRadius: BorderRadius.circular(
+                      10.0), // Ajustar la curvatura de las esquinas
+                  side: const BorderSide(
+                      color: Colors.white, width: 5.0), // Agregar borde blanco
                 ),
                 content: SizedBox(
                   width: MediaQuery.of(context).size.width * 0.8,
@@ -331,10 +329,13 @@ class botonIzquierda extends StatelessWidget {
             context: context,
             builder: (BuildContext context) {
               return AlertDialog(
-                backgroundColor: const Color(0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
+                backgroundColor: const Color(
+                    0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10.0), // Ajustar la curvatura de las esquinas
-                  side: const BorderSide(color: Colors.white, width: 5.0), // Agregar borde blanco
+                  borderRadius: BorderRadius.circular(
+                      10.0), // Ajustar la curvatura de las esquinas
+                  side: const BorderSide(
+                      color: Colors.white, width: 5.0), // Agregar borde blanco
                 ),
                 content: SizedBox(
                   width: MediaQuery.of(context).size.width * 0.8,
@@ -350,6 +351,7 @@ class botonIzquierda extends StatelessWidget {
     );
   }
 }
+
 class botonInfo extends StatelessWidget {
   const botonInfo({
     super.key,
@@ -358,11 +360,12 @@ class botonInfo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 40,  // Ancho del container
+      width: 40, // Ancho del container
       height: 40, // Alto del container
       decoration: BoxDecoration(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(20), // Ajusta el radio según el tamaño del container
+        borderRadius: BorderRadius.circular(
+            20), // Ajusta el radio según el tamaño del container
         border: Border.all(
           color: Colors.white,
           width: 3,
@@ -376,16 +379,17 @@ class botonInfo extends StatelessWidget {
         },
         iconSize: 20, // Ajusta el tamaño del icono
         padding: EdgeInsets.zero, // Elimina el padding interno del IconButton
-        constraints: const BoxConstraints(
-          maxHeight: 40, // Asegura que el tamaño del IconButton coincida con el Container
+        constraints: BoxConstraints(
+          maxHeight:
+              40, // Asegura que el tamaño del IconButton coincida con el Container
           maxWidth: 40,
         ),
       ),
     );
   }
 }
-class botonAbrirMenu extends StatelessWidget {
 
+class botonAbrirMenu extends StatelessWidget {
   const botonAbrirMenu({
     Key? key,
   }) : super(key: key);
@@ -404,14 +408,18 @@ class botonAbrirMenu extends StatelessWidget {
         ),
       ),
       child: IconButton(
-        icon: const Icon(Icons.article_rounded),
+        icon: Icon(Icons.article_rounded),
         color: Colors.white,
         onPressed: () {
-          scaffoldKey.currentState?.openEndDrawer();
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const HistoryPage(),
+            ),
+          );
         },
         iconSize: 20,
         padding: EdgeInsets.zero,
-        constraints: const BoxConstraints(
+        constraints: BoxConstraints(
           maxHeight: 40,
           maxWidth: 40,
         ),
@@ -419,6 +427,7 @@ class botonAbrirMenu extends StatelessWidget {
     );
   }
 }
+
 class InfoDialog {
   static void show(BuildContext context) {
     showDialog(
@@ -429,10 +438,13 @@ class InfoDialog {
             "¿Cómo funciono?",
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          backgroundColor: const Color(0xFFDDE6F7), // Establecer el color de fondo del AlertDialog
+          backgroundColor: const Color(
+              0xFFDDE6F7), // Establecer el color de fondo del AlertDialog
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10.0), // Ajustar la curvatura de las esquinas
-            side: const BorderSide(color: Colors.white, width: 5.0), // Agregar borde blanco
+            borderRadius: BorderRadius.circular(
+                10.0), // Ajustar la curvatura de las esquinas
+            side: const BorderSide(
+                color: Colors.white, width: 5.0), // Agregar borde blanco
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -443,12 +455,14 @@ class InfoDialog {
                 title: RichText(
                   text: const TextSpan(
                     text: 'Avanzar ',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF152A51)),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, color: Color(0xFF152A51)),
                     children: <TextSpan>[
                       TextSpan(
                         text: 'una cantidad de centímetros indicada',
-                        style: TextStyle(fontWeight: FontWeight.normal, color: Color(0xFF152A51)
-                        ),
+                        style: TextStyle(
+                            fontWeight: FontWeight.normal,
+                            color: Color(0xFF152A51)),
                       ),
                     ],
                   ),
@@ -459,13 +473,14 @@ class InfoDialog {
                 title: RichText(
                   text: const TextSpan(
                     text: 'Retroceder ',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF152A51)
-                    ),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, color: Color(0xFF152A51)),
                     children: <TextSpan>[
                       TextSpan(
                         text: 'una cantidad de centímetros indicada',
-                        style: TextStyle(fontWeight: FontWeight.normal, color: Color(0xFF152A51)
-                        ),
+                        style: TextStyle(
+                            fontWeight: FontWeight.normal,
+                            color: Color(0xFF152A51)),
                       ),
                     ],
                   ),
@@ -476,13 +491,14 @@ class InfoDialog {
                 title: RichText(
                   text: const TextSpan(
                     text: 'Girar a la derecha ',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF152A51)
-                    ),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, color: Color(0xFF152A51)),
                     children: <TextSpan>[
                       TextSpan(
                         text: 'una cantidad de grados indicada',
-                        style: TextStyle(fontWeight: FontWeight.normal, color: Color(0xFF152A51)
-                        ),
+                        style: TextStyle(
+                            fontWeight: FontWeight.normal,
+                            color: Color(0xFF152A51)),
                       ),
                     ],
                   ),
@@ -493,13 +509,14 @@ class InfoDialog {
                 title: RichText(
                   text: const TextSpan(
                     text: 'Girar a la izquierda ',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF152A51)
-                    ),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, color: Color(0xFF152A51)),
                     children: <TextSpan>[
                       TextSpan(
                         text: 'una cantidad de grados indicada',
-                        style: TextStyle(fontWeight: FontWeight.normal, color: Color(0xFF152A51)
-                        ),
+                        style: TextStyle(
+                            fontWeight: FontWeight.normal,
+                            color: Color(0xFF152A51)),
                       ),
                     ],
                   ),
@@ -510,13 +527,14 @@ class InfoDialog {
                 title: RichText(
                   text: const TextSpan(
                     text: 'Activar detección de obstáculos ',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF152A51)
-                    ),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, color: Color(0xFF152A51)),
                     children: <TextSpan>[
                       TextSpan(
                         text: 'hasta deseleccionar',
-                        style: TextStyle(fontWeight: FontWeight.normal, color: Color(0xFF152A51)
-                        ),
+                        style: TextStyle(
+                            fontWeight: FontWeight.normal,
+                            color: Color(0xFF152A51)),
                       ),
                     ],
                   ),
@@ -527,13 +545,14 @@ class InfoDialog {
                 title: RichText(
                   text: const TextSpan(
                     text: 'Iniciar un ciclo, ',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF152A51)
-                    ),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, color: Color(0xFF152A51)),
                     children: <TextSpan>[
                       TextSpan(
                         text: 'una cantidad de veces',
-                        style: TextStyle(fontWeight: FontWeight.normal, color: Color(0xFF152A51)
-                        ),
+                        style: TextStyle(
+                            fontWeight: FontWeight.normal,
+                            color: Color(0xFF152A51)),
                       ),
                     ],
                   ),
@@ -554,6 +573,7 @@ class InfoDialog {
     );
   }
 }
+
 //botón para mover el robot hacia la arriba, es la parte grafica del boton
 class botonArriba extends StatelessWidget {
   const botonArriba({
@@ -610,7 +630,8 @@ class _BotonEjecutarState extends State<BotonEjecutar> {
           IconButton(
             icon: const Icon(Icons.play_circle_outline),
             color: Colors.white,
-            onPressed: _showOptionsDialog, // Mostrar el diálogo al presionar el botón
+            onPressed:
+                _showOptionsDialog, // Mostrar el diálogo al presionar el botón
           ),
         ],
       ),
@@ -639,32 +660,38 @@ class _BotonEjecutarState extends State<BotonEjecutar> {
               actions: [
                 TextButton(
                   onPressed: () {
-                    Navigator.of(context).pop(); // Cerrar el diálogo sin ejecutar nada
+                    Navigator.of(context)
+                        .pop(); // Cerrar el diálogo sin ejecutar nada
                   },
                   child: const Text('Cancelar'),
                 ),
                 TextButton(
                   onPressed: () {
-                    if (!globals.isPressed){
+                    if (!globals.isPressed) {
                       Navigator.of(context).pop();
-                      _executeAction(_selectedOption);// Ejecutar la acción seleccionada
-                    }
-                    else{
+                      _executeAction(
+                          _selectedOption); // Ejecutar la acción seleccionada
+                    } else {
                       showDialog(
                         context: context,
                         builder: (BuildContext context) {
                           return AlertDialog(
-
-                            title: const Text('Debe cerrar el ciclo antes de poder ejecutar las instrucciones'),
-                            backgroundColor: const Color(0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
+                            title: const Text(
+                                'Debe cerrar el ciclo antes de poder ejecutar las instrucciones'),
+                            backgroundColor: const Color(
+                                0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30.0), // Ajustar la curvatura de las esquinas
-                              side: const BorderSide(color: Colors.white, width: 5.0), // Agregar borde blanco
+                              borderRadius: BorderRadius.circular(
+                                  30.0), // Ajustar la curvatura de las esquinas
+                              side: const BorderSide(
+                                  color: Colors.white,
+                                  width: 5.0), // Agregar borde blanco
                             ),
                             actions: [
                               TextButton(
                                 onPressed: () {
-                                  Navigator.of(context).pop(); // Cerrar el diálogo sin ejecutar nada
+                                  Navigator.of(context)
+                                      .pop(); // Cerrar el diálogo sin ejecutar nada
                                 },
                                 child: const Text('Ok'),
                               ),
@@ -697,6 +724,7 @@ class _BotonEjecutarState extends State<BotonEjecutar> {
       },
     );
   }
+
   // Método para ejecutar la acción correspondiente a la opción seleccionada
   void _executeAction(idDispositivoBuscado) async {
     final flutterReactiveBle = FlutterReactiveBle();
@@ -704,31 +732,36 @@ class _BotonEjecutarState extends State<BotonEjecutar> {
     String idDispositivo = '';
 
     if (Platform.isIOS) {
-      idDispositivo = "FF8C3368-6EB6-D271-2BE5-AC5CCEBB578A"; // ID de dispositivo esp32 solo se usa si es iOS el dispositivo
+      idDispositivo =
+          "FF8C3368-6EB6-D271-2BE5-AC5CCEBB578A"; // ID de dispositivo esp32 solo se usa si es iOS el dispositivo
     }
-    flutter_blue.BluetoothDevice dispositivo =
-    flutter_blue.BluetoothDevice(remoteId: flutter_blue.DeviceIdentifier(idDispositivo));
+    flutter_blue.BluetoothDevice dispositivo = flutter_blue.BluetoothDevice(
+        remoteId: flutter_blue.DeviceIdentifier(idDispositivo));
 
     if (Platform.isIOS) {
-      conexionIos(dispositivo, context); // si es iOS llama a esta función para hacer la conexión
+      conexionIos(dispositivo,
+          context); // si es iOS llama a esta función para hacer la conexión
     } else if (Platform.isAndroid) {
-      conexionAndroid(context, flutterReactiveBle,idDispositivoBuscado); // si es android llama a esta función para hacer la conexión
+      conexionAndroid(context, flutterReactiveBle,
+          idDispositivoBuscado); // si es android llama a esta función para hacer la conexión
     }
   }
 
-
 //funcion que me permite enviar los datos si el dispositivo es ios
 //rastrea primero los dispositivos para emparejar, usa un caracteristico y un servicio ya que se usa BLE bluethoot de baja frecuencia
-  Future<void> conexionIos(flutter_blue.BluetoothDevice device, BuildContext context) async {
+  Future<void> conexionIos(
+      flutter_blue.BluetoothDevice device, BuildContext context) async {
     await device.connect();
 
-    List<flutter_blue.BluetoothService> servicios = await device.discoverServices();
+    List<flutter_blue.BluetoothService> servicios =
+        await device.discoverServices();
     flutter_blue.BluetoothService servicio = servicios.firstWhere((service) =>
-        service.uuid == flutter_blue.Guid("4fafc201-1fb5-459e-8fcc-c5c9c331914b"));
-    flutter_blue.BluetoothCharacteristic caracteristico = servicio.characteristics
-        .firstWhere((characteristic) =>
+        service.uuid ==
+        flutter_blue.Guid("4fafc201-1fb5-459e-8fcc-c5c9c331914b"));
+    flutter_blue.BluetoothCharacteristic caracteristico =
+        servicio.characteristics.firstWhere((characteristic) =>
             characteristic.uuid ==
-                flutter_blue.Guid("beb5483e-36e1-4688-b7f5-ea07361b26a8"));
+            flutter_blue.Guid("beb5483e-36e1-4688-b7f5-ea07361b26a8"));
 
     List<String> historial = Provider.of<Historial>(context, listen: false)
         .convertirComandos(); //codifica los comandos primeros tipo nemonicos antes de enviarlos
@@ -741,11 +774,8 @@ class _BotonEjecutarState extends State<BotonEjecutar> {
 
 //funcion que me permite enviar los datos si el dispositivo es android
 //rastrea primero los dispositivos para emparejar, usa un caracteristico y un servicio ya que se usa BLE bluethoot de baja frecuencia
-Future<void> conexionAndroid(
-  BuildContext context,
-  FlutterReactiveBle flutterReactiveBle,
-    idDispositivoBuscado
-) async {
+Future<void> conexionAndroid(BuildContext context,
+    FlutterReactiveBle flutterReactiveBle, idDispositivoBuscado) async {
   // Obtener 'historial' cada vez que se presiona el botón
   var historial =
       Provider.of<Historial>(context, listen: false).convertirComandos();
@@ -755,11 +785,13 @@ Future<void> conexionAndroid(
   //const dispositivoID = 'D4:8A:FC:B6:5C:F2';
 
   try {
-    var dispositivoID = await startScan(flutterReactiveBle,idDispositivoBuscado,context);
+    var dispositivoID =
+        await startScan(flutterReactiveBle, idDispositivoBuscado, context);
     print("dispositivoID:");
     print(dispositivoID);
 
-    final connectionStream = flutterReactiveBle.connectToDevice(id: dispositivoID);
+    final connectionStream =
+        flutterReactiveBle.connectToDevice(id: dispositivoID);
 
     // Manejar la suscripción al stream
     StreamSubscription<ConnectionStateUpdate>? connectionSubscription;
@@ -789,16 +821,21 @@ Future<void> conexionAndroid(
             context: context,
             builder: (BuildContext context) {
               return AlertDialog(
-                title: const Text('Se enviaron las instrucciones correctamente'),
-                backgroundColor: const Color(0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
+                title:
+                    const Text('Se enviaron las instrucciones correctamente'),
+                backgroundColor: const Color(
+                    0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30.0), // Ajustar la curvatura de las esquinas
-                  side: const BorderSide(color: Colors.white, width: 5.0), // Agregar borde blanco
+                  borderRadius: BorderRadius.circular(
+                      30.0), // Ajustar la curvatura de las esquinas
+                  side: const BorderSide(
+                      color: Colors.white, width: 5.0), // Agregar borde blanco
                 ),
                 actions: [
                   TextButton(
                     onPressed: () {
-                      Navigator.of(context).pop(); // Cerrar el diálogo sin ejecutar nada
+                      Navigator.of(context)
+                          .pop(); // Cerrar el diálogo sin ejecutar nada
                     },
                     child: const Text('Ok'),
                   ),
@@ -813,19 +850,21 @@ Future<void> conexionAndroid(
             context: context,
             builder: (BuildContext context) {
               return AlertDialog(
-
                 title: const Text('Error al enviar las instrucciones'),
-                content: Text(
-                    'error: $e'),
-                backgroundColor: const Color(0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
+                content: Text('error: $e'),
+                backgroundColor: const Color(
+                    0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30.0), // Ajustar la curvatura de las esquinas
-                  side: const BorderSide(color: Colors.white, width: 5.0), // Agregar borde blanco
+                  borderRadius: BorderRadius.circular(
+                      30.0), // Ajustar la curvatura de las esquinas
+                  side: const BorderSide(
+                      color: Colors.white, width: 5.0), // Agregar borde blanco
                 ),
                 actions: [
                   TextButton(
                     onPressed: () {
-                      Navigator.of(context).pop(); // Cerrar el diálogo sin ejecutar nada
+                      Navigator.of(context)
+                          .pop(); // Cerrar el diálogo sin ejecutar nada
                     },
                     child: const Text('Ok'),
                   ),
@@ -839,7 +878,8 @@ Future<void> conexionAndroid(
         await connectionSubscription?.cancel();
       } else if (state.connectionState == DeviceConnectionState.disconnected) {
         print('Dispositivo desconectado: $dispositivoID');
-        await connectionSubscription?.cancel(); // Cancelar la suscripción si se desconecta
+        await connectionSubscription
+            ?.cancel(); // Cancelar la suscripción si se desconecta
       }
     });
   } catch (e) {
@@ -847,7 +887,8 @@ Future<void> conexionAndroid(
   }
 }
 
-Future<String> startScan(FlutterReactiveBle flutterReactiveBle,idDispositivoBuscado,context) async {
+Future<String> startScan(FlutterReactiveBle flutterReactiveBle,
+    idDispositivoBuscado, context) async {
   print(idDispositivoBuscado);
   List<DiscoveredDevice> devices = [];
   StreamController<List<DiscoveredDevice>> controller = StreamController();
@@ -883,19 +924,21 @@ Future<String> startScan(FlutterReactiveBle flutterReactiveBle,idDispositivoBusc
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-
           title: const Text('Error durante el escaneo'),
-          content: Text(
-              'error: $error'),
-          backgroundColor: const Color(0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
+          content: Text('error: $error'),
+          backgroundColor: const Color(
+              0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30.0), // Ajustar la curvatura de las esquinas
-            side: const BorderSide(color: Colors.white, width: 5.0), // Agregar borde blanco
+            borderRadius: BorderRadius.circular(
+                30.0), // Ajustar la curvatura de las esquinas
+            side: const BorderSide(
+                color: Colors.white, width: 5.0), // Agregar borde blanco
           ),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Cerrar el diálogo sin ejecutar nada
+                Navigator.of(context)
+                    .pop(); // Cerrar el diálogo sin ejecutar nada
               },
               child: const Text('Ok'),
             ),
@@ -905,21 +948,19 @@ Future<String> startScan(FlutterReactiveBle flutterReactiveBle,idDispositivoBusc
     );
     if (!controller.isClosed) {
       controller.addError(error);
-      controller.close();  // Cerrar el controlador en caso de error
+      controller.close(); // Cerrar el controlador en caso de error
     }
     if (!completer.isCompleted) {
       completer.completeError(error); // Completar el completer con el error
     }
   }, onDone: () {
     if (!controller.isClosed) {
-      controller.close();  // Cerrar el controlador cuando el escaneo termine
+      controller.close(); // Cerrar el controlador cuando el escaneo termine
     }
   });
 
   return completer.future; // Devolver el future del completer
 }
-
-
 
 //
 // //menu desplegable arriba derecha de la pantalla, contiene las funcionalidades de guardar y cargar datos
@@ -982,58 +1023,54 @@ class BotonCambioColorCiclo extends StatefulWidget {
   _BotonCambioColorCicloState createState() => _BotonCambioColorCicloState();
 }
 
-
 class _BotonCambioColorCicloState extends State<BotonCambioColorCiclo> {
-
-
   @override
   Widget build(BuildContext context) {
     return Container(
       width: 75,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white,width: 3), // Bordes blancos
+        border: Border.all(color: Colors.white, width: 3), // Bordes blancos
       ),
       child: IconButton(
-          icon: const Icon(Icons.autorenew),
-          color: Colors.white,
-          onPressed: () {
-
-            if (!globals.isPressed) {
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return const DialogoCiclo();
-                },
-              );
-            } else {
-              globals.isPressed = !globals.isPressed;
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-
-                    title: const Text('Fin del ciclo'),
-                    backgroundColor: const Color(0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30.0), // Ajustar la curvatura de las esquinas
-                      side: const BorderSide(color: Colors.white, width: 5.0), // Agregar borde blanco
-                    ),
-                  );
-                },
-              );
-              Provider.of<Historial>(context,
-                      listen:
-                          false) //agrega Fin del ciclo al historial si se toco 2 veces
-                  .addEvento('Fin del ciclo');
-            }
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.transparent,// Fondo transparente
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
+        icon: const Icon(Icons.autorenew),
+        color: Colors.white,
+        onPressed: () {
+          if (!globals.isPressed) {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return const DialogoCiclo();
+              },
+            );
+          } else {
+            globals.isPressed = !globals.isPressed;
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text('Fin del ciclo'),
+                  backgroundColor: const Color(
+                      0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(
+                        30.0), // Ajustar la curvatura de las esquinas
+                    side: const BorderSide(
+                        color: Colors.white,
+                        width: 5.0), // Agregar borde blanco
+                  ),
+                );
+              },
+            );
+            context.read<CommandService>().endCycle();
+          }
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent, // Fondo transparente
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
           ),
+        ),
       ),
     );
   }
@@ -1054,10 +1091,13 @@ class _DialogoCicloState extends State<DialogoCiclo> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text('Realizar ciclo $cantidadDeVeces veces'),
-      backgroundColor: const Color(0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
+      backgroundColor: const Color(
+          0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10.0), // Ajustar la curvatura de las esquinas
-        side: const BorderSide(color: Colors.white, width: 5.0), // Agregar borde blanco
+        borderRadius:
+            BorderRadius.circular(10.0), // Ajustar la curvatura de las esquinas
+        side: const BorderSide(
+            color: Colors.white, width: 5.0), // Agregar borde blanco
       ),
 
       content: Row(
@@ -1090,8 +1130,7 @@ class _DialogoCicloState extends State<DialogoCiclo> {
           child: const Text('Realizar ciclo'),
           onPressed: () {
             globals.isPressed = !globals.isPressed;
-            Provider.of<Historial>(context, listen: false).addEvento(
-                'Inicio de ciclo, $cantidadDeVeces ciclos'); // envia la info al historial
+            context.read<CommandService>().initCycle(cantidadDeVeces); // envia la info al historial
             Navigator.of(context).pop();
           },
         ),
@@ -1118,7 +1157,7 @@ class _BotonDeteccionObstaculosState extends State<BotonDeteccionObstaculos> {
       width: 75,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white,width: 3), // Bordes blancos
+        border: Border.all(color: Colors.white, width: 3), // Bordes blancos
       ),
       child: IconButton(
         icon: const Icon(Icons.remove_red_eye_outlined),
@@ -1127,24 +1166,30 @@ class _BotonDeteccionObstaculosState extends State<BotonDeteccionObstaculos> {
           setState(() {
             _isActivated = !_isActivated;
           });
-          Provider.of<Historial>(context, listen: false).addEvento(
-              _isActivated //envia la informacion aca si se activa o se desactiva
-                  ? 'Detección de obstáculos activada'
-                  : 'Fin detección de obstáculos');
+          switch (_isActivated) {
+            case true:
+              context.read<CommandService>().activateObjectDetection();
+              break;
+            case false:
+              context.read<CommandService>().deactivateObjectDetection();
+              break;
+          }
           showDialog(
             context: context,
             builder: (BuildContext context) {
               return AlertDialog(
-                backgroundColor: const Color(0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
+                backgroundColor: const Color(
+                    0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30.0), // Ajustar la curvatura de las esquinas
-                  side: const BorderSide(color: Colors.white, width: 5.0), // Agregar borde blanco
+                  borderRadius: BorderRadius.circular(
+                      30.0), // Ajustar la curvatura de las esquinas
+                  side: const BorderSide(
+                      color: Colors.white, width: 5.0), // Agregar borde blanco
                 ),
                 title: Text(_isActivated // lo muestra en pantalla
                     ? 'Se ha activado la detección de obstáculos'
                     : 'Se ha desactivado la detección de obstáculos'),
               );
-
             },
           );
         },
