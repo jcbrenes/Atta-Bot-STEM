@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:proyecto_tec/features/bot-control/movement/rotation.dart';
 import 'package:proyecto_tec/features/bot-control/movement/movement.dart';
+import 'package:proyecto_tec/shared/styles/colors.dart';
+import 'package:proyecto_tec/shared/styles/gradient_factory.dart';
+import 'package:proyecto_tec/shared/components/ui/buttons/default_button_factory.dart';
 
 class MovementMenu extends StatelessWidget {
   const MovementMenu({super.key});
@@ -10,19 +13,12 @@ class MovementMenu extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(10.0),
       child: Column(children: [
-        OutlinedButton(
-          style: ButtonStyle(
-            padding: WidgetStateProperty.all(const EdgeInsets.all(15)),
-            iconColor: WidgetStateProperty.all(const Color(0xFFF5F8F9)),
-            iconSize: WidgetStateProperty.all(35),
-            alignment: Alignment.center,
-            shape: WidgetStateProperty.all(RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            )),
-            side: WidgetStateProperty.all(
-              const BorderSide(color: Colors.white, width: 2.0),
-            ),
-          ),
+        DefaultButtonFactory.getButton(
+          decoration: GradientFactory.getGradient(
+              startColor: primaryDarkBlue,
+              endColor: primaryBlue,
+              direction: GradientDirection.topToBottom),
+          buttonType: ButtonType.primary,
           onPressed: () {
             showDialog(
               context: context,
@@ -31,22 +27,15 @@ class MovementMenu extends StatelessWidget {
               },
             );
           },
-          child: const Icon(Icons.arrow_upward),
+          icon: IconType.forwardArrow,
         ),
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          OutlinedButton(
-            style: ButtonStyle(
-              padding: WidgetStateProperty.all(const EdgeInsets.all(15)),
-              iconColor: WidgetStateProperty.all(const Color(0xFFF5F8F9)),
-              iconSize: WidgetStateProperty.all(35),
-              alignment: Alignment.center,
-              shape: WidgetStateProperty.all(RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              )),
-              side: WidgetStateProperty.all(
-                const BorderSide(color: Colors.white, width: 2.0),
-              ),
-            ),
+          DefaultButtonFactory.getButton(
+            decoration: GradientFactory.getGradient(
+                startColor: primaryDarkOrange,
+                endColor: primaryOrange,
+                direction: GradientDirection.leftToRight),
+            buttonType: ButtonType.primary,
             onPressed: () {
               showDialog(
                 context: context,
@@ -55,30 +44,23 @@ class MovementMenu extends StatelessWidget {
                 },
               );
             },
-            child: const Icon(Icons.rotate_left),
+            icon: IconType.rotateLeft,
           ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(20.0),
+              padding: const EdgeInsets.all(5.0),
               child: Image.asset(
-                'assets/AttaBotUpperView.png',
+                'assets/generic_atta_bot.png',
                 fit: BoxFit.contain,
               ),
             ),
           ),
-          OutlinedButton(
-            style: ButtonStyle(
-              padding: WidgetStateProperty.all(const EdgeInsets.all(15)),
-              iconColor: WidgetStateProperty.all(const Color(0xFFF5F8F9)),
-              iconSize: WidgetStateProperty.all(35),
-              alignment: Alignment.center,
-              shape: WidgetStateProperty.all(RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              )),
-              side: WidgetStateProperty.all(
-                const BorderSide(color: Colors.white, width: 2.0),
-              ),
-            ),
+          DefaultButtonFactory.getButton(
+            decoration: GradientFactory.getGradient(
+                startColor: primaryOrange,
+                endColor: primaryDarkOrange,
+                direction: GradientDirection.leftToRight),
+            buttonType: ButtonType.primary,
             onPressed: () {
               showDialog(
                 context: context,
@@ -87,22 +69,15 @@ class MovementMenu extends StatelessWidget {
                 },
               );
             },
-            child: const Icon(Icons.rotate_right),
+            icon: IconType.rotateRight,
           ),
         ]),
-        OutlinedButton(
-          style: ButtonStyle(
-            padding: WidgetStateProperty.all(const EdgeInsets.all(15)),
-            iconColor: WidgetStateProperty.all(const Color(0xFFF5F8F9)),
-            iconSize: WidgetStateProperty.all(35),
-            alignment: Alignment.center,
-            shape: WidgetStateProperty.all(RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            )),
-            side: WidgetStateProperty.all(
-              const BorderSide(color: Colors.white, width: 2.0),
-            ),
-          ),
+        DefaultButtonFactory.getButton(
+          decoration: GradientFactory.getGradient(
+              startColor: primaryBlue,
+              endColor: primaryDarkBlue,
+              direction: GradientDirection.topToBottom),
+          buttonType: ButtonType.primary,
           onPressed: () {
             showDialog(
               context: context,
@@ -111,7 +86,7 @@ class MovementMenu extends StatelessWidget {
               },
             );
           },
-          child: const Icon(Icons.arrow_downward),
+          icon: IconType.backwardArrow,
         ),
       ]),
     );

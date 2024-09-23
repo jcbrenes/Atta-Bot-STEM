@@ -19,9 +19,18 @@ class AttaBotApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: HomePage(),
+      home: const HomePage(),
+      theme: ThemeData(
+        textTheme: const TextTheme(
+          bodyMedium: TextStyle(fontFamily: 'Poppins'),
+          displayMedium: TextStyle(fontFamily: 'Poppins'),
+          headlineMedium: TextStyle(fontFamily: 'Poppins'),
+          labelMedium: TextStyle(fontFamily: 'Poppins'),
+          titleMedium: TextStyle(fontFamily: 'Poppins'),
+        ),
+      ),
     );
   }
 }

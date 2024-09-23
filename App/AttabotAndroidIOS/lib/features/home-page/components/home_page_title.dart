@@ -7,7 +7,7 @@ class HomePageTitle extends StatelessWidget {
   const HomePageTitle({super.key, required this.title, required this.version});
 
   get titleStyle => const TextStyle(
-        fontSize: 50,
+        fontSize: 55,
         color: Colors.white,
         fontFamily: 'Poppins', // Establecer la fuente como Poppins
         // Establecer el peso de la fuente como extrabold (800)
@@ -30,6 +30,7 @@ class HomePageTitle extends StatelessWidget {
         Text(
           title,
           style: titleStyle,
+          textAlign: TextAlign.center,
         ),
         Text(
           version,

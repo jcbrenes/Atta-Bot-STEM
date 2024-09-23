@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:proyecto_tec/pages/history_page.dart';
+import 'package:proyecto_tec/shared/styles/colors.dart';
 // import provider and service commands
 import 'package:provider/provider.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
@@ -18,12 +19,12 @@ class HistoryMenu extends StatelessWidget {
           builder: (context, commandService, child) {
             return Text(
               commandService.getLastCommand(),
-              style: TextStyle(fontSize: 16, color: Colors.white),
+                style: TextStyle(fontSize: 18, color: neutralWhite, fontWeight: FontWeight.w500),
             );
           },
         ),
         IconButton(
-          color: Colors.white,
+          color: neutralWhite,
           onPressed: () {
             Navigator.push(
               context,
