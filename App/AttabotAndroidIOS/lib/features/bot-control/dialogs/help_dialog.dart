@@ -9,7 +9,7 @@ class HelpDialog {
           title: const Text(
             '¿Cómo funciono?',
             textAlign: TextAlign.center,
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Poppins'),
           ),
           backgroundColor: const Color(
               0xFFDDE6F7), // Establecer el color de fondo del AlertDialog
@@ -29,13 +29,13 @@ class HelpDialog {
                   text: const TextSpan(
                     text: 'Avanzar ',
                     style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Color(0xFF152A51)),
+                        fontWeight: FontWeight.bold, color: Color(0xFF152A51), fontFamily: 'Poppins'),
                     children: <TextSpan>[
                       TextSpan(
                         text: 'una cantidad de centímetros indicada',
                         style: TextStyle(
                             fontWeight: FontWeight.normal,
-                            color: Color(0xFF152A51)),
+                            color: Color(0xFF152A51), fontFamily: 'Poppins'),
                       ),
                     ],
                   ),
@@ -47,13 +47,13 @@ class HelpDialog {
                   text: const TextSpan(
                     text: 'Retroceder ',
                     style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Color(0xFF152A51)),
+                        fontWeight: FontWeight.bold, color: Color(0xFF152A51),fontFamily: 'Poppins'),
                     children: <TextSpan>[
                       TextSpan(
                         text: 'una cantidad de centímetros indicada',
                         style: TextStyle(
                             fontWeight: FontWeight.normal,
-                            color: Color(0xFF152A51)),
+                            color: Color(0xFF152A51), fontFamily: 'Poppins'),
                       ),
                     ],
                   ),
@@ -65,13 +65,13 @@ class HelpDialog {
                   text: const TextSpan(
                     text: 'Girar a la derecha ',
                     style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Color(0xFF152A51)),
+                        fontWeight: FontWeight.bold, color: Color(0xFF152A51), fontFamily: 'Poppins'),
                     children: <TextSpan>[
                       TextSpan(
                         text: 'una cantidad de grados indicada',
                         style: TextStyle(
                             fontWeight: FontWeight.normal,
-                            color: Color(0xFF152A51)),
+                            color: Color(0xFF152A51), fontFamily: 'Poppins'),
                       ),
                     ],
                   ),
@@ -83,13 +83,13 @@ class HelpDialog {
                   text: const TextSpan(
                     text: 'Girar a la izquierda ',
                     style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Color(0xFF152A51)),
+                        fontWeight: FontWeight.bold, color: Color(0xFF152A51), fontFamily: 'Poppins'),
                     children: <TextSpan>[
                       TextSpan(
                         text: 'una cantidad de grados indicada',
                         style: TextStyle(
                             fontWeight: FontWeight.normal,
-                            color: Color(0xFF152A51)),
+                            color: Color(0xFF152A51), fontFamily: 'Poppins'),
                       ),
                     ],
                   ),
@@ -101,13 +101,13 @@ class HelpDialog {
                   text: const TextSpan(
                     text: 'Activar detección de obstáculos ',
                     style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Color(0xFF152A51)),
+                        fontWeight: FontWeight.bold, color: Color(0xFF152A51), fontFamily: 'Poppins'),
                     children: <TextSpan>[
                       TextSpan(
                         text: 'hasta deseleccionar',
                         style: TextStyle(
                             fontWeight: FontWeight.normal,
-                            color: Color(0xFF152A51)),
+                            color: Color(0xFF152A51), fontFamily: 'Poppins'),
                       ),
                     ],
                   ),
@@ -119,13 +119,13 @@ class HelpDialog {
                   text: const TextSpan(
                     text: 'Iniciar un ciclo, ',
                     style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Color(0xFF152A51)),
+                        fontWeight: FontWeight.bold, color: Color(0xFF152A51), fontFamily: 'Poppins'),
                     children: <TextSpan>[
                       TextSpan(
                         text: 'una cantidad de veces',
                         style: TextStyle(
                             fontWeight: FontWeight.normal,
-                            color: Color(0xFF152A51)),
+                            color: Color(0xFF152A51), fontFamily: 'Poppins'),
                       ),
                     ],
                   ),
@@ -135,7 +135,8 @@ class HelpDialog {
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text("Cerrar"),
+              child: const Text("Cerrar",
+                  style: TextStyle(fontFamily: 'Poppins', color: Color(0xFF152A51))),
               onPressed: () {
                 Navigator.of(context).pop();
               },

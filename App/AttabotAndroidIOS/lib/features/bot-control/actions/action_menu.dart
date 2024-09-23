@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:proyecto_tec/features/bot-control/actions/cycle_input.dart';
+import 'package:proyecto_tec/shared/styles/colors.dart';
+import 'package:proyecto_tec/shared/styles/gradient_factory.dart';
+import 'package:proyecto_tec/shared/components/ui/buttons/default_button_factory.dart';
 // import provider and service commands
 import 'package:provider/provider.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
@@ -22,8 +25,17 @@ class _ActionMenuState extends State<ActionMenu> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        IconButton(
-          color: Colors.white,
+        DefaultButtonFactory.getButton(
+          borderWidth: 2,
+          verticalPadding: 10,
+          horizontalPadding: 10,
+          borderRadius: 12,
+          decoration: GradientFactory.getGradient(
+              startColor: primaryYellow,
+              endColor: primaryDarkYellow,
+              direction: GradientDirection.topToBottom),
+          buttonType: ButtonType.primary,
+          iconSize: 25,
           onPressed: () {
             obstacleDetection = !obstacleDetection;
             if (obstacleDetection) {
@@ -40,21 +52,34 @@ class _ActionMenuState extends State<ActionMenu> {
                         ? 'Detección de obstáculos activada'
                         : 'Detección de obstáculos desactivada',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: neutralWhite,
+                        fontFamily: 'Poppins'),
                   ),
-                  backgroundColor: const Color(0xFFDDE6F7),
+                  backgroundColor: primaryBlue,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0),
-                    side: const BorderSide(color: Colors.white, width: 5.0),
+                    side: const BorderSide(color: neutralWhite, width: 5.0),
                   ),
                 );
               },
             );
           },
-          icon: const Icon(Icons.visibility),
+          icon: IconType.obstacleDetection,
         ),
-        IconButton(
-          color: Colors.white,
+        const SizedBox(width: 10),
+        DefaultButtonFactory.getButton(
+          borderWidth: 2,
+          verticalPadding: 10,
+          horizontalPadding: 10,
+          borderRadius: 12,
+          decoration: GradientFactory.getGradient(
+              startColor: primaryYellow,
+              endColor: primaryDarkYellow,
+              direction: GradientDirection.topToBottom),
+          buttonType: ButtonType.primary,
+          iconSize: 25,
           onPressed: () {
             initCycle = !initCycle;
             if (initCycle) {
@@ -65,8 +90,10 @@ class _ActionMenuState extends State<ActionMenu> {
                     title: const Text(
                       'Repetir el ciclo',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, color: neutralWhite),
                     ),
+                    backgroundColor: primaryBlue,
                     content: CycleInput(
                       onCycleSelected: (value) {
                         setState(() {
@@ -76,13 +103,19 @@ class _ActionMenuState extends State<ActionMenu> {
                     ),
                     actions: [
                       TextButton(
-                        child: const Text("Cancelar"),
+                        child: const Text(
+                          "Cancelar",
+                          style: TextStyle(
+                              fontFamily: 'Poppins', color: neutralWhite),
+                        ),
                         onPressed: () {
                           Navigator.of(context).pop();
                         },
                       ),
                       TextButton(
-                        child: const Text("Aceptar"),
+                        child: const Text("Aceptar",
+                            style: TextStyle(
+                                fontFamily: 'Poppins', color: neutralWhite)),
                         onPressed: () {
                           context.read<CommandService>().initCycle(cycleCount);
                           Navigator.of(context).pop();
@@ -97,25 +130,32 @@ class _ActionMenuState extends State<ActionMenu> {
                 context: context,
                 builder: (BuildContext context) {
                   return AlertDialog(
-                    title: Text(
+                    title: const Text(
                       "Fin del ciclo",
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.bold,
+                          color: neutralWhite),
                     ),
-                    backgroundColor: const Color(0xFFDDE6F7),
+                    backgroundColor: primaryBlue,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
-                      side: const BorderSide(color: Colors.white, width: 5.0),
+                      side: const BorderSide(color: neutralWhite, width: 5.0),
                     ),
                     actions: [
                       TextButton(
-                        child: const Text("Cancelar"),
+                        child: const Text("Cancelar",
+                            style: TextStyle(
+                                fontFamily: 'Poppins', color: neutralWhite)),
                         onPressed: () {
                           Navigator.of(context).pop();
                         },
                       ),
                       TextButton(
-                        child: const Text("Aceptar"),
+                        child: const Text("Aceptar",
+                            style: TextStyle(
+                                fontFamily: 'Poppins', color: neutralWhite)),
                         onPressed: () {
                           context.read<CommandService>().endCycle();
                           Navigator.of(context).pop();
@@ -127,33 +167,33 @@ class _ActionMenuState extends State<ActionMenu> {
               );
             }
           },
-          icon: const Icon(Icons.autorenew),
+          icon: IconType.cycle,
         ),
         const SizedBox(width: 25),
         DropdownButton<String>(
-          dropdownColor: const Color.fromARGB(200, 0, 0, 0),
-          iconEnabledColor: Colors.white,
+          dropdownColor: neutralDarkBlue,
+          iconEnabledColor: neutralWhite,
           value: selectedValue,
           onChanged: (String? newValue) {
             setState(() {
               selectedValue = newValue;
             });
           },
-          style: const TextStyle(color: Colors.white),
+          style: const TextStyle(color: neutralWhite),
           underline: Container(
-            color: Colors.white,
+            color: neutralWhite,
             height: 1,
           ),
           items: <String>['Atta-bot 1', 'Atta-bot 2', 'Atta-bot 3']
               .map<DropdownMenuItem<String>>((String value) {
             return DropdownMenuItem<String>(
               value: value,
-              child: Text(value),
+              child: Text(value, style: const TextStyle(color: neutralWhite,fontSize: 20,fontFamily: 'Poppins',fontWeight: FontWeight.w500,)),  
             );
           }).toList(),
         ),
         IconButton(
-          color: Colors.white,
+          color: neutralWhite,
           onPressed: () {},
           icon: const Icon(Icons.play_arrow),
         ),
