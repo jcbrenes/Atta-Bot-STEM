@@ -29,7 +29,7 @@ class CommandService extends ChangeNotifier {
       return;
     }
 
-    _commands.removeRange(index, endCommandPairIndex + index++);
+    _commands.removeRange(index, endCommandPairIndex + index+1);
     notifyListeners();
   }
 

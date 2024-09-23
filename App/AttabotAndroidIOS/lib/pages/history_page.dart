@@ -123,8 +123,6 @@ class _HistoryPageState extends State<HistoryPage> {
                 itemBuilder: (context, index) {
                   return Column(
                     children: [
-                      //TODO:Remove text item
-                      Text(historial.commandHistory[index].toBotString()),
                       InstructionTile(
                           key: ValueKey(historial.commandHistory[index]),
                           color: processInstruction(

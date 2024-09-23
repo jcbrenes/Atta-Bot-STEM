@@ -7,6 +7,7 @@ enum CommandType {
   endCycle('Fin del ciclo', 'CIFIN'),
   activateObjectDetection('Detección de obstáculos activada', 'OBJINI'),
   deactivateObjectDetection('Fin detección de obstáculos', 'OBJFIN'),
+  //TODO: New tool instruction
   ;
   // Add new command types here
 
