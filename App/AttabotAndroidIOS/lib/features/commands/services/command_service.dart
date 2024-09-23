@@ -33,6 +33,14 @@ class CommandService extends ChangeNotifier {
     notifyListeners();
   }
 
+    // Method to get the first command
+  String getLastCommand() {
+    if (_commands.isNotEmpty) {
+      return _commands.last.toUiString();
+    }
+    return "No hay acciones recientes";
+  }
+
   void loadCommands(List<String> commandList) {
     _commands.clear();
     for (String command in commandList) {
