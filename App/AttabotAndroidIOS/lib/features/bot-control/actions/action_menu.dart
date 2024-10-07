@@ -1,5 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:proyecto_tec/features/bot-control/actions/cycle_input.dart';
+import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
+import 'package:proyecto_tec/shared/interfaces/bluetooth/bluetooth_service_interface.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 import 'package:proyecto_tec/shared/styles/gradient_factory.dart';
 import 'package:proyecto_tec/shared/components/ui/buttons/default_button_factory.dart';
@@ -19,6 +24,28 @@ class _ActionMenuState extends State<ActionMenu> {
   bool obstacleDetection = false;
   bool initCycle = false;
   int cycleCount = 1;
+  late StreamSubscription scanSubscription;
+  List<BluetoothDevice> devices = [];
+
+
+  BluetoothServiceInterface btService = DependencyManager().getBluetoothService();
+
+  @override
+  void initState() {
+    super.initState();
+
+    scanSubscription = btService.devices$.listen((event) {
+      setState(() {
+        devices = event;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    scanSubscription.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -176,6 +203,7 @@ class _ActionMenuState extends State<ActionMenu> {
           value: selectedValue,
           onChanged: (String? newValue) {
             setState(() {
+              btService.connectToDevice(devices.firstWhere((element) => element.platformName == newValue));
               selectedValue = newValue;
             });
           },
@@ -184,13 +212,12 @@ class _ActionMenuState extends State<ActionMenu> {
             color: neutralWhite,
             height: 1,
           ),
-          items: <String>['Atta-bot 1', 'Atta-bot 2', 'Atta-bot 3']
-              .map<DropdownMenuItem<String>>((String value) {
-            return DropdownMenuItem<String>(
-              value: value,
-              child: Text(value, style: const TextStyle(color: neutralWhite,fontSize: 20,fontFamily: 'Poppins',fontWeight: FontWeight.w500,)),  
-            );
-          }).toList(),
+          items: devices
+              .map((device) => DropdownMenuItem<String>(
+                    value: device.platformName,
+                    child: Text(device.platformName),
+                  ))
+              .toList(),
         ),
         IconButton(
           color: neutralWhite,
