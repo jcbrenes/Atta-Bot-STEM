@@ -4,6 +4,8 @@ import 'package:proyecto_tec/features/commands/components/instruction_tile.dart'
 import 'package:proyecto_tec/features/commands/components/history_dropdown_menu.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
 import 'package:proyecto_tec/shared/components/ui/buttons/text/button_factory.dart';
+import 'package:proyecto_tec/shared/styles/gradient_factory.dart';
+import 'package:proyecto_tec/shared/styles/colors.dart';
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
@@ -21,15 +23,15 @@ class _HistoryPageState extends State<HistoryPage> {
   );
 
   final Map<String, Color> appbarColors = {
-    'foreground': Colors.white,
-    'background': const Color(0xFF586B8F),
+    'foreground': neutralWhite,
+    'background': Colors.transparent,
   };
 
-  final BoxDecoration bodyDecoration = const BoxDecoration(
-    gradient: LinearGradient(
-      begin: Alignment.topRight,
-      end: Alignment.bottomLeft,
-      colors: [Color(0xFF798DB1), Color(0xFF586B8F)],
+  final BoxDecoration bodyDecoration = BoxDecoration(
+    gradient: GradientFactory.getGradient(
+      startColor: primaryBlue,
+      endColor: neutralDarkBlue,
+      direction: GradientDirection.topToBottom,
     ),
   );
 
@@ -114,6 +116,7 @@ class _HistoryPageState extends State<HistoryPage> {
             foregroundColor: appbarColors['foreground'],
             backgroundColor: appbarColors['background'],
             actions: const <Widget>[InstructionHistoryDropdown()]),
+        extendBodyBehindAppBar: true,
         body: Container(
           decoration: bodyDecoration,
           child: Consumer<CommandService>(

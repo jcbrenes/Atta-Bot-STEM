@@ -2,16 +2,13 @@ import 'package:flutter/material.dart';
 
 // Primary colors
 const Color primaryBlue = Color(0xFF0C7BCC); // For movement
-const Color primaryDarkBlue = Color(0xFF0065AF);
-const Color primaryOrange = Color(0xFFF4864A); // For rotation
-const Color primaryDarkOrange = Color(0xFF9C4515); 
-const Color primaryYellow = Color(0xFFF2C13C); // For obstacle detection
-const Color primaryDarkYellow = Color(0xFF9C7A15);
+const Color primaryOrange = Color(0xFFEC793B); // For rotation
+const Color primaryYellow = Color(0xFFEEB417); // For obstacle detection
 
 // Secondary colors
-const Color secondaryGreen = Color(0xFF77D992);
-const Color secondaryPurple = Color(0xFFB599F1);
-const Color secondaryPink = Color(0xFFF199C3);
+const Color secondaryGreen = Color(0xFF60CA7D);
+const Color secondaryPurple = Color(0xFFA582EE);
+const Color secondaryPink = Color(0xFFED80B5);
 
 // Neutral colors
 const Color neutralWhite = Color(0xFFF5F6F9); // Off-white
