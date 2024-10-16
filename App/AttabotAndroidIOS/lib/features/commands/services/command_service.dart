@@ -29,11 +29,11 @@ class CommandService extends ChangeNotifier {
       return;
     }
 
-    _commands.removeRange(index, endCommandPairIndex + index+1);
+    _commands.removeRange(index, endCommandPairIndex + index + 1);
     notifyListeners();
   }
 
-    // Method to get the first command
+  // Method to get the first command
   String getLastCommand() {
     if (_commands.isNotEmpty) {
       return _commands.last.toUiString();
@@ -79,6 +79,16 @@ class CommandService extends ChangeNotifier {
 
     // if theres no errors anywhere, return true
     return true;
+  }
+
+  String getCommandsBotString() {
+    String commandsString = "";
+    commandsString += CommandType.commandHeader.botTranslation;
+    for (Command command in _commands) {
+      commandsString += command.toBotString();
+    }
+    commandsString += CommandType.commandFooter.botTranslation;
+    return commandsString;
   }
 
 // ================================COMMANDS=====================================
@@ -129,5 +139,18 @@ class CommandService extends ChangeNotifier {
     _commands.add(command);
     notifyListeners();
   }
+
+  void activateTool() {
+    Command command = Command(CommandType.activateTool, null);
+    _commands.add(command);
+    notifyListeners();
+  }
+
+  void deactivateTool() {
+    Command command = Command(CommandType.deactivateTool, null);
+    _commands.add(command);
+    notifyListeners();
+  }
+
 // =============================================================================
 }

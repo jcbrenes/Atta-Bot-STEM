@@ -4,8 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
 import 'package:proyecto_tec/pages/home_page.dart';
+import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
+import 'package:proyecto_tec/shared/features/permissions/services/permission.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final PermissionService permissionService = DependencyManager().getPermissionService();
+await permissionService.requestPermissions();
+
   runApp(
     ChangeNotifierProvider(
       create: (context) => CommandService(),
