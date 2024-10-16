@@ -1,5 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:proyecto_tec/features/bot-control/actions/cycle_input.dart';
+import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
+import 'package:proyecto_tec/shared/features/navigation/services/navigation.dart';
+import 'package:proyecto_tec/shared/interfaces/bluetooth/bluetooth_service_interface.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 import 'package:proyecto_tec/shared/styles/gradient_factory.dart';
 import 'package:proyecto_tec/shared/components/ui/buttons/default_button_factory.dart';
@@ -15,10 +21,48 @@ class ActionMenu extends StatefulWidget {
 }
 
 class _ActionMenuState extends State<ActionMenu> {
-  String? selectedValue = "Atta-bot 1"; // Initial selected value
+  String? selectedValue = ""; // Initial selected value
   bool obstacleDetection = false;
   bool initCycle = false;
   int cycleCount = 1;
+  late StreamSubscription scanSubscription;
+  List<BluetoothDevice> devices = [];
+
+  BluetoothServiceInterface btService =
+      DependencyManager().getBluetoothService();
+  NavigationService navService = DependencyManager().getNavigationService();
+
+
+  void showEmptyHistorySnackBar(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Aún no hay comandos'),
+        duration: Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    scanSubscription = btService.devices$.listen((event) {
+      debugPrint("Devices: $event");
+      setState(() {
+        devices = event;
+        if (devices.isNotEmpty) {
+          selectedValue = devices.first.remoteId.toString();
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    scanSubscription.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -170,31 +214,20 @@ class _ActionMenuState extends State<ActionMenu> {
           icon: IconType.cycle,
         ),
         const SizedBox(width: 25),
-        DropdownButton<String>(
-          dropdownColor: neutralDarkBlue,
-          iconEnabledColor: neutralWhite,
-          value: selectedValue,
-          onChanged: (String? newValue) {
-            setState(() {
-              selectedValue = newValue;
-            });
-          },
-          style: const TextStyle(color: neutralWhite),
-          underline: Container(
-            color: neutralWhite,
-            height: 1,
-          ),
-          items: <String>['Atta-bot 1', 'Atta-bot 2', 'Atta-bot 3']
-              .map<DropdownMenuItem<String>>((String value) {
-            return DropdownMenuItem<String>(
-              value: value,
-              child: Text(value, style: const TextStyle(color: neutralWhite,fontSize: 20,fontFamily: 'Poppins',fontWeight: FontWeight.w500,)),  
-            );
-          }).toList(),
-        ),
         IconButton(
           color: neutralWhite,
-          onPressed: () {},
+          onPressed: () async {
+            if (!btService.isConnected) {
+              navService.goToBluetoothDevicesPage(context);
+              return;
+            }
+            if (context.read<CommandService>().commandHistory.isEmpty) {
+              showEmptyHistorySnackBar(context);
+              return;
+            }
+            btService.sendStringToDevice(
+                context.read<CommandService>().getCommandsBotString());
+          },
           icon: const Icon(Icons.play_arrow),
         ),
       ],

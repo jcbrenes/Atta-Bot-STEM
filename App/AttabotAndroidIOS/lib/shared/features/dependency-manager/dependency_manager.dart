@@ -1,5 +1,7 @@
 import 'package:proyecto_tec/shared/interfaces/bluetooth/bluetooth_service_interface.dart';
-import 'package:proyecto_tec/shared/services/bluetooth/bluetooth.dart';
+import 'package:proyecto_tec/shared/features/bluetooth-connection/services/bluetooth/bluetooth.dart';
+import 'package:proyecto_tec/shared/features/navigation/services/navigation.dart';
+import 'package:proyecto_tec/shared/features/permissions/services/permission.dart';
 
 class DependencyManager {
   
@@ -13,5 +15,13 @@ class DependencyManager {
   
   BluetoothServiceInterface getBluetoothService() {
     return FlutterBluePlusService();
+  }
+
+  PermissionService getPermissionService() {
+    return PermissionService();
+  }
+
+  NavigationService getNavigationService() {
+    return NavigationService();
   }
 }
