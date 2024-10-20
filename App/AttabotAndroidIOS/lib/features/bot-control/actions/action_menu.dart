@@ -25,7 +25,7 @@ class _ActionMenuState extends State<ActionMenu> {
       children: [
         DefaultButtonFactory.getButton(
           color: secondaryGreen,
-          buttonType: ButtonType.primary,
+          buttonType: ButtonType.primaryIcon,
           onPressed: () {
             initCycle = !initCycle;
             if (initCycle) {
@@ -118,7 +118,7 @@ class _ActionMenuState extends State<ActionMenu> {
         SizedBox(width: 16),
         DefaultButtonFactory.getButton(
           color: primaryYellow,
-          buttonType: ButtonType.primary,
+          buttonType: ButtonType.primaryIcon,
           onPressed: () {
             obstacleDetection = !obstacleDetection;
             if (obstacleDetection) {
@@ -173,7 +173,7 @@ class _ActionMenuState extends State<ActionMenu> {
         SizedBox(width: 16),
         DefaultButtonFactory.getButton(
           color: secondaryPink,
-          buttonType: ButtonType.primary,
+          buttonType: ButtonType.primaryIcon,
           onPressed: () {
             obstacleDetection = !obstacleDetection;
             if (obstacleDetection) {
@@ -209,7 +209,7 @@ class _ActionMenuState extends State<ActionMenu> {
         SizedBox(width: 16),
         DefaultButtonFactory.getButton(
           color: secondaryPurple,
-          buttonType: ButtonType.primary,
+          buttonType: ButtonType.primaryIcon,
           onPressed: () {
             obstacleDetection = !obstacleDetection;
             if (obstacleDetection) {

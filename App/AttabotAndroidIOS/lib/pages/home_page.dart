@@ -53,7 +53,7 @@ class _HomePageState extends State<HomePage> {
             HomePageTitle(title: pageTitle, version: version),
             SeparatorFactory.getSeparator(type: SeparatorType.context),
             DefaultButtonFactory.getButton(
-                buttonType: ButtonType.primary,
+                buttonType: ButtonType.primaryIcon,
                 text: 'comenzar',
                 color: primaryOrange,
                 onPressed: () async {

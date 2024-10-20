@@ -15,9 +15,12 @@ class MovementMenu extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            SizedBox(
+              height: 60,
+            ),
             DefaultButtonFactory.getButton(
               color: primaryBlue,
-              buttonType: ButtonType.primary,
+              buttonType: ButtonType.primaryIcon,
               onPressed: () {
                 showDialog(
                   context: context,
@@ -37,7 +40,7 @@ class MovementMenu extends StatelessWidget {
                 children: [
                   DefaultButtonFactory.getButton(
                     color: primaryOrange,
-                    buttonType: ButtonType.primary,
+                    buttonType: ButtonType.primaryIcon,
                     onPressed: () {
                       showDialog(
                         context: context,
@@ -62,7 +65,7 @@ class MovementMenu extends StatelessWidget {
                   ),
                   DefaultButtonFactory.getButton(
                     color: primaryOrange,
-                    buttonType: ButtonType.primary,
+                    buttonType: ButtonType.primaryIcon,
                     onPressed: () {
                       showDialog(
                         context: context,
@@ -79,7 +82,7 @@ class MovementMenu extends StatelessWidget {
             ),
             DefaultButtonFactory.getButton(
               color: primaryBlue,
-              buttonType: ButtonType.primary,
+              buttonType: ButtonType.primaryIcon,
               onPressed: () {
                 showDialog(
                   context: context,

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 
-class PrimaryButton extends StatefulWidget {
-  const PrimaryButton({
+class PrimaryIconButton extends StatefulWidget {
+  const PrimaryIconButton({
     super.key,
     required this.child,
     required this.onPressed,
@@ -22,10 +22,10 @@ class PrimaryButton extends StatefulWidget {
   final double borderRadius;
 
   @override
-  State<PrimaryButton> createState() => _PrimaryButtonState();
+  State<PrimaryIconButton> createState() => _PrimaryIconButtonState();
 }
 
-class _PrimaryButtonState extends State<PrimaryButton> {
+class _PrimaryIconButtonState extends State<PrimaryIconButton> {
   bool _isPressed = false;
 
   @override

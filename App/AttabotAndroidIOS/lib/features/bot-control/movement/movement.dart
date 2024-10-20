@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:proyecto_tec/features/bot-control/movement/distance_input.dart';
+import 'package:proyecto_tec/shared/styles/colors.dart';
 // import provider and service commands
 import 'package:provider/provider.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
@@ -28,42 +29,44 @@ class _MovementState extends State<Movement> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      buttonPadding: const EdgeInsets.all(0.0),
-      actionsPadding: const EdgeInsets.all(0.0),
-      contentPadding: const EdgeInsets.all(0.0),
-      title: Text(
-        widget.direction == 'forward' ? 'Avanzar' : 'Retroceder',
-        textAlign: TextAlign.center,
-      ),
-      backgroundColor: const Color(0xFFDDE6F7),
+      buttonPadding: const EdgeInsets.all(20.0),
+      actionsPadding: const EdgeInsets.fromLTRB(20, 20, 30, 10),
+      contentPadding: const EdgeInsets.fromLTRB(0, 40, 0, 20),
+      title: Text(widget.direction == 'forward' ? 'Avanzar' : 'Retroceder',
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontWeight: FontWeight.w500,
+            fontSize: 26,
+            fontFamily: "Poppins",
+            color: neutralWhite,
+          )),
+      backgroundColor: neutralDarkBlueAD,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10.0),
-        side: const BorderSide(color: Colors.white, width: 5.0),
+        borderRadius: BorderRadius.circular(24.0),
+        side: const BorderSide(color: neutralWhite, width: 4.0),
       ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 15),
-          DistanceInput(
-            onSetDistance: _setDistance,
-          )
-        ],
+      content: DistanceInput(
+        onSetDistance: _setDistance,
       ),
       actions: [
         TextButton(
-          child: const Text("Cancelar"),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-        ),
-        TextButton(
-          child: const Text("Aceptar"),
+          child: const Text("Aceptar",
+              style: TextStyle(
+                  fontSize: 14, fontFamily: "Poppins", color: neutralWhite)),
           onPressed: () {
             if (widget.direction == 'forward') {
               context.read<CommandService>().moveForward(distance);
             } else {
               context.read<CommandService>().moveBackward(distance);
             }
+            Navigator.of(context).pop();
+          },
+        ),
+        TextButton(
+          child: const Text("Cancelar",
+              style: TextStyle(
+                  fontSize: 14, fontFamily: "Poppins", color: neutralWhite)),
+          onPressed: () {
             Navigator.of(context).pop();
           },
         ),
