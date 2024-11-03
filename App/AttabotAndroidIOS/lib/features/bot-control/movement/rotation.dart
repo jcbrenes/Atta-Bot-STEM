@@ -75,9 +75,7 @@ class _RotationState extends State<Rotation> {
             SizedBox(
               height: 400,
               width: 150,
-              child: LayoutBuilder(
-                  builder: (BuildContext context, BoxConstraints constraints) {
-                return SfRadialGauge(
+              child: SfRadialGauge(
                   axes: <RadialAxis>[
                     RadialAxis(
                       showFirstLabel: false,
@@ -144,8 +142,7 @@ class _RotationState extends State<Rotation> {
                       ],
                     ),
                   ],
-                );
-              }),
+                ),
             ),
             SizedBox(width: 10),
             DefaultButtonFactory.getButton(
