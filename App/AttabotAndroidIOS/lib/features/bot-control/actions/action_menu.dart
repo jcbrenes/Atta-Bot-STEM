@@ -225,7 +225,7 @@ class _ActionMenuState extends State<ActionMenu> {
               showEmptyHistorySnackBar(context);
               return;
             }
-            btService.sendStringToDevice(
+            await btService.sendStringToDevice(
                 context.read<CommandService>().getCommandsBotString());
           },
           icon: const Icon(Icons.play_arrow),

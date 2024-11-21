@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
@@ -77,12 +78,14 @@ class FlutterBluePlusService implements BluetoothServiceInterface {
 
       // Find a writable characteristic
       for (BluetoothService service in services) {
-        for (BluetoothCharacteristic characteristic
-            in service.characteristics) {
-          if (characteristic.properties.write) {
-            writableCharacteristic = characteristic;
-            print('Found writable characteristic: ${characteristic.uuid}');
-            break;
+        if(service.uuid.toString() == AppConfig.bluetoothServiceUUID){
+          for (BluetoothCharacteristic characteristic
+              in service.characteristics) {
+            if (characteristic.uuid.toString() == AppConfig.bluetoothCharacteristicUUID) {
+              writableCharacteristic = characteristic;
+              print('Found writable characteristic: ${characteristic.uuid}');
+              break;
+            }
           }
         }
         if (writableCharacteristic != null) break;
@@ -105,11 +108,7 @@ class FlutterBluePlusService implements BluetoothServiceInterface {
     }
 
     try {
-      // Convert the string to bytes
-      List<int> messageBytes = message.codeUnits;
-
-      // Send the message to the writable characteristic
-      await writableCharacteristic!.write(messageBytes, withoutResponse: true);
+      await writableCharacteristic?.write(utf8.encode(message));
       print('Sent message: $message');
     } catch (e) {
       print('Error sending message: $e');
