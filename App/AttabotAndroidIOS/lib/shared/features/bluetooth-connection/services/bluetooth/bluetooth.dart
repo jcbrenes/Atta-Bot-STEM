@@ -120,7 +120,7 @@ class FlutterBluePlusService implements BluetoothServiceInterface {
     try {
       await device.disconnect();
       _connectedDevice = null;
-      print('Disconnected from device: ${device.name}');
+        print('Disconnected from device: ${device.name}');
     } catch (e) {
       print('Error disconnecting from device: $e');
     }
