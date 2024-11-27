@@ -1,30 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:proyecto_tec/features/bot-control/movement/distance_input.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
-// import provider and service commands
+import 'package:proyecto_tec/features/bot-control/actions/cycle_input.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
 
-class Movement extends StatefulWidget {
-  final String direction;
-
-  const Movement({
-    super.key,
-    required this.direction,
-  });
+class CycleDialog extends StatefulWidget {
+  const CycleDialog({super.key});
 
   @override
-  State<Movement> createState() => _MovementState();
+  State<CycleDialog> createState() => _CycleDialogState();
+
+  static void show(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return const CycleDialog();
+      },
+    );
+  }
 }
 
-class _MovementState extends State<Movement> {
-  int distance = 0;
-
-  void _setDistance(int newDistance) {
-    setState(() {
-      distance = newDistance;
-    });
-  }
+class _CycleDialogState extends State<CycleDialog> {
+  int cycleCount = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -32,9 +29,9 @@ class _MovementState extends State<Movement> {
       buttonPadding: const EdgeInsets.all(20.0),
       actionsPadding: const EdgeInsets.fromLTRB(20, 20, 30, 10),
       contentPadding: const EdgeInsets.fromLTRB(0, 40, 0, 20),
-      title: Text(widget.direction == 'forward' ? 'Avanzar' : 'Retroceder',
+      title: const Text("Repetir ciclo",
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.w500,
             fontSize: 26,
             fontFamily: "Poppins",
@@ -45,8 +42,12 @@ class _MovementState extends State<Movement> {
         borderRadius: BorderRadius.circular(24.0),
         side: const BorderSide(color: neutralWhite, width: 4.0),
       ),
-      content: DistanceInput(
-        onSetDistance: _setDistance,
+      content: CycleInput(
+        onCycleSelected: (value) {
+          setState(() {
+            cycleCount = value;
+          });
+        },
       ),
       actions: [
         TextButton(
@@ -54,11 +55,7 @@ class _MovementState extends State<Movement> {
               style: TextStyle(
                   fontSize: 14, fontFamily: "Poppins", color: neutralWhite)),
           onPressed: () {
-            if (widget.direction == 'forward') {
-              context.read<CommandService>().moveForward(distance);
-            } else {
-              context.read<CommandService>().moveBackward(distance);
-            }
+            context.read<CommandService>().initCycle(cycleCount);
             Navigator.of(context).pop();
           },
         ),

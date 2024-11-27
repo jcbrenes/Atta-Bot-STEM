@@ -6,7 +6,6 @@ import 'package:proyecto_tec/shared/components/ui/separators/separator_factory.d
 import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
 import 'package:proyecto_tec/shared/interfaces/bluetooth/bluetooth_service_interface.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
-import 'package:proyecto_tec/shared/styles/gradient_factory.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -19,7 +18,7 @@ class _HomePageState extends State<HomePage> {
   BluetoothServiceInterface bluetoothService =
       DependencyManager().getBluetoothService();
 
-  String get version => 'v1.1.16';
+  String get version => 'v1.2';
   String get pageTitle => 'Atta-Bot\nEducativo';
 
   Future<void> initApp(BuildContext context) async {
@@ -47,24 +46,16 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       body: Container(
         width: double.infinity,
-        decoration: BoxDecoration(
-            gradient: GradientFactory.getGradient(
-                startColor: primaryBlue,
-                endColor: neutralDarkBlue,
-                direction: GradientDirection.topToBottom)),
+        color: neutralDarkBlue,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             HomePageTitle(title: pageTitle, version: version),
             SeparatorFactory.getSeparator(type: SeparatorType.context),
             DefaultButtonFactory.getButton(
-                buttonType: ButtonType.primary,
-                text: 'Comenzar',
-                decoration: GradientFactory.getGradient(
-                  startColor: primaryOrange,
-                  endColor: primaryYellow,
-                  direction: GradientDirection.leftToRight,
-                ),
+                buttonType: ButtonType.primaryIcon,
+                text: 'comenzar',
+                color: primaryOrange,
                 onPressed: () async {
                   await initApp(context);
                 }),

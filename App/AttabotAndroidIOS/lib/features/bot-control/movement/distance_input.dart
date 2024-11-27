@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:proyecto_tec/shared/styles/colors.dart';
+import 'package:proyecto_tec/shared/components/ui/buttons/default_button_factory.dart';
 
 class DistanceInput extends StatefulWidget {
   final Function(int) onSetDistance;
@@ -38,97 +40,70 @@ class _DistanceInputState extends State<DistanceInput> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        SizedBox(
-          height: 35,
-          width: 35,
-          child: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFF1C74B5),
-                  Color(0xFF669BC2),
-                ],
-              ),
-              shape: BoxShape.circle,
-            ),
-            child: TextButton(
-              style: ButtonStyle(
-                padding: WidgetStateProperty.all(EdgeInsets.all(0)),
-                iconColor: WidgetStateProperty.all(const Color(0xFFF5F8F9)),
-                backgroundColor: WidgetStateProperty.all(Colors.transparent),
-                alignment: Alignment.center,
-                shape: WidgetStateProperty.all(CircleBorder()),
-              ),
-              onPressed: () {
-                int currentValue = int.parse(_controller.text);
-                if (currentValue > 0) {
-                  currentValue--;
-                  _controller.text = currentValue.toString();
-                  handleOnChanged(_controller.text);
-                }
-              },
-              child: const Icon(Icons.remove),
-            ),
+    return SizedBox(
+      height: 100,
+      width: 500,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          DefaultButtonFactory.getButton(
+            color: secondaryIconBlue,
+            buttonType: ButtonType.secondaryIcon,
+            onPressed: () {
+              int currentValue = int.parse(_controller.text);
+              if (currentValue > 0) {
+                currentValue--;
+                _controller.text = currentValue.toString();
+                handleOnChanged(_controller.text);
+              }
+            },
+            icon: IconType.remove,
           ),
-        ),
-        SizedBox(width: 10),
-        IntrinsicWidth(
-          child: TextFormField(
-              controller: _controller,
-              focusNode: _focusNode,
-              keyboardType: TextInputType.number,
-              style: const TextStyle(color: Colors.black, fontSize: 20),
-              decoration: const InputDecoration(
-                border: InputBorder.none,
-                suffixText: " cm",
-                suffixStyle: TextStyle(color: Colors.black, fontSize: 20),
-              ),
-              inputFormatters: [
-                LengthLimitingTextInputFormatter(3), // Limit to 3 digits
-                FilteringTextInputFormatter.digitsOnly, // Allow only digits
-              ],
-              onChanged: handleOnChanged),
-        ),
-        SizedBox(width: 10),
-        SizedBox(
-          height: 35,
-          width: 35,
-          child: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFF1C74B5),
-                  Color(0xFF669BC2),
+          SizedBox(width: 30),
+          SizedBox(
+            width: 110,
+            child: TextFormField(
+                controller: _controller,
+                focusNode: _focusNode,
+                textAlign: TextAlign.center,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 28,
+                    fontFamily: "Poppins",
+                    color: neutralWhite),
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  suffixText: " cm",
+                  suffixStyle: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 28,
+                      fontFamily: "Poppins",
+                      color: neutralWhite),
+                ),
+                inputFormatters: [
+                  LengthLimitingTextInputFormatter(3), // Limit to 3 digits
+                  FilteringTextInputFormatter.digitsOnly, // Allow only digits
                 ],
-              ),
-              shape: BoxShape.circle,
-            ),
-            child: TextButton(
-              style: ButtonStyle(
-                padding: WidgetStateProperty.all(EdgeInsets.all(0)),
-                iconColor: WidgetStateProperty.all(const Color(0xFFF5F8F9)),
-                backgroundColor: WidgetStateProperty.all(Colors.transparent),
-                alignment: Alignment.center,
-                shape: WidgetStateProperty.all(CircleBorder()),
-              ),
-              onPressed: () {
-                int currentValue = int.parse(_controller.text);
+                onChanged: handleOnChanged),
+          ),
+          SizedBox(width: 30),
+          DefaultButtonFactory.getButton(
+            color: secondaryIconBlue,
+            buttonType: ButtonType.secondaryIcon,
+            onPressed: () {
+              int currentValue = int.parse(_controller.text);
+              if (currentValue < 999) {
                 currentValue++;
                 _controller.text = currentValue.toString();
                 handleOnChanged(_controller.text);
-              },
-              child: const Icon(Icons.add),
-            ),
+              }
+            },
+            icon: IconType.add,
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

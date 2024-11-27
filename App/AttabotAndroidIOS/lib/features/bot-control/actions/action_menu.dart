@@ -2,13 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:proyecto_tec/features/bot-control/actions/cycle_input.dart';
 import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
 import 'package:proyecto_tec/shared/features/navigation/services/navigation.dart';
 import 'package:proyecto_tec/shared/interfaces/bluetooth/bluetooth_service_interface.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
-import 'package:proyecto_tec/shared/styles/gradient_factory.dart';
 import 'package:proyecto_tec/shared/components/ui/buttons/default_button_factory.dart';
+import 'package:proyecto_tec/features/bot-control/actions/cycle_dialog.dart';
+import 'package:proyecto_tec/features/bot-control/dialogs/info_dialog.dart';
 // import provider and service commands
 import 'package:provider/provider.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
@@ -23,6 +23,8 @@ class ActionMenu extends StatefulWidget {
 class _ActionMenuState extends State<ActionMenu> {
   String? selectedValue = ""; // Initial selected value
   bool obstacleDetection = false;
+  bool pencilActive = false;
+  bool clawActive = false;
   bool initCycle = false;
   int cycleCount = 1;
   late StreamSubscription scanSubscription;
@@ -70,152 +72,45 @@ class _ActionMenuState extends State<ActionMenu> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         DefaultButtonFactory.getButton(
-          borderWidth: 2,
-          verticalPadding: 10,
-          horizontalPadding: 10,
-          borderRadius: 12,
-          decoration: GradientFactory.getGradient(
-              startColor: primaryYellow,
-              endColor: primaryDarkYellow,
-              direction: GradientDirection.topToBottom),
-          buttonType: ButtonType.primary,
-          iconSize: 25,
-          onPressed: () {
-            obstacleDetection = !obstacleDetection;
-            if (obstacleDetection) {
-              context.read<CommandService>().activateObjectDetection();
-            } else {
-              context.read<CommandService>().deactivateObjectDetection();
-            }
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text(
-                    obstacleDetection
-                        ? 'Detección de obstáculos activada'
-                        : 'Detección de obstáculos desactivada',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: neutralWhite,
-                        fontFamily: 'Poppins'),
-                  ),
-                  backgroundColor: primaryBlue,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                    side: const BorderSide(color: neutralWhite, width: 5.0),
-                  ),
-                );
-              },
-            );
-          },
-          icon: IconType.obstacleDetection,
-        ),
-        const SizedBox(width: 10),
-        DefaultButtonFactory.getButton(
-          borderWidth: 2,
-          verticalPadding: 10,
-          horizontalPadding: 10,
-          borderRadius: 12,
-          decoration: GradientFactory.getGradient(
-              startColor: primaryYellow,
-              endColor: primaryDarkYellow,
-              direction: GradientDirection.topToBottom),
-          buttonType: ButtonType.primary,
-          iconSize: 25,
+          color: secondaryGreen,
+          buttonType: ButtonType.primaryIcon,
           onPressed: () {
             initCycle = !initCycle;
             if (initCycle) {
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: const Text(
-                      'Repetir el ciclo',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, color: neutralWhite),
-                    ),
-                    backgroundColor: primaryBlue,
-                    content: CycleInput(
-                      onCycleSelected: (value) {
-                        setState(() {
-                          cycleCount = value;
-                        });
-                      },
-                    ),
-                    actions: [
-                      TextButton(
-                        child: const Text(
-                          "Cancelar",
-                          style: TextStyle(
-                              fontFamily: 'Poppins', color: neutralWhite),
-                        ),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                      TextButton(
-                        child: const Text("Aceptar",
-                            style: TextStyle(
-                                fontFamily: 'Poppins', color: neutralWhite)),
-                        onPressed: () {
-                          context.read<CommandService>().initCycle(cycleCount);
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                    ],
-                  );
-                },
-              );
+              CycleDialog.show(context);
             } else {
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: const Text(
-                      "Fin del ciclo",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.bold,
-                          color: neutralWhite),
-                    ),
-                    backgroundColor: primaryBlue,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                      side: const BorderSide(color: neutralWhite, width: 5.0),
-                    ),
-                    actions: [
-                      TextButton(
-                        child: const Text("Cancelar",
-                            style: TextStyle(
-                                fontFamily: 'Poppins', color: neutralWhite)),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                      TextButton(
-                        child: const Text("Aceptar",
-                            style: TextStyle(
-                                fontFamily: 'Poppins', color: neutralWhite)),
-                        onPressed: () {
-                          context.read<CommandService>().endCycle();
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                    ],
-                  );
-                },
-              );
+              context.read<CommandService>().endCycle();
+              showInfoDialog(context, 'Se ha cerrado el ciclo');
             }
           },
           icon: IconType.cycle,
         ),
-        const SizedBox(width: 25),
-        IconButton(
-          color: neutralWhite,
+        SizedBox(width: 16),
+        DefaultButtonFactory.getButton(
+          color: primaryYellow,
+          buttonType: ButtonType.primaryIcon,
+          onPressed: () {
+            obstacleDetection = !obstacleDetection;
+            if (obstacleDetection) {
+              showInfoDialog(context, 'Se ha activado la detección de obstáculos');
+              context.read<CommandService>().activateObjectDetection();
+            } else {
+              showInfoDialog(context, 'Se ha desactivado la detección de obstáculos');
+              context.read<CommandService>().deactivateObjectDetection();
+            }
+          },
+          icon: IconType.obstacleDetection,
+        ),
+        SizedBox(width: 16),
+        TextButton(
+          style: TextButton.styleFrom(
+            alignment: Alignment.center,
+            padding: const EdgeInsets.all(24),
+            shape: CircleBorder(
+              side: BorderSide(color: neutralWhite, width: 4.0),
+            ),
+            iconColor: neutralWhite,
+          ),
           onPressed: () async {
             if (!btService.isConnected) {
               navService.goToBluetoothDevicesPage(context);
@@ -228,7 +123,41 @@ class _ActionMenuState extends State<ActionMenu> {
             await btService.sendStringToDevice(
                 context.read<CommandService>().getCommandsBotString());
           },
-          icon: const Icon(Icons.play_arrow),
+          child: Image.asset(
+            'assets/button_icons/play.png',
+            color: neutralWhite,
+            width: 27,
+            height: 26,
+            alignment: Alignment(1,0),
+          ),
+        ),
+        SizedBox(width: 16),
+        DefaultButtonFactory.getButton(
+          color: secondaryPink,
+          buttonType: ButtonType.primaryIcon,
+          onPressed: () {
+            pencilActive = !pencilActive;
+            if (pencilActive) {
+              showInfoDialog(context, 'Se ha activado \n el lápiz');
+            } else {
+              showInfoDialog(context, 'Se ha desactivado \n el lápiz');
+            }
+          },
+          icon: IconType.pencil,
+        ),
+        SizedBox(width: 16),
+        DefaultButtonFactory.getButton(
+          color: secondaryPurple,
+          buttonType: ButtonType.primaryIcon,
+          onPressed: () {
+            clawActive = !clawActive;
+            if (clawActive) {
+              showInfoDialog(context, 'Se ha activado \n la garra');
+            } else {
+              showInfoDialog(context, 'Se ha desactivado \n la garra');
+            }
+          },
+          icon: IconType.claw,
         ),
       ],
     );

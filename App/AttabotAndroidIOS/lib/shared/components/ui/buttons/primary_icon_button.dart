@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 
-class GradientButton extends StatefulWidget {
-  const GradientButton({
+class PrimaryIconButton extends StatefulWidget {
+  const PrimaryIconButton({
     super.key,
     required this.child,
     required this.onPressed,
-    required this.gradient,
+    required this.color,
     required this.verticalPadding,
     required this.horizontalPadding,
     required this.borderWidth,
@@ -15,17 +15,17 @@ class GradientButton extends StatefulWidget {
 
   final Widget child;
   final VoidCallback onPressed;
-  final LinearGradient gradient;
+  final Color color;
   final double horizontalPadding;
   final double verticalPadding;
   final double borderWidth;
   final double borderRadius;
 
   @override
-  State<GradientButton> createState() => _GradientButtonState();
+  State<PrimaryIconButton> createState() => _PrimaryIconButtonState();
 }
 
-class _GradientButtonState extends State<GradientButton> {
+class _PrimaryIconButtonState extends State<PrimaryIconButton> {
   bool _isPressed = false;
 
   @override
@@ -48,11 +48,12 @@ class _GradientButtonState extends State<GradientButton> {
         });
       },
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: widget.verticalPadding, horizontal: widget.horizontalPadding),
+        padding: EdgeInsets.symmetric(
+            vertical: widget.verticalPadding,
+            horizontal: widget.horizontalPadding),
         decoration: BoxDecoration(
-          gradient: _isPressed ? widget.gradient : null,
-          color: _isPressed ? null : Colors.transparent,
-                    border: Border.all(
+          color: _isPressed ? widget.color : Colors.transparent,
+          border: Border.all(
             color: neutralWhite,
             width: widget.borderWidth,
           ),
