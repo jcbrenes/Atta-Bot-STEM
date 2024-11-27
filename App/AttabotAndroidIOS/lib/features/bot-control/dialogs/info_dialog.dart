@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:proyecto_tec/screens/ventanaInicio.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 
 void showInfoDialog(BuildContext context, String message) {

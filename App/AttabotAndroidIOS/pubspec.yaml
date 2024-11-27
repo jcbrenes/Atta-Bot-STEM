@@ -21,6 +21,7 @@ dependencies:
   flutter_blue_plus: ^1.31.13
   flutter_reactive_ble: ^5.3.0
   syncfusion_flutter_gauges: ^27.1.53
+  permission_handler: ^11.3.1
   
 
 dev_dependencies:
