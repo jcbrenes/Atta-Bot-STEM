@@ -17,7 +17,6 @@ dependencies:
   file_picker: ^8.0.7
 
   collection: ^1.15.0
-  flutter_blue: ^0.8.0
   flutter_blue_plus: ^1.31.13
   flutter_reactive_ble: ^5.3.0
   syncfusion_flutter_gauges: ^27.1.53
