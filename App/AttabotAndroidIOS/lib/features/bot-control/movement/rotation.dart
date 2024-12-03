@@ -173,9 +173,9 @@ class _RotationState extends State<Rotation> {
               style: TextStyle(
                   fontSize: 14, fontFamily: "Poppins", color: neutralWhite)),
           onPressed: () {
-            if (widget.direction == 'right') {
+            if (widget.direction == 'right' && _pointerValue > 0) {
               context.read<CommandService>().rotateRight(_pointerValue.toInt());
-            } else {
+            } else if (widget.direction == 'left' && _pointerValue > 0) {
               context.read<CommandService>().rotateLeft(_pointerValue.toInt());
             }
             Navigator.of(context).pop();

@@ -26,7 +26,7 @@ void showInfoDialog(BuildContext context, String message) {
                   message,
                   style: const TextStyle(
                     fontWeight: FontWeight.w500,
-                      fontSize: 24,
+                      fontSize: 20,
                       fontFamily: "Poppins",
                       color: neutralWhite),
                 ),
