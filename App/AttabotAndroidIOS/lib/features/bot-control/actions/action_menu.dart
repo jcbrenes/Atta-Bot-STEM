@@ -46,10 +46,10 @@ class _ActionMenuState extends State<ActionMenu> {
           onPressed: () {
             obstacleDetection = !obstacleDetection;
             if (obstacleDetection) {
-              showInfoDialog(context, 'Se ha activado la detección de obstáculos');
+              showInfoDialog(context, 'Se ha activado \nla detección \nde obstáculos');
               context.read<CommandService>().activateObjectDetection();
             } else {
-              showInfoDialog(context, 'Se ha desactivado la detección de obstáculos');
+              showInfoDialog(context, 'Se ha desactivado \nla detección \nde obstáculos');
               context.read<CommandService>().deactivateObjectDetection();
             }
           },

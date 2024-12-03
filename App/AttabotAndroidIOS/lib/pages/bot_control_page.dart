@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog.dart';
 import 'package:proyecto_tec/features/bot-control/actions/action_menu.dart';
-import 'package:proyecto_tec/features/bot-control/actions/text_menu.dart';
+import 'package:proyecto_tec/features/bot-control/actions/history_menu.dart';
 import 'package:proyecto_tec/features/bot-control/movement/movement_menu.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 
@@ -52,7 +52,7 @@ class _BotControlPageState extends State<BotControlPage> {
               SizedBox(height: 50),
               ActionMenu(),
               SizedBox(height: 20),
-              TextMenu(),
+              HistoryMenu(),
             ]),
       ),
     );
