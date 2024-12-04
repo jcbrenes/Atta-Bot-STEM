@@ -51,19 +51,19 @@ class _CycleDialogState extends State<CycleDialog> {
       ),
       actions: [
         TextButton(
+          child: const Text("Cancelar",
+              style: TextStyle(
+                  fontSize: 14, fontFamily: "Poppins", color: neutralWhite)),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+        TextButton(
           child: const Text("Aceptar",
               style: TextStyle(
                   fontSize: 14, fontFamily: "Poppins", color: neutralWhite)),
           onPressed: () {
             context.read<CommandService>().initCycle(cycleCount);
-            Navigator.of(context).pop();
-          },
-        ),
-        TextButton(
-          child: const Text("Cancelar",
-              style: TextStyle(
-                  fontSize: 14, fontFamily: "Poppins", color: neutralWhite)),
-          onPressed: () {
             Navigator.of(context).pop();
           },
         ),

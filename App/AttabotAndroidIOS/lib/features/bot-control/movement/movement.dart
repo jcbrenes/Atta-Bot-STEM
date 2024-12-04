@@ -50,23 +50,23 @@ class _MovementState extends State<Movement> {
       ),
       actions: [
         TextButton(
-          child: const Text("Aceptar",
-              style: TextStyle(
-                  fontSize: 14, fontFamily: "Poppins", color: neutralWhite)),
-          onPressed: () {
-            if (widget.direction == 'forward') {
-              context.read<CommandService>().moveForward(distance);
-            } else {
-              context.read<CommandService>().moveBackward(distance);
-            }
-            Navigator.of(context).pop();
-          },
-        ),
-        TextButton(
           child: const Text("Cancelar",
               style: TextStyle(
                   fontSize: 14, fontFamily: "Poppins", color: neutralWhite)),
           onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+        TextButton(
+          child: const Text("Aceptar",
+              style: TextStyle(
+                  fontSize: 14, fontFamily: "Poppins", color: neutralWhite)),
+          onPressed: () {
+            if (widget.direction == 'forward' && distance > 0) {
+              context.read<CommandService>().moveForward(distance);
+            } else if (widget.direction == 'backward' && distance > 0) {
+              context.read<CommandService>().moveBackward(distance);
+            }
             Navigator.of(context).pop();
           },
         ),
