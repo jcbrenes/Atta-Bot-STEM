@@ -7,6 +7,6 @@ abstract class BluetoothServiceInterface {
   Future<bool> initBluetooth();
   Future<void> startDeviceScan();
   Future<void> connectToDevice(BluetoothDevice device);
-  Future<void> sendStringToDevice(String message);
+  Future<bool> sendStringToDevice(String message);
   Future<void> disconnectDevice(BluetoothDevice device);
 }

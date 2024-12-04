@@ -34,12 +34,21 @@ class _ActionMenuState extends State<ActionMenu> {
       DependencyManager().getBluetoothService();
   NavigationService navService = DependencyManager().getNavigationService();
 
-
   void showEmptyHistorySnackBar(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Aún no hay comandos'),
         duration: Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void showMessageSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -92,10 +101,12 @@ class _ActionMenuState extends State<ActionMenu> {
           onPressed: () {
             obstacleDetection = !obstacleDetection;
             if (obstacleDetection) {
-              showInfoDialog(context, 'Se ha activado \nla detección \nde obstáculos');
+              showInfoDialog(
+                  context, 'Se ha activado \nla detección \nde obstáculos');
               context.read<CommandService>().activateObjectDetection();
             } else {
-              showInfoDialog(context, 'Se ha desactivado \nla detección \nde obstáculos');
+              showInfoDialog(
+                  context, 'Se ha desactivado \nla detección \nde obstáculos');
               context.read<CommandService>().deactivateObjectDetection();
             }
           },
@@ -120,15 +131,22 @@ class _ActionMenuState extends State<ActionMenu> {
               showEmptyHistorySnackBar(context);
               return;
             }
-            await btService.sendStringToDevice(
-                context.read<CommandService>().getCommandsBotString());
+
+            // Send commands to the bot using the bluetooth service
+            String message =
+                context.read<CommandService>().getCommandsBotString();
+            bool messageSent = await btService.sendStringToDevice(message);
+            if (!messageSent) {
+              showMessageSnackBar("Error al enviar comandos");
+            }
+            showMessageSnackBar("Comandos enviados");
           },
           child: Image.asset(
             'assets/button_icons/play.png',
             color: neutralWhite,
             width: 27,
             height: 26,
-            alignment: Alignment(1,0),
+            alignment: Alignment(1, 0),
           ),
         ),
         SizedBox(width: 16),
