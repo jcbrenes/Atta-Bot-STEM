@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:proyecto_tec/features/home-page/components/home_page_title.dart';
 import 'package:proyecto_tec/pages/bot_control_page.dart';
+import 'package:proyecto_tec/pages/landing_page.dart';
 import 'package:proyecto_tec/shared/components/ui/buttons/default_button_factory.dart';
 import 'package:proyecto_tec/shared/components/ui/separators/separator_factory.dart';
 import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
@@ -28,7 +29,7 @@ class _HomePageState extends State<HomePage> {
     if (isBluetoothEnabled) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const BotControlPage()),
+        MaterialPageRoute(builder: (context) => const LandingPage()),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
