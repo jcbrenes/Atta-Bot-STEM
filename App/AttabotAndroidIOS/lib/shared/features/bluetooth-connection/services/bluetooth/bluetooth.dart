@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:proyecto_tec/config/app_config.dart';
 import 'package:proyecto_tec/shared/interfaces/bluetooth/bluetooth_service_interface.dart';
@@ -100,18 +101,19 @@ class FlutterBluePlusService implements BluetoothServiceInterface {
   }
 
   @override
-  Future<void> sendStringToDevice(String message) async {
+  Future<bool> sendStringToDevice(String message) async {
     if (writableCharacteristic == null) {
-      print(
-          'No writable characteristic available. Please connect to the device first.');
-      return;
+      debugPrint('No writable characteristic found!');
+      return false;
     }
 
     try {
       await writableCharacteristic?.write(utf8.encode(message));
-      print('Sent message: $message');
+      debugPrint('Sent message: $message');
+      return true;
     } catch (e) {
-      print('Error sending message: $e');
+      debugPrint('Error sending message: $e');
+      return false;
     }
   }
 
