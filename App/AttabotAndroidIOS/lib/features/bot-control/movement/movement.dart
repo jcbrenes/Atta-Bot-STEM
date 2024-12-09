@@ -36,7 +36,7 @@ class _MovementState extends State<Movement> {
           textAlign: TextAlign.center,
           style: const TextStyle(
             fontWeight: FontWeight.w500,
-            fontSize: 26,
+            fontSize: 24,
             fontFamily: "Poppins",
             color: neutralWhite,
           )),

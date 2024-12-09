@@ -94,7 +94,7 @@ class _ActionMenuState extends State<ActionMenu> {
           },
           icon: IconType.cycle,
         ),
-        SizedBox(width: 16),
+        SizedBox(width: 10),
         DefaultButtonFactory.getButton(
           color: primaryYellow,
           buttonType: ButtonType.primaryIcon,
@@ -112,7 +112,7 @@ class _ActionMenuState extends State<ActionMenu> {
           },
           icon: IconType.obstacleDetection,
         ),
-        SizedBox(width: 16),
+        SizedBox(width: 10),
         TextButton(
           style: TextButton.styleFrom(
             alignment: Alignment.center,
@@ -131,7 +131,7 @@ class _ActionMenuState extends State<ActionMenu> {
               showEmptyHistorySnackBar(context);
               return;
             }
-
+    
             // Send commands to the bot using the bluetooth service
             String message =
                 context.read<CommandService>().getCommandsBotString();
@@ -144,12 +144,12 @@ class _ActionMenuState extends State<ActionMenu> {
           child: Image.asset(
             'assets/button_icons/play.png',
             color: neutralWhite,
-            width: 27,
-            height: 26,
+            width: 20,
+            height: 20,
             alignment: Alignment(1, 0),
           ),
         ),
-        SizedBox(width: 16),
+        SizedBox(width: 10),
         DefaultButtonFactory.getButton(
           color: secondaryPink,
           buttonType: ButtonType.primaryIcon,
@@ -165,7 +165,7 @@ class _ActionMenuState extends State<ActionMenu> {
           },
           icon: IconType.pencil,
         ),
-        SizedBox(width: 16),
+        SizedBox(width: 10),
         DefaultButtonFactory.getButton(
           color: secondaryPurple,
           buttonType: ButtonType.primaryIcon,

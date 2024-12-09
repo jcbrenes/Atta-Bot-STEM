@@ -11,89 +11,81 @@ class MovementMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            SizedBox(
-              height: 60,
-            ),
-            DefaultButtonFactory.getButton(
-              color: primaryBlue,
-              buttonType: ButtonType.primaryIcon,
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return const Movement(direction: "forward");
-                  },
-                );
-              },
-              icon: IconType.forwardArrow,
-            ),
-            SizedBox(
-              height: 25,
-            ),
-            Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  DefaultButtonFactory.getButton(
-                    color: primaryOrange,
-                    buttonType: ButtonType.primaryIcon,
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return const Rotation(direction: "left");
-                        },
-                      );
+      child: Expanded(
+        child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              DefaultButtonFactory.getButton(
+                color: primaryBlue,
+                buttonType: ButtonType.primaryIcon,
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return const Movement(direction: "forward");
                     },
-                    icon: IconType.rotateLeft,
-                  ),
-                  SizedBox(
-                    width: 25,
-                  ),
-                  SizedBox(
-                    height: 300,
-                    width: 200,
-                    child: Image.asset("assets/generic_atta_bot.png",
-                        color: neutralWhite, fit: BoxFit.cover),
-                  ),
-                  SizedBox(
-                    width: 25,
-                  ),
-                  DefaultButtonFactory.getButton(
-                    color: primaryOrange,
-                    buttonType: ButtonType.primaryIcon,
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return const Rotation(direction: "right");
-                        },
-                      );
+                  );
+                },
+                icon: IconType.forwardArrow,
+              ),
+              SizedBox(height: 10),
+              Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    DefaultButtonFactory.getButton(
+                      color: primaryOrange,
+                      buttonType: ButtonType.primaryIcon,
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return const Rotation(direction: "left");
+                          },
+                        );
+                      },
+                      icon: IconType.rotateLeft,
+                    ),
+                    Expanded(
+                      child: SizedBox(
+                        child: Image.asset(
+                          "assets/generic_atta_bot.png",
+                          color: neutralWhite,
+                          fit: BoxFit.scaleDown,
+                        ),
+                      ),
+                    ),
+                    DefaultButtonFactory.getButton(
+                      color: primaryOrange,
+                      buttonType: ButtonType.primaryIcon,
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return const Rotation(direction: "right");
+                          },
+                        );
+                      },
+                      icon: IconType.rotateRight,
+                    ),
+                  ]),
+              SizedBox(height: 10),
+              DefaultButtonFactory.getButton(
+                color: primaryBlue,
+                buttonType: ButtonType.primaryIcon,
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return const Movement(direction: "backward");
                     },
-                    icon: IconType.rotateRight,
-                  ),
-                ]),
-            SizedBox(
-              height: 25,
-            ),
-            DefaultButtonFactory.getButton(
-              color: primaryBlue,
-              buttonType: ButtonType.primaryIcon,
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return const Movement(direction: "backward");
-                  },
-                );
-              },
-              icon: IconType.backwardArrow,
-            ),
-          ]),
+                  );
+                },
+                icon: IconType.backwardArrow,
+              ),
+            ]),
+      ),
     );
   }
 }

@@ -19,7 +19,6 @@ class _BotControlPageState extends State<BotControlPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('Atta-Bot Educativo'),
         titleTextStyle: const TextStyle(
@@ -28,7 +27,8 @@ class _BotControlPageState extends State<BotControlPage> {
             fontFamily: 'Poppins',
             fontWeight: FontWeight.w600),
         automaticallyImplyLeading: false,
-        backgroundColor: Colors.transparent,
+        
+        backgroundColor: neutralDarkBlue,
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.bluetooth),
@@ -55,16 +55,20 @@ class _BotControlPageState extends State<BotControlPage> {
         color: neutralDarkBlue,
         alignment: Alignment.center,
         padding: const EdgeInsets.all(0),
-        child: const Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              MovementMenu(),
-              SizedBox(height: 50),
-              ActionMenu(),
-              SizedBox(height: 20),
-              HistoryMenu(),
-            ]),
+        child: const Expanded(
+          child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Spacer(),
+                MovementMenu(),
+                Expanded(child: SizedBox(height: 20)),
+                ActionMenu(),
+                SizedBox(height: 10),
+                HistoryMenu(),
+                Spacer()
+              ]),
+        ),
       ),
     );
   }

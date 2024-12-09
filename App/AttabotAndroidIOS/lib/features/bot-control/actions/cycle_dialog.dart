@@ -33,7 +33,7 @@ class _CycleDialogState extends State<CycleDialog> {
           textAlign: TextAlign.center,
           style: TextStyle(
             fontWeight: FontWeight.w500,
-            fontSize: 26,
+            fontSize: 24,
             fontFamily: "Poppins",
             color: neutralWhite,
           )),

@@ -54,67 +54,67 @@ class _CycleInputState extends State<CycleInput> {
     return SizedBox(
       height: 100,
       width: 500,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          DefaultButtonFactory.getButton(
-            color: secondaryIconGreen,
-            buttonType: ButtonType.secondaryIcon,
-            onPressed: () {
-              int currentValue = int.parse(_controller.text);
-              if (currentValue > 1) {
-                currentValue--;
-                _controller.text = currentValue.toString();
-                handleOnChanged(_controller.text);
-              }
-            },
-            icon: IconType.remove,
-          ),
-          const SizedBox(width: 10),
-          SizedBox(
-            width: 150,
-            child: IntrinsicWidth(
-              child: TextFormField(
-                  controller: _controller,
-                  focusNode: _focusNode,
-                  textAlign: TextAlign.center,
-                  keyboardType: TextInputType.number,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 28,
-                      fontFamily: "Poppins",
-                      color: neutralWhite),
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.all(value == 1 ? 0 : 10),
-                    suffixText: value == 1 ? "vez    " : "veces",
-                    suffixStyle: const TextStyle(
+      child: Expanded(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            DefaultButtonFactory.getButton(
+              color: secondaryIconGreen,
+              buttonType: ButtonType.secondaryIcon,
+              onPressed: () {
+                int currentValue = int.parse(_controller.text);
+                if (currentValue > 1) {
+                  currentValue--;
+                  _controller.text = currentValue.toString();
+                  handleOnChanged(_controller.text);
+                }
+              },
+              icon: IconType.remove,
+            ),
+            SizedBox(
+              width: 150,
+              child: IntrinsicWidth(
+                child: TextFormField(
+                    controller: _controller,
+                    focusNode: _focusNode,
+                    textAlign: TextAlign.center,
+                    keyboardType: TextInputType.number,
+                    style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 28,
                         fontFamily: "Poppins",
                         color: neutralWhite),
-                  ),
-                  inputFormatters: [
-                    LengthLimitingTextInputFormatter(2), // Limit to 2 digits
-                    FilteringTextInputFormatter.digitsOnly, // Allow only digits
-                  ],
-                  onChanged: handleOnChanged),
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.all(value == 1 ? 0 : 10),
+                      suffixText: value == 1 ? "vez    " : "veces",
+                      suffixStyle: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 28,
+                          fontFamily: "Poppins",
+                          color: neutralWhite),
+                    ),
+                    inputFormatters: [
+                      LengthLimitingTextInputFormatter(2), // Limit to 2 digits
+                      FilteringTextInputFormatter.digitsOnly, // Allow only digits
+                    ],
+                    onChanged: handleOnChanged),
+              ),
             ),
-          ),
-          const SizedBox(width: 10),
-          DefaultButtonFactory.getButton(
-            color: secondaryIconGreen,
-            buttonType: ButtonType.secondaryIcon,
-            onPressed: () {
-              int currentValue = int.parse(_controller.text);
-              currentValue++;
-              _controller.text = currentValue.toString();
-              handleOnChanged(_controller.text);
-            },
-            icon: IconType.add,
-          ),
-        ],
+            DefaultButtonFactory.getButton(
+              color: secondaryIconGreen,
+              buttonType: ButtonType.secondaryIcon,
+              onPressed: () {
+                int currentValue = int.parse(_controller.text);
+                currentValue++;
+                _controller.text = currentValue.toString();
+                handleOnChanged(_controller.text);
+              },
+              icon: IconType.add,
+            ),
+          ],
+        ),
       ),
     );
   }

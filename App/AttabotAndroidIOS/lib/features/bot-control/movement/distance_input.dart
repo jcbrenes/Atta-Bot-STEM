@@ -43,66 +43,68 @@ class _DistanceInputState extends State<DistanceInput> {
     return SizedBox(
       height: 100,
       width: 500,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.max,
-        children: [
-          DefaultButtonFactory.getButton(
-            color: secondaryIconBlue,
-            buttonType: ButtonType.secondaryIcon,
-            onPressed: () {
-              int currentValue = int.parse(_controller.text);
-              if (currentValue > 0) {
-                currentValue--;
-                _controller.text = currentValue.toString();
-                handleOnChanged(_controller.text);
-              }
-            },
-            icon: IconType.remove,
-          ),
-          SizedBox(width: 30),
-          SizedBox(
-            width: 110,
-            child: TextFormField(
-                controller: _controller,
-                focusNode: _focusNode,
-                textAlign: TextAlign.center,
-                keyboardType: TextInputType.number,
-                style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 28,
-                    fontFamily: "Poppins",
-                    color: neutralWhite),
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  suffixText: " cm",
-                  suffixStyle: TextStyle(
+      child: Expanded(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            DefaultButtonFactory.getButton(
+              color: secondaryIconBlue,
+              buttonType: ButtonType.secondaryIcon,
+              onPressed: () {
+                int currentValue = int.parse(_controller.text);
+                if (currentValue > 0) {
+                  currentValue--;
+                  _controller.text = currentValue.toString();
+                  handleOnChanged(_controller.text);
+                }
+              },
+              icon: IconType.remove,
+            ),
+            SizedBox(width: 20,),
+            SizedBox(
+              width: 110,
+              child: TextFormField(
+                  controller: _controller,
+                  focusNode: _focusNode,
+                  textAlign: TextAlign.center,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 28,
                       fontFamily: "Poppins",
                       color: neutralWhite),
-                ),
-                inputFormatters: [
-                  LengthLimitingTextInputFormatter(3), // Limit to 3 digits
-                  FilteringTextInputFormatter.digitsOnly, // Allow only digits
-                ],
-                onChanged: handleOnChanged),
-          ),
-          SizedBox(width: 30),
-          DefaultButtonFactory.getButton(
-            color: secondaryIconBlue,
-            buttonType: ButtonType.secondaryIcon,
-            onPressed: () {
-              int currentValue = int.parse(_controller.text);
-              if (currentValue < 999) {
-                currentValue++;
-                _controller.text = currentValue.toString();
-                handleOnChanged(_controller.text);
-              }
-            },
-            icon: IconType.add,
-          ),
-        ],
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    suffixText: " cm",
+                    suffixStyle: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 28,
+                        fontFamily: "Poppins",
+                        color: neutralWhite),
+                  ),
+                  inputFormatters: [
+                    LengthLimitingTextInputFormatter(3), // Limit to 3 digits
+                    FilteringTextInputFormatter.digitsOnly, // Allow only digits
+                  ],
+                  onChanged: handleOnChanged),
+            ),
+            SizedBox(width: 20,),
+            DefaultButtonFactory.getButton(
+              color: secondaryIconBlue,
+              buttonType: ButtonType.secondaryIcon,
+              onPressed: () {
+                int currentValue = int.parse(_controller.text);
+                if (currentValue < 999) {
+                  currentValue++;
+                  _controller.text = currentValue.toString();
+                  handleOnChanged(_controller.text);
+                }
+              },
+              icon: IconType.add,
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -46,7 +46,7 @@ class _RotationState extends State<Rotation> {
           textAlign: TextAlign.center,
           style: const TextStyle(
             fontWeight: FontWeight.w500,
-            fontSize: 26,
+            fontSize: 24,
             fontFamily: "Poppins",
             color: neutralWhite,
           )),
@@ -57,106 +57,106 @@ class _RotationState extends State<Rotation> {
       content: SizedBox(
         height: 140,
         width: 500,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            DefaultButtonFactory.getButton(
-              color: secondaryIconOrange,
-              buttonType: ButtonType.secondaryIcon,
-              onPressed: () {
-                setState(() {
-                  _pointerValue =
-                      (_pointerValue == 0) ? 359 : _pointerValue - 1;
-                });
-              },
-              icon: IconType.remove,
-            ),
-            SizedBox(width: 10),
-            SizedBox(
-              height: 400,
-              width: 150,
-              child: SfRadialGauge(
-                  axes: <RadialAxis>[
-                    RadialAxis(
-                      showFirstLabel: false,
-                      showLastLabel: false,
-                      isInversed: widget.direction == 'right' ? false : true,
-                      showLabels: false,
-                      showTicks: false,
-                      maximum: 359,
-                      minimum: 0,
-                      startAngle: 270,
-                      endAngle: 270,
-                      showAxisLine: false,
-                      pointers: <GaugePointer>[
-                        RangePointer(
-                          value: _pointerValue,
-                          cornerStyle: CornerStyle.bothFlat,
-                          width: 1,
-                          sizeUnit: GaugeSizeUnit.factor,
-                          color: gaugeColor,
-                        ),
-                        NeedlePointer(
-                          value: _pointerValue,
-                          needleColor: neutralWhite,
-                          needleEndWidth: 1,
-                          needleStartWidth: 1,
-                          needleLength: 1,
-                          lengthUnit: GaugeSizeUnit.factor,
-                          enableDragging: true,
-                          onValueChanged: onValueChanged,
-                          knobStyle: KnobStyle(knobRadius: 0),
-                        ),
-                        MarkerPointer(
-                          value: _pointerValue,
-                          markerType: MarkerType.triangle,
-                          color: neutralWhite,
-                          markerHeight: 10,
-                          markerWidth: 10,
-                          offsetUnit: GaugeSizeUnit.factor,
-                          enableDragging: true,
-                          markerOffset: -0.15,
-                          onValueChanged: onValueChanged,
-                        ),
-                      ],
-                      annotations: [
-                        GaugeAnnotation(
-                            widget: Container(
-                          width: 70,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: neutralDarkBlueAD,
-                            borderRadius: BorderRadius.circular(100),
+        child: Expanded(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              DefaultButtonFactory.getButton(
+                color: secondaryIconOrange,
+                buttonType: ButtonType.secondaryIcon,
+                onPressed: () {
+                  setState(() {
+                    _pointerValue =
+                        (_pointerValue == 0) ? 359 : _pointerValue - 1;
+                  });
+                },
+                icon: IconType.remove,
+              ),
+              SizedBox(
+                height: 400,
+                width: 150,
+                child: SfRadialGauge(
+                    axes: <RadialAxis>[
+                      RadialAxis(
+                        showFirstLabel: false,
+                        showLastLabel: false,
+                        isInversed: widget.direction == 'right' ? false : true,
+                        showLabels: false,
+                        showTicks: false,
+                        maximum: 359,
+                        minimum: 0,
+                        startAngle: 270,
+                        endAngle: 270,
+                        showAxisLine: false,
+                        pointers: <GaugePointer>[
+                          RangePointer(
+                            value: _pointerValue,
+                            cornerStyle: CornerStyle.bothFlat,
+                            width: 1,
+                            sizeUnit: GaugeSizeUnit.factor,
+                            color: gaugeColor,
                           ),
-                        )),
-                        GaugeAnnotation(
-                          widget: Text(
-                            '${_pointerValue.toInt()}°',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: neutralWhite,
+                          NeedlePointer(
+                            value: _pointerValue,
+                            needleColor: neutralWhite,
+                            needleEndWidth: 1,
+                            needleStartWidth: 1,
+                            needleLength: 1,
+                            lengthUnit: GaugeSizeUnit.factor,
+                            enableDragging: true,
+                            onValueChanged: onValueChanged,
+                            knobStyle: KnobStyle(knobRadius: 0),
+                          ),
+                          MarkerPointer(
+                            value: _pointerValue,
+                            markerType: MarkerType.triangle,
+                            color: neutralWhite,
+                            markerHeight: 10,
+                            markerWidth: 10,
+                            offsetUnit: GaugeSizeUnit.factor,
+                            enableDragging: true,
+                            markerOffset: -0.15,
+                            onValueChanged: onValueChanged,
+                          ),
+                        ],
+                        annotations: [
+                          GaugeAnnotation(
+                              widget: Container(
+                            width: 70,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: neutralDarkBlueAD,
+                              borderRadius: BorderRadius.circular(100),
+                            ),
+                          )),
+                          GaugeAnnotation(
+                            widget: Text(
+                              '${_pointerValue.toInt()}°',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: neutralWhite,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-            ),
-            SizedBox(width: 10),
-            DefaultButtonFactory.getButton(
-              color: secondaryIconOrange,
-              buttonType: ButtonType.secondaryIcon,
-              onPressed: () {
-                setState(() {
-                  _pointerValue =
-                      (_pointerValue == 359) ? 0 : _pointerValue + 1;
-                });
-              },
-              icon: IconType.add,
-            ),
-          ],
+                        ],
+                      ),
+                    ],
+                  ),
+              ),
+              DefaultButtonFactory.getButton(
+                color: secondaryIconOrange,
+                buttonType: ButtonType.secondaryIcon,
+                onPressed: () {
+                  setState(() {
+                    _pointerValue =
+                        (_pointerValue == 359) ? 0 : _pointerValue + 1;
+                  });
+                },
+                icon: IconType.add,
+              ),
+            ],
+          ),
         ),
       ),
       actions: [
