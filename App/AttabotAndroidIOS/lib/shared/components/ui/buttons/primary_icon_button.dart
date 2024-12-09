@@ -7,6 +7,7 @@ class PrimaryIconButton extends StatefulWidget {
     required this.child,
     required this.onPressed,
     required this.color,
+    this.disabled = false,
     required this.verticalPadding,
     required this.horizontalPadding,
     required this.borderWidth,
@@ -16,6 +17,7 @@ class PrimaryIconButton extends StatefulWidget {
   final Widget child;
   final VoidCallback onPressed;
   final Color color;
+  final bool disabled;
   final double horizontalPadding;
   final double verticalPadding;
   final double borderWidth;
@@ -52,7 +54,7 @@ class _PrimaryIconButtonState extends State<PrimaryIconButton> {
             vertical: widget.verticalPadding,
             horizontal: widget.horizontalPadding),
         decoration: BoxDecoration(
-          color: _isPressed ? widget.color : Colors.transparent,
+          color: widget.disabled ? widget.color : (_isPressed ? widget.color : Colors.transparent),
           border: Border.all(
             color: neutralWhite,
             width: widget.borderWidth,

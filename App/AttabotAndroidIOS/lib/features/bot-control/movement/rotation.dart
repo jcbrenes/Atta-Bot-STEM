@@ -105,7 +105,7 @@ class _RotationState extends State<Rotation> {
                             lengthUnit: GaugeSizeUnit.factor,
                             enableDragging: true,
                             onValueChanged: onValueChanged,
-                            knobStyle: KnobStyle(knobRadius: 0),
+                            knobStyle: const KnobStyle(knobRadius: 0),
                           ),
                           MarkerPointer(
                             value: _pointerValue,
@@ -132,7 +132,7 @@ class _RotationState extends State<Rotation> {
                           GaugeAnnotation(
                             widget: Text(
                               '${_pointerValue.toInt()}°',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
                                 color: neutralWhite,
