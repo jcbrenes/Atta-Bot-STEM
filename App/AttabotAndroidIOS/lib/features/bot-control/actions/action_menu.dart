@@ -139,8 +139,10 @@ class _ActionMenuState extends State<ActionMenu> {
             pencilActive = !pencilActive;
             if (pencilActive) {
               showInfoDialog(context, 'Se ha activado \n el lápiz');
+              context.read<CommandService>().activateTool();
             } else {
               showInfoDialog(context, 'Se ha desactivado \n el lápiz');
+              context.read<CommandService>().deactivateTool();
             }
           },
           icon: IconType.pencil,
@@ -152,9 +154,9 @@ class _ActionMenuState extends State<ActionMenu> {
           onPressed: () {
             clawActive = !clawActive;
             if (clawActive) {
-              showInfoDialog(context, 'Se ha activado \n la garra');
+              showInfoDialog(context, 'Se ha activado \n _____');
             } else {
-              showInfoDialog(context, 'Se ha desactivado \n la garra');
+              showInfoDialog(context, 'Se ha desactivado \n _____');
             }
           },
           icon: IconType.claw,

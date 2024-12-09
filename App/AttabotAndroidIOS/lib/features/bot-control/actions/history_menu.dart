@@ -24,7 +24,7 @@ class _HistoryMenuState extends State<HistoryMenu> {
           builder: (context, commandService, child) {
             return Text(
               commandService.getLastCommand(),
-                style: TextStyle(fontSize: 20, color: neutralWhite, fontWeight: FontWeight.w500),
+                style: TextStyle(fontSize: 18, color: neutralWhite, fontWeight: FontWeight.w500),
             );
           },
         ),

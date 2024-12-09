@@ -4,7 +4,6 @@ import 'package:proyecto_tec/features/commands/components/instruction_tile.dart'
 import 'package:proyecto_tec/features/commands/components/history_dropdown_menu.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
 import 'package:proyecto_tec/shared/components/ui/buttons/text/button_factory.dart';
-import 'package:proyecto_tec/shared/styles/gradient_factory.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 
 class HistoryPage extends StatefulWidget {
@@ -27,12 +26,8 @@ class _HistoryPageState extends State<HistoryPage> {
     'background': Colors.transparent,
   };
 
-  final BoxDecoration bodyDecoration = BoxDecoration(
-    gradient: GradientFactory.getGradient(
-      startColor: primaryBlue,
-      endColor: neutralDarkBlue,
-      direction: GradientDirection.topToBottom,
-    ),
+  final BoxDecoration bodyDecoration = const BoxDecoration(
+    color: neutralDarkBlue,
   );
 
   final Map<String, Color> stateInstructions = {
