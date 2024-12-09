@@ -15,7 +15,7 @@ class HistoryPage extends StatefulWidget {
 
 class _HistoryPageState extends State<HistoryPage> {
   final Text pageTitle = const Text(
-    'Instrucciones',
+    'Historial de Instrucciones',
     style: TextStyle(
       fontWeight: FontWeight.bold,
     ),
@@ -108,6 +108,7 @@ class _HistoryPageState extends State<HistoryPage> {
     return Scaffold(
         appBar: AppBar(
             title: pageTitle,
+            automaticallyImplyLeading: false,
             foregroundColor: appbarColors['foreground'],
             backgroundColor: appbarColors['background'],
             actions: const <Widget>[InstructionHistoryDropdown()]),
