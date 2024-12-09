@@ -29,7 +29,7 @@ class MovementMenu extends StatelessWidget {
                 },
                 icon: IconType.forwardArrow,
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -70,7 +70,7 @@ class MovementMenu extends StatelessWidget {
                       icon: IconType.rotateRight,
                     ),
                   ]),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               DefaultButtonFactory.getButton(
                 color: primaryBlue,
                 buttonType: ButtonType.primaryIcon,

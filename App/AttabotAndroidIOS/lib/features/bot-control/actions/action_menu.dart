@@ -94,7 +94,7 @@ class _ActionMenuState extends State<ActionMenu> {
           },
           icon: IconType.cycle,
         ),
-        SizedBox(width: 10),
+        const SizedBox(width: 15),
         DefaultButtonFactory.getButton(
           color: primaryYellow,
           buttonType: ButtonType.primaryIcon,
@@ -112,12 +112,12 @@ class _ActionMenuState extends State<ActionMenu> {
           },
           icon: IconType.obstacleDetection,
         ),
-        SizedBox(width: 10),
+        const SizedBox(width: 15),
         TextButton(
           style: TextButton.styleFrom(
             alignment: Alignment.center,
-            padding: const EdgeInsets.all(24),
-            shape: CircleBorder(
+            padding: const EdgeInsets.all(18),
+            shape: const CircleBorder(
               side: BorderSide(color: neutralWhite, width: 4.0),
             ),
             iconColor: neutralWhite,
@@ -144,12 +144,12 @@ class _ActionMenuState extends State<ActionMenu> {
           child: Image.asset(
             'assets/button_icons/play.png',
             color: neutralWhite,
-            width: 20,
-            height: 20,
-            alignment: Alignment(1, 0),
+            width: 32,
+            height: 32,
+            alignment: const Alignment(0, 3),
           ),
         ),
-        SizedBox(width: 10),
+        const SizedBox(width: 15),
         DefaultButtonFactory.getButton(
           color: secondaryPink,
           buttonType: ButtonType.primaryIcon,
@@ -165,7 +165,7 @@ class _ActionMenuState extends State<ActionMenu> {
           },
           icon: IconType.pencil,
         ),
-        SizedBox(width: 10),
+        const SizedBox(width: 15),
         DefaultButtonFactory.getButton(
           color: secondaryPurple,
           buttonType: ButtonType.primaryIcon,

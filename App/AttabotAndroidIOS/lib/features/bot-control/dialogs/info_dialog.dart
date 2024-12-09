@@ -9,7 +9,7 @@ void showInfoDialog(BuildContext context, String message) {
           buttonPadding: const EdgeInsets.all(20.0),
           actionsPadding: const EdgeInsets.fromLTRB(20, 20, 30, 10),
           contentPadding: const EdgeInsets.fromLTRB(0, 40, 0, 20),
-          title: Text(" "),
+          title: const Text(" "),
           backgroundColor: neutralDarkBlueAD,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24.0),
