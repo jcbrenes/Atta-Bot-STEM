@@ -2,13 +2,19 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:proyecto_tec/screens/ventanaInicio.dart';
-import 'package:proyecto_tec/screens/ventanaHistorial.dart';
+import 'package:proyecto_tec/features/commands/services/command_service.dart';
+import 'package:proyecto_tec/pages/home_page.dart';
+import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
+import 'package:proyecto_tec/shared/features/permissions/services/permission.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final PermissionService permissionService = DependencyManager().getPermissionService();
+await permissionService.requestPermissions();
+
   runApp(
     ChangeNotifierProvider(
-      create: (context) => Historial(),
+      create: (context) => CommandService(),
       child: const AttaBotApp(),
     ),
   );
@@ -19,12 +25,18 @@ class AttaBotApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      //theme: ThemeData(fontFamily: 'Poppins'),
-      home: pantallaInicio(),
+      home: const HomePage(),
+      theme: ThemeData(
+        textTheme: const TextTheme(
+          bodyMedium: TextStyle(fontFamily: 'Poppins'),
+          displayMedium: TextStyle(fontFamily: 'Poppins'),
+          headlineMedium: TextStyle(fontFamily: 'Poppins'),
+          labelMedium: TextStyle(fontFamily: 'Poppins'),
+          titleMedium: TextStyle(fontFamily: 'Poppins'),
+        ),
+      ),
     );
   }
 }
-
