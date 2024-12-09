@@ -51,7 +51,7 @@ El proyecto utiliza una estructura basada en Screaming Architecture y componente
         - page2.dart
 ```
 
-- **Shared**: Contiene los componentesm servicios e interfaces compartidos entre diferentes funcionalidades, como botones, inputs, etc.
+- **Shared**: Contiene los componentes servicios e interfaces compartidos entre diferentes funcionalidades, como botones, inputs, etc.
 
 ```
     - components
