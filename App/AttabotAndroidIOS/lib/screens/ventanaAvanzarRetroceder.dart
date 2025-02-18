@@ -2,10 +2,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:proyecto_tec/features/commands/services/command_service.dart';
 import 'package:proyecto_tec/screens/ventanaHistorial.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
-
 
 /// Define el esqueleto para una ventana de diálogo personalizada.
 abstract class VentanaBase extends StatefulWidget {
@@ -19,7 +19,6 @@ abstract class VentanaBase extends StatefulWidget {
   @override
   _VentanaBaseState createState() => _VentanaBaseState();
 }
-
 
 /// Define el estado para una ventana de diálogo personalizada.
 class _VentanaBaseState extends State<VentanaBase> {
@@ -35,7 +34,8 @@ class _VentanaBaseState extends State<VentanaBase> {
     _tiempo = Timer.periodic(const Duration(milliseconds: 33), (timer) {
       setState(() {
         numero += cambio;
-        if (numero < 0) { //aca es un limitador para el numero no pase de 0 o de 300, que solo sea de 0 a 300
+        if (numero < 0) {
+          //aca es un limitador para el numero no pase de 0 o de 300, que solo sea de 0 a 300
           numero = 0;
         } else if (numero > 300) {
           numero = 300;
@@ -59,10 +59,13 @@ class _VentanaBaseState extends State<VentanaBase> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: const Color(0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
+      backgroundColor: const Color(
+          0xFFBBCEF1), // Establecer el color de fondo del AlertDialog
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10.0), // Ajustar la curvatura de las esquinas
-        side: const BorderSide(color: Colors.white, width: 5.0), // Agregar borde blanco
+        borderRadius:
+            BorderRadius.circular(10.0), // Ajustar la curvatura de las esquinas
+        side: const BorderSide(
+            color: Colors.white, width: 5.0), // Agregar borde blanco
       ),
 
       title: _crearTitulo(),
@@ -86,7 +89,6 @@ class _VentanaBaseState extends State<VentanaBase> {
     );
   }
 
-
   /// Crea el TextField de la ventana de diálogo.
   Widget _crearTextField() {
     return SizedBox(
@@ -100,7 +102,8 @@ class _VentanaBaseState extends State<VentanaBase> {
               controller: _controller,
               keyboardType: TextInputType.number,
               inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'^\d{0,3}$')), //validacion de caracteres en el textfield
+                FilteringTextInputFormatter.allow(RegExp(
+                    r'^\d{0,3}$')), //validacion de caracteres en el textfield
               ],
               onChanged: _onChanged,
               textAlign: TextAlign.center,
@@ -114,7 +117,6 @@ class _VentanaBaseState extends State<VentanaBase> {
               ),
             ),
           ),
-
           const Text(
             'cm',
             style: TextStyle(
@@ -126,9 +128,6 @@ class _VentanaBaseState extends State<VentanaBase> {
       ),
     );
   }
-
-
-
 
   /// Maneja el cambio de valor en el TextField.
   void _onChanged(String value) {
@@ -173,15 +172,20 @@ class _VentanaBaseState extends State<VentanaBase> {
       TextButton(
         child: const Text('Cancelar'),
         onPressed: () {
-
           Navigator.of(context).pop();
         },
       ),
       TextButton(
         child: const Text('Aceptar'),
         onPressed: () {
-          Provider.of<Historial>(context, listen: false)// Se obtiene una instancia del proveedor 'Historial' y se añade un nuevo evento a este.
-              .addEvento('${widget.accion} $numero cm');// El evento es una cadena de texto que contiene la acción realizada y la distancia en centímetros.
+          switch (widget.accion) {
+            case 'Avanzar':
+              context.read<CommandService>().moveForward(numero);
+              break;
+            case 'Retroceder':
+              context.read<CommandService>().moveBackward(numero);
+              break;
+          }
           Navigator.of(context).pop();
         },
       ),
@@ -191,12 +195,10 @@ class _VentanaBaseState extends State<VentanaBase> {
   /// Crea el contenido de la ventana de diálogo.
   Widget _crearContenido() {
     return Row(
-
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: <Widget>[
         _crearBoton(-1, Icons.remove),
         _crearTextField(),
-
         _crearBoton(1, Icons.add),
       ],
     );
@@ -235,9 +237,7 @@ class _VentanaBaseState extends State<VentanaBase> {
       ),
     );
   }
-
 }
-
 
 /// Representa una ventana de diálogo para avanzar.
 class ventanaAvanzar extends VentanaBase {
@@ -250,7 +250,6 @@ class ventanaAvanzar extends VentanaBase {
   String get accion => 'Avanzar';
 }
 
-
 /// Representa una ventana de diálogo para retroceder.
 class ventanaRetroceder extends VentanaBase {
   const ventanaRetroceder({Key? key}) : super(key: key);
@@ -260,5 +259,4 @@ class ventanaRetroceder extends VentanaBase {
 
   @override
   String get accion => 'Retroceder';
-
 }

@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:proyecto_tec/features/commands/services/command_service.dart';
 import 'package:proyecto_tec/screens/ventanaHistorial.dart';
 
 /// Punto de entrada de la aplicación.
@@ -126,7 +127,9 @@ class _RotacionDerechaState extends State<RotacionDerecha> {
                       textAlign: TextAlign.center,
                       onChanged: (value) {
                         final numeroGrados = int.tryParse(value);
-                        if (numeroGrados != null && numeroGrados >= 0 && numeroGrados <= 360) {
+                        if (numeroGrados != null &&
+                            numeroGrados >= 0 &&
+                            numeroGrados <= 360) {
                           setState(() {
                             _rotacion = numeroGrados / 360;
                           });
@@ -136,7 +139,8 @@ class _RotacionDerechaState extends State<RotacionDerecha> {
                             builder: (context) {
                               return AlertDialog(
                                 title: const Text('Error'),
-                                content: const Text('Por favor, ingrese valores entre 0 y 360.'),
+                                content: const Text(
+                                    'Por favor, ingrese valores entre 0 y 360.'),
                                 actions: <Widget>[
                                   TextButton(
                                     child: const Text('OK'),
@@ -188,8 +192,7 @@ class BotonGirarDerecha extends StatelessWidget {
         ),
       ),
       onPressed: () {
-        Provider.of<Historial>(context, listen: false)
-            .addEvento("Girar ${(rotacion * 360).truncate()} grados derecha");
+        context.read<CommandService>().rotateRight((rotacion * 360).truncate());
         Navigator.of(context).pop();
       },
       child: const Text(
@@ -330,4 +333,3 @@ class ArcoPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
-

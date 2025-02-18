@@ -5,7 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart' as flutter_blue;
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:provider/provider.dart';
-import 'package:proyecto_tec/features/components/plane_simulation.dart';
+import 'package:proyecto_tec/features/commands/services/command_service.dart';
+import 'package:proyecto_tec/pages/history_page.dart';
 import 'package:proyecto_tec/screens/ventanaGirarDerecha.dart';
 import 'package:proyecto_tec/screens/ventanaHistorial.dart';
 import 'package:proyecto_tec/screens/ventanaGirarIzquierda.dart';
@@ -131,10 +132,6 @@ class _pantallaControlRobotState extends State<pantallaControlRobot> {
               ),
             ),
           ),
-          endDrawer: SizedBox(
-            width: MediaQuery.of(context).size.width * 1,
-            child: const ventanaHistorial(),
-          ),
         ));
   }
 }
@@ -157,13 +154,13 @@ class textfieldUltimaAccion extends StatelessWidget {
         // Delineado blanco en el contorno
         color: Colors.transparent,
       ),
-      child: Consumer<Historial>(
+      child: Consumer<CommandService>(
         builder: (context, historial, child) {
           return Center(
             child: Text(
               // lo fillea con la ultima accion del historial
-              historial.historial.isNotEmpty
-                  ? historial.historial.last
+              historial.commandHistory.isNotEmpty
+                  ? historial.commandHistory.last.toUiString()
                   : 'No hay acciones recientes',
               style: const TextStyle(
                 color: Colors.white,
@@ -414,7 +411,11 @@ class botonAbrirMenu extends StatelessWidget {
         icon: Icon(Icons.article_rounded),
         color: Colors.white,
         onPressed: () {
-          scaffoldKey.currentState?.openEndDrawer();
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const HistoryPage(),
+            ),
+          );
         },
         iconSize: 20,
         padding: EdgeInsets.zero,
@@ -649,12 +650,11 @@ class _BotonEjecutarState extends State<BotonEjecutar> {
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _optionRadioTile(setState, 'Simulation'),
                   _optionRadioTile(setState, 'AttaBotSTEM1'),
                   _optionRadioTile(setState, 'AttaBotSTEM2'),
                   _optionRadioTile(setState, 'AttaBotSTEM3'),
                   _optionRadioTile(setState, 'AttaBotSTEM4'),
-                  _optionRadioTile(setState, 'AttaBotSTEM5')
+                  _optionRadioTile(setState, 'AttaBotSTEM5'),
                 ],
               ),
               actions: [
@@ -669,19 +669,8 @@ class _BotonEjecutarState extends State<BotonEjecutar> {
                   onPressed: () {
                     if (!globals.isPressed) {
                       Navigator.of(context).pop();
-                      if (_selectedOption == 'Simulation') {
-                        /// Opens a dialog with the bot simulation
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) => const AlertDialog(
-                            title: Text("Simulación"),
-                            content: PlaneSimulation(),
-                          ),
-                        );
-                      }
-                      else {
-                        _executeAction(_selectedOption); // Ejecutar la acción seleccionada
-                      }
+                      _executeAction(
+                          _selectedOption); // Ejecutar la acción seleccionada
                     } else {
                       showDialog(
                         context: context,
@@ -1073,10 +1062,7 @@ class _BotonCambioColorCicloState extends State<BotonCambioColorCiclo> {
                 );
               },
             );
-            Provider.of<Historial>(context,
-                    listen:
-                        false) //agrega Fin del ciclo al historial si se toco 2 veces
-                .addEvento('Fin del ciclo');
+            context.read<CommandService>().endCycle();
           }
         },
         style: ElevatedButton.styleFrom(
@@ -1144,8 +1130,7 @@ class _DialogoCicloState extends State<DialogoCiclo> {
           child: const Text('Realizar ciclo'),
           onPressed: () {
             globals.isPressed = !globals.isPressed;
-            Provider.of<Historial>(context, listen: false).addEvento(
-                'Inicio de ciclo, $cantidadDeVeces ciclos'); // envia la info al historial
+            context.read<CommandService>().initCycle(cantidadDeVeces); // envia la info al historial
             Navigator.of(context).pop();
           },
         ),
@@ -1181,10 +1166,14 @@ class _BotonDeteccionObstaculosState extends State<BotonDeteccionObstaculos> {
           setState(() {
             _isActivated = !_isActivated;
           });
-          Provider.of<Historial>(context, listen: false).addEvento(
-              _isActivated //envia la informacion aca si se activa o se desactiva
-                  ? 'Detección de obstáculos activada'
-                  : 'Fin detección de obstáculos');
+          switch (_isActivated) {
+            case true:
+              context.read<CommandService>().activateObjectDetection();
+              break;
+            case false:
+              context.read<CommandService>().deactivateObjectDetection();
+              break;
+          }
           showDialog(
             context: context,
             builder: (BuildContext context) {
