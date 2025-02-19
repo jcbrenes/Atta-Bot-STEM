@@ -103,7 +103,7 @@ bool obstaculo_detectado=false;
 bool paro_emergencia=false;
 
 //variables para comunicación Bluetooth
-string mensajeBLE="ATINIHEINIHEFINATFIN";
+string mensajeBLE="ATINIAV020GD030CI003RE010GI090CIFINATFIN";  
 BLEService servicio("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
 BLEStringCharacteristic caracteristico("beb5483e-36e1-4688-b7f5-ea07361b26a8", BLERead | BLEWrite, 512);
 //char nombreBLErobot= "AttaBotSTEM";
@@ -456,7 +456,7 @@ void Interpreta_mensajeBLE (string mensaje) {
         
         //if (comando.compare("ATINI")==0) {
         if (comando == "ATINI"){
-
+          inst_actual = 0;
         
         }else if (comando == "ATFIN"){
           inst_final = i/5;
