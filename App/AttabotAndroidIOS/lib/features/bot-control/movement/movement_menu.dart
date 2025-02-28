@@ -29,7 +29,7 @@ class MovementMenu extends StatelessWidget {
                 },
                 icon: IconType.forwardArrow,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 15),
               Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -47,15 +47,17 @@ class MovementMenu extends StatelessWidget {
                       },
                       icon: IconType.rotateLeft,
                     ),
-                    Expanded(
-                      child: SizedBox(
-                        child: Image.asset(
-                          "assets/generic_atta_bot.png",
-                          color: neutralWhite,
-                          fit: BoxFit.scaleDown,
-                        ),
+                    SizedBox(width: 15),
+                    Container(
+                      width: 200,
+                      height: 250,
+                      child: Image.asset(
+                        "assets/generic_atta_bot.png",
+                        color: neutralWhite,
+                        fit: BoxFit.scaleDown,
                       ),
                     ),
+                    SizedBox(width: 15),
                     DefaultButtonFactory.getButton(
                       color: primaryOrange,
                       buttonType: ButtonType.primaryIcon,
@@ -70,7 +72,7 @@ class MovementMenu extends StatelessWidget {
                       icon: IconType.rotateRight,
                     ),
                   ]),
-              const SizedBox(height: 10),
+              const SizedBox(height: 15),
               DefaultButtonFactory.getButton(
                 color: primaryBlue,
                 buttonType: ButtonType.primaryIcon,

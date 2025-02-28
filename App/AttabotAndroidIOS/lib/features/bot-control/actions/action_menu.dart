@@ -81,18 +81,19 @@ class _ActionMenuState extends State<ActionMenu> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         DefaultButtonFactory.getButton(
-          color: secondaryGreen,
+          color: secondaryPink,
           buttonType: ButtonType.primaryIcon,
           onPressed: () {
-            initCycle = !initCycle;
-            if (initCycle) {
-              CycleDialog.show(context);
+            pencilActive = !pencilActive;
+            if (pencilActive) {
+              showInfoDialog(context, 'Se ha activado \n el lápiz');
+              context.read<CommandService>().activateTool();
             } else {
-              context.read<CommandService>().endCycle();
-              showInfoDialog(context, 'Se ha cerrado el ciclo');
+              showInfoDialog(context, 'Se ha desactivado \n el lápiz');
+              context.read<CommandService>().deactivateTool();
             }
           },
-          icon: IconType.cycle,
+          icon: IconType.pencil,
         ),
         const SizedBox(width: 15),
         DefaultButtonFactory.getButton(
@@ -113,12 +114,27 @@ class _ActionMenuState extends State<ActionMenu> {
           icon: IconType.obstacleDetection,
         ),
         const SizedBox(width: 15),
+        DefaultButtonFactory.getButton(
+          color: secondaryGreen,
+          buttonType: ButtonType.primaryIcon,
+          onPressed: () {
+            initCycle = !initCycle;
+            if (initCycle) {
+              CycleDialog.show(context);
+            } else {
+              context.read<CommandService>().endCycle();
+              showInfoDialog(context, 'Se ha cerrado el ciclo');
+            }
+          },
+          icon: IconType.cycle,
+        ),
+        const SizedBox(width: 15),
         TextButton(
           style: TextButton.styleFrom(
             alignment: Alignment.center,
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(22),
             shape: const CircleBorder(
-              side: BorderSide(color: neutralWhite, width: 4.0),
+              side: BorderSide(color: neutralWhite, width: 5.0),
             ),
             iconColor: neutralWhite,
           ),
@@ -131,7 +147,7 @@ class _ActionMenuState extends State<ActionMenu> {
               showEmptyHistorySnackBar(context);
               return;
             }
-    
+
             // Send commands to the bot using the bluetooth service
             String message =
                 context.read<CommandService>().getCommandsBotString();
@@ -144,40 +160,10 @@ class _ActionMenuState extends State<ActionMenu> {
           child: Image.asset(
             'assets/button_icons/play.png',
             color: neutralWhite,
-            width: 32,
-            height: 32,
+            width: 40,
+            height: 40,
             alignment: const Alignment(0, 3),
           ),
-        ),
-        const SizedBox(width: 15),
-        DefaultButtonFactory.getButton(
-          color: secondaryPink,
-          buttonType: ButtonType.primaryIcon,
-          onPressed: () {
-            pencilActive = !pencilActive;
-            if (pencilActive) {
-              showInfoDialog(context, 'Se ha activado \n el lápiz');
-              context.read<CommandService>().activateTool();
-            } else {
-              showInfoDialog(context, 'Se ha desactivado \n el lápiz');
-              context.read<CommandService>().deactivateTool();
-            }
-          },
-          icon: IconType.pencil,
-        ),
-        const SizedBox(width: 15),
-        DefaultButtonFactory.getButton(
-          color: secondaryPurple,
-          buttonType: ButtonType.primaryIcon,
-          onPressed: () {
-            clawActive = !clawActive;
-            if (clawActive) {
-              showInfoDialog(context, 'Se ha activado \n _____');
-            } else {
-              showInfoDialog(context, 'Se ha desactivado \n _____');
-            }
-          },
-          icon: IconType.claw,
         ),
       ],
     );

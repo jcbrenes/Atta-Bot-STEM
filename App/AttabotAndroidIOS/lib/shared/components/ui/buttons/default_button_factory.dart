@@ -26,11 +26,11 @@ class DefaultButtonFactory {
     IconType? icon,
     required Color color,
     required ButtonType buttonType,
-    double? iconSize = 32,
-    double borderWidth = 4,
+    double? iconSize = 26,
+    double borderWidth = 3.5,
     double verticalPadding = 16,
     double horizontalPadding = 16,
-    double borderRadius = 16,
+    double borderRadius = 14,
     required void Function() onPressed,
   }) {
     Widget buttonData;

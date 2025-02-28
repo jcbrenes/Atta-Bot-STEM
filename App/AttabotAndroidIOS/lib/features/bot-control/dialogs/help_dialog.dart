@@ -281,42 +281,6 @@ class HelpDialog {
                     ),
                   ),
                 ),
-                ListTile(
-                  contentPadding: const EdgeInsets.fromLTRB(10, 0, 0, 0),
-                  leading: PrimaryIconButton(
-                    borderRadius: 6,
-                    borderWidth: 3,
-                    horizontalPadding: 10,
-                    verticalPadding: 10,
-                    color: secondaryPink,
-                    disabled: true,
-                    onPressed: () {},
-                    child: Image.asset(
-                      'assets/button_icons/claw.png',
-                      color: neutralWhite,
-                      height: 20,
-                      width: 20,
-                    ),
-                  ),
-                  title: RichText(
-                    text: const TextSpan(
-                      text: '  Activar garra ',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: neutralWhite,
-                          fontFamily: 'Poppins'),
-                      children: <TextSpan>[
-                        TextSpan(
-                          text: 'del AttaBot',
-                          style: TextStyle(
-                              fontWeight: FontWeight.normal,
-                              color: neutralWhite,
-                              fontFamily: 'Poppins'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
                 Spacer(),
                 ListTile(
                   contentPadding: const EdgeInsets.all(0),
