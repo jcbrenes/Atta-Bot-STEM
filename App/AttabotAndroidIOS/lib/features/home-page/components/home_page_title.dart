@@ -10,7 +10,6 @@ class HomePageTitle extends StatelessWidget {
         color: Colors.white,
         fontFamily: 'Poppins',
         fontWeight: FontWeight.w700,
-        height: 1.1,
       );
 
   get versionStyle => const TextStyle(
@@ -22,57 +21,69 @@ class HomePageTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 500,
-      height: 300,
-      child: Stack(
-        children: [
-          Align(
-            alignment: Alignment(-2.35, 0),
-            child: Image.asset(
-              'assets/hexagon.png',
-              width: 350,
-              height: 350,
-            ),
-          ),
-          Align(
-            alignment: Alignment.center,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Spacer(),
+        Flex(direction: Axis.horizontal, children: [
+          Container(
+            child: Stack(
+              alignment: Alignment.center,
               children: [
-                Text(
-                  "atta",
-                  style: titleStyle,
-                  textAlign: TextAlign.center,
+                Align(
+                  alignment: Alignment.center,
+                  child: Image.asset(
+                    'assets/hexagon.png',
+                    fit: BoxFit.fill,
+                  ),
                 ),
-                SizedBox(width: 5),
-                Text(
-                  "bot",
-                  style: titleStyle,
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-          Align(
-            alignment: Alignment(.6, .35),
-            child: RichText(
-                text: TextSpan(
-              text: 'educativo ',
-              style: versionStyle,
-              children: [
-                TextSpan(
-                  text: version,
-                  style: versionStyle.copyWith(
-                    fontWeight: FontWeight.w700,
+                Align(
+                  alignment: Alignment.center,
+                  child: Text(
+                    "atta",
+                    style: titleStyle,
                   ),
                 ),
               ],
-            )),
+            ),
           ),
-        ],
-      ),
+        ]),
+        Flex(direction: Axis.horizontal, children: [
+          Container(
+            child: Stack(
+              alignment: Alignment.bottomCenter,
+              children: [
+                Align(
+                  alignment: Alignment.center,
+                  child: Text(
+                    "bot",
+                    style: titleStyle,
+                  ),
+                ),
+                Align(
+                  child: Container(
+                    child: RichText(
+                        text: TextSpan(
+                      text: 'educativo ',
+                      style: versionStyle,
+                      children: [
+                        TextSpan(
+                          text: version,
+                          style: versionStyle.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    )),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ]),
+        Spacer(),
+      ],
     );
   }
 }
