@@ -9,6 +9,7 @@ import 'package:proyecto_tec/shared/styles/colors.dart';
 import 'package:proyecto_tec/shared/components/ui/buttons/default_button_factory.dart';
 import 'package:proyecto_tec/features/bot-control/actions/cycle_dialog.dart';
 import 'package:proyecto_tec/features/bot-control/dialogs/info_dialog.dart';
+import 'package:proyecto_tec/features/bot-control/dialogs/simulator_bluetooth_dialog.dart';
 // import provider and service commands
 import 'package:provider/provider.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
@@ -124,14 +125,15 @@ class _ActionMenuState extends State<ActionMenu> {
           ),
           onPressed: () async {
             if (!btService.isConnected) {
-              navService.goToBluetoothDevicesPage(context);
+              SimulatorBluetoothDialog.show(context);
+              //navService.goToBluetoothDevicesPage(context);
               return;
             }
             if (context.read<CommandService>().commandHistory.isEmpty) {
               showEmptyHistorySnackBar(context);
               return;
             }
-    
+
             // Send commands to the bot using the bluetooth service
             String message =
                 context.read<CommandService>().getCommandsBotString();
