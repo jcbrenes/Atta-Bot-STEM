@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 import 'package:proyecto_tec/shared/components/ui/buttons/primary_icon_button.dart';
-import 'package:proyecto_tec/shared/features/navigation/services/navigation.dart';
 import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
 
 class SimulatorBluetoothDialog {
@@ -41,7 +40,7 @@ class SimulatorBluetoothDialog {
             ),
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop();
+                navService.goToSimulatorPage(context);
                 ;
               },
               child: const Text(
