@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 // Primary colors
-const Color primaryBlue = Color(0xFF0C7BCC); // For movement
-const Color primaryOrange = Color(0xFFEC793B); // For rotation
+const Color primaryBlue = Color(0xFF0C7BCC); // For movement select
+const Color primaryOrange = Color(0xFFEC793B); // Logo color and rotation select
 const Color primaryYellow = Color(0xFFEEB417); // For obstacle detection
 
 // Secondary colors
@@ -12,7 +12,7 @@ const Color secondaryPink = Color(0xFFED80B5);
 
 // Neutral colors
 const Color neutralWhite = Color(0xFFF5F6F9); // Off-white
-const Color neutralDarkBlue = Color(0xFF152A51); // Text
+const Color neutralDarkBlue = Color(0xFF152A51); // Main app color
 const Color neutralDarkBlueAD = Color(0xFF3D5379); // Alert Dialog Background
 const Color neutralLightBlue = Color(0xFFDDE6F7);
 

@@ -81,7 +81,7 @@ class _ActionMenuState extends State<ActionMenu> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         DefaultButtonFactory.getButton(
-          color: secondaryPink,
+          color: secondaryPurple,
           buttonType: ButtonType.primaryIcon,
           onPressed: () {
             pencilActive = !pencilActive;

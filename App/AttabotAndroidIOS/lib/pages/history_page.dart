@@ -15,9 +15,12 @@ class HistoryPage extends StatefulWidget {
 
 class _HistoryPageState extends State<HistoryPage> {
   final Text pageTitle = const Text(
-    'Historial de Instrucciones',
+    'Instrucciones',
+    textAlign: TextAlign.left,
     style: TextStyle(
-      fontWeight: FontWeight.bold,
+      fontWeight: FontWeight.w700,
+      color: neutralWhite,
+      fontSize: 18,
     ),
   );
 
@@ -26,23 +29,37 @@ class _HistoryPageState extends State<HistoryPage> {
     'background': Colors.transparent,
   };
 
-  final BoxDecoration bodyDecoration = const BoxDecoration(
+  final BoxDecoration bodyDecoration = BoxDecoration(
     color: neutralDarkBlue,
+    borderRadius: BorderRadius.circular(20),
+    border: Border.all(
+      color: Colors.white,
+      width: 3,
+    ),
   );
 
   final Map<String, Color> stateInstructions = {
-    'Inicio de ciclo': const Color(0xFFF2B100),
-    'Fin del ciclo': const Color(0xFFF2B100),
-    'Detección de obstáculos activada': const Color.fromARGB(255, 11, 158, 158),
-    'Fin detección de obstáculos': const Color.fromARGB(255, 11, 158, 158),
+    'Ciclo': secondaryGreen,
+    'Detección': primaryYellow,
+    'Lápiz': secondaryPurple,
   };
 
   final Map<String, Color> movementInstructions = {
-    'Avanzar': const Color(0XFF006DBD),
-    'Retroceder': const Color(0XFF006DBD),
-    'derecha': const Color(0xFFF47E3E),
-    'izquierda': const Color(0xFFF47E3E),
+    'Avanzar': primaryBlue,
+    'Retroceder': primaryBlue,
+    'Girar': primaryOrange,
   };
+
+  final Map<String, double> paddingInstructions = {
+    'Ciclo abierto': 20,
+    'Ciclo cerrado': -20,
+    'Detección iniciada': 20,
+    'Detección finalizada': -20,
+    'Lápiz activado': 20,
+    'Lápiz desactivado': -20,
+  };
+
+  double tilePadding = 10;
 
   AnimatedBuilder reorderingAnimation(child, index, animation) {
     return AnimatedBuilder(
@@ -62,80 +79,133 @@ class _HistoryPageState extends State<HistoryPage> {
     List<String> instructionParts;
     instructionParts = instruction.split(' ');
 
-    Color? color = movementInstructions[instructionParts.first] ??
-        movementInstructions[instructionParts.last];
-
+    Color? color = movementInstructions[instructionParts.first];
     if (color != null) return color;
-    instructionParts = instruction.split(',');
     return stateInstructions[instructionParts.first] ?? Colors.white;
+  }
+
+  double processPadding(String instruction) {
+    double preSum;
+    String shortInstructions = instruction.split(' ').take(2).join(' ');
+    if (paddingInstructions[shortInstructions] != null) {
+      preSum = tilePadding;
+      tilePadding += paddingInstructions[shortInstructions]!;
+      if (paddingInstructions[shortInstructions]! < 0) {
+        return tilePadding;
+      }
+      return preSum;
+    }
+    return tilePadding;
   }
 
   Widget? setTrailing(String instruction, index) {
     if (instruction.contains('Fin del ciclo')) return null;
 
-    return IconButton(
-        icon: const Icon(Icons.delete),
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: const Text('Confirmación'),
-                content: const Text(
-                    '¿Estás seguro de que quieres eliminar este elemento?'),
-                actions: <Widget>[
-                  TextButtonFactory.getButton(
-                      type: TextButtonType.text,
-                      text: "Cancelar",
-                      handleButtonPress: () => Navigator.of(context).pop()),
-                  TextButtonFactory.getButton(
-                    type: TextButtonType.warning,
-                    text: "Eliminar",
-                    handleButtonPress: () {
-                      context.read<CommandService>().removeCommand(index);
-                      Navigator.of(context).pop();
-                    },
-                  )
-                ],
-              );
-            },
-          );
-        });
+    return Container(
+      height: 20,
+      child: IconButton(
+          padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+          icon: Icon(
+            Icons.delete,
+            color: Colors.grey[400],
+          ),
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text('Confirmación'),
+                  content: const Text(
+                      '¿Estás seguro de que quieres eliminar este elemento?'),
+                  actions: <Widget>[
+                    TextButtonFactory.getButton(
+                        type: TextButtonType.text,
+                        text: "Cancelar",
+                        handleButtonPress: () => Navigator.of(context).pop()),
+                    TextButtonFactory.getButton(
+                      type: TextButtonType.warning,
+                      text: "Eliminar",
+                      handleButtonPress: () {
+                        context.read<CommandService>().removeCommand(index);
+                        Navigator.of(context).pop();
+                      },
+                    )
+                  ],
+                );
+              },
+            );
+          }),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-            title: pageTitle,
-            automaticallyImplyLeading: false,
-            foregroundColor: appbarColors['foreground'],
-            backgroundColor: appbarColors['background'],
-            actions: const <Widget>[InstructionHistoryDropdown()]),
-        extendBodyBehindAppBar: true,
-        body: Container(
+      backgroundColor: neutralDarkBlue,
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 50, 20, 24),
+        child: Container(
           decoration: bodyDecoration,
           child: Consumer<CommandService>(
             builder: (context, historial, child) {
-              return ListView.builder(
-                itemCount: historial.commandHistory.length,
-                itemBuilder: (context, index) {
-                  return Column(
-                    children: [
-                      InstructionTile(
-                          key: ValueKey(historial.commandHistory[index]),
-                          color: processInstruction(
-                              historial.commandHistory[index].toUiString()),
-                          title: historial.commandHistory[index].toUiString(),
-                          trailing: setTrailing(
-                              historial.commandHistory[index].toUiString(),
-                              index)),
-                    ],
-                  );
-                },
+              return Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 5, 0, 0),
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 10),
+                        pageTitle,
+                        const Spacer(),
+                        InstructionHistoryDropdown(),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(0, 0, 20, 0),
+                      child: RawScrollbar(
+                        thumbVisibility: true,
+                        thumbColor: neutralWhite,
+                        radius: const Radius.circular(6),
+                        thickness: 7,
+                        trackVisibility: true,
+                        trackColor: neutralWhite.withOpacity(.3),
+                        trackRadius: const Radius.circular(6),
+                        padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+                        child: ListView.builder(
+                          itemCount: historial.commandHistory.length,
+                          padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+                          itemBuilder: (context, index) {
+                            return InstructionTile(
+                              key: ValueKey(historial.commandHistory[index]),
+                              color: processInstruction(
+                                historial.commandHistory[index].toUiString(),
+                              ),
+                              tilePadding: processPadding((historial
+                                  .commandHistory[index]
+                                  .toUiString())),
+                              title:
+                                  historial.commandHistory[index].toUiString(),
+                              trailing: setTrailing(
+                                historial.commandHistory[index].toUiString(),
+                                index,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                ],
               );
             },
           ),
-        ));
+        ),
+      ),
+    );
   }
 }

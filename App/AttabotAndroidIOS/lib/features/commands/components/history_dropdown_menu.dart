@@ -5,6 +5,7 @@ import 'package:proyecto_tec/features/commands/models/command.dart';
 import 'package:proyecto_tec/features/file-management/services/file_management_service.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
 import 'package:proyecto_tec/shared/components/ui/buttons/text/button_factory.dart';
+import 'package:proyecto_tec/shared/styles/colors.dart';
 
 class InstructionHistoryDropdown extends StatefulWidget {
   const InstructionHistoryDropdown({
@@ -231,7 +232,8 @@ class _InstructionHistoryDropdownState
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      icon: const Icon(Icons.menu),
+      color: neutralWhite,
+      icon: const Icon(Icons.menu_outlined),
       onPressed: () async {
         final value = await showMenu(
           context: this.context,

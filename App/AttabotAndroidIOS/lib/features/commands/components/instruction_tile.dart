@@ -1,45 +1,75 @@
 import 'package:flutter/material.dart';
+import 'package:proyecto_tec/shared/styles/colors.dart';
 
 class InstructionTile extends StatelessWidget {
   final Color color;
   final String title;
   final Widget? trailing;
-  
-  const InstructionTile({super.key, required this.color, required this.title, this.trailing});
+  final double tilePadding;
+
+  const InstructionTile(
+      {super.key,
+      required this.color,
+      required this.title,
+      this.trailing,
+      required this.tilePadding});
 
   double get tileMargin => 8;
 
   BoxDecoration get tileDecoration => BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: Colors.white,
-          width: 3,
-        ),
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            color,
-            const Color.fromRGBO(245, 248, 249, 0.6)
-          ], //Color(0xFFF5F8F9)],
-        ),
-      );
+      borderRadius: BorderRadius.circular(15), color: neutralWhite);
 
   TextStyle get titleTextStyle => const TextStyle(
-        fontWeight: FontWeight.bold,
-        color: Color(0xFF152A51),
+        fontWeight: FontWeight.w700,
+        backgroundColor: Colors.transparent,
+        color: neutralDarkBlue,
+        fontFamily: "Poppins",
+        fontSize: 13,
       );
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-        decoration: tileDecoration,
-        margin: EdgeInsets.all(tileMargin),
-        child: ListTile(
-          title: Text(
-            title,
-            style: titleTextStyle,
+    return Row(
+      children: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(10, 0, tilePadding, 0),
+          child: const Icon(
+            Icons.circle,
+            color: neutralWhite,
+            size: 6,
           ),
-          trailing: trailing,
-        ));
+        ),
+        Expanded(
+          child: Container(
+            decoration: tileDecoration,
+            margin: EdgeInsets.fromLTRB(0, tileMargin, 35, tileMargin),
+            padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+            child: ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Row(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.only(
+                        topRight: Radius.circular(15),
+                        bottomRight: Radius.circular(15),
+                      ),
+                      color: color.withOpacity(0.5),
+                    ),
+                    padding: const EdgeInsets.fromLTRB(15, 2, 8, 2),
+                    child: Text(
+                      title,
+                      style: titleTextStyle,
+                    ),
+                  ),
+                  const Spacer(), // Add this to push trailing widget to the end
+                  trailing ?? const SizedBox(),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
