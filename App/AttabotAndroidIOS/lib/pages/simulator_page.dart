@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:proyecto_tec/features/bot-control/actions/action_menu.dart';
 import 'package:proyecto_tec/features/bot-control/actions/history_menu.dart';
 import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog.dart';
+import 'package:proyecto_tec/features/bot-control/dialogs/simulator_actions_dialog.dart';
 import 'package:proyecto_tec/features/bot-control/movement/movement_menu.dart';
 import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
 import 'package:proyecto_tec/shared/features/navigation/services/navigation.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
+import 'package:proyecto_tec/features/commands/services/command_service.dart';
+import 'package:proyecto_tec/shared/components/ui/simulator/grid_simulator.dart'; // Asegúrate de la ruta correcta
 
 class SimulatorPage extends StatefulWidget {
   const SimulatorPage({super.key});
+
   @override
   State<SimulatorPage> createState() => _SimulatorPageState();
 }
@@ -23,10 +27,11 @@ class _SimulatorPageState extends State<SimulatorPage> {
       appBar: AppBar(
         title: const Text('Simulador'),
         titleTextStyle: const TextStyle(
-            color: neutralWhite,
-            fontSize: 20.0,
-            fontFamily: 'Poppins',
-            fontWeight: FontWeight.w600),
+          color: neutralWhite,
+          fontSize: 20.0,
+          fontFamily: 'Poppins',
+          fontWeight: FontWeight.w600,
+        ),
         automaticallyImplyLeading: false,
         backgroundColor: Colors.transparent,
         actions: <Widget>[
@@ -39,8 +44,22 @@ class _SimulatorPageState extends State<SimulatorPage> {
             ),
             color: neutralWhite,
             onPressed: () {
-              HelpDialog.show(context);
+              showSimulatorActionsDialog(context);
             },
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text(
+              'Cerrar',
+              style: TextStyle(
+                color: neutralWhite,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                fontFamily: 'Poppins',
+              ),
+            ),
           ),
         ],
       ),
@@ -48,18 +67,16 @@ class _SimulatorPageState extends State<SimulatorPage> {
         color: neutralDarkBlue,
         alignment: Alignment.center,
         padding: const EdgeInsets.all(0),
-        child: const Expanded(
-          child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(height: 70),
-                Spacer(),
-                Expanded(child: SizedBox(height: 10)),
-                Expanded(child: SizedBox(height: 15)),
-                HistoryMenu(),
-                Spacer()
-              ]),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            SizedBox(height: 70),
+            // Aquí se inserta el área de simulación
+            SimulationArea(),
+            SizedBox(height: 10),
+            HistoryMenu(),
+            Spacer(),
+          ],
         ),
       ),
     );
