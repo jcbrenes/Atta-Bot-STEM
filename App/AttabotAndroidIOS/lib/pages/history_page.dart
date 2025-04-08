@@ -85,21 +85,28 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   double processPadding(String instruction) {
-    double preSum;
-    String shortInstructions = instruction.split(' ').take(2).join(' ');
-    if (paddingInstructions[shortInstructions] != null) {
-      preSum = tilePadding;
-      tilePadding += paddingInstructions[shortInstructions]!;
-      if (paddingInstructions[shortInstructions]! < 0) {
-        return tilePadding;
-      }
-      return preSum;
+    String shortInstruction = instruction.split(' ').take(2).join(' ');
+    double preSum = tilePadding;
+    if (paddingInstructions[shortInstruction] != null && tilePadding < 30) {
+      tilePadding = tilePadding + paddingInstructions[shortInstruction]!;
     }
-    return tilePadding;
+    if (tilePadding < 0) tilePadding = 10;
+    if (shortInstruction == 'Ciclo cerrado' ||
+        shortInstruction == 'Detección finalizada' ||
+        shortInstruction == 'Lápiz desactivado') {
+      tilePadding = 10;
+      return tilePadding;
+    }
+    return preSum;
   }
 
   Widget? setTrailing(String instruction, index) {
-    if (instruction.contains('Fin del ciclo')) return null;
+    if (instruction == 'Ciclo cerrado' ||
+        instruction == "Detección finalizada" ||
+        instruction == "Lápiz desactivado") {
+      return null;
+    }
+    ;
 
     return Container(
       height: 20,
@@ -138,6 +145,91 @@ class _HistoryPageState extends State<HistoryPage> {
     );
   }
 
+  bool isValidMove(int oldIndex, int newIndex) {
+    // Get the CommandService and command history
+    final commandService = context.read<CommandService>();
+    final commands = commandService.commandHistory;
+
+    // Get the command being moved
+    final movingCommand = commands[oldIndex].toUiString();
+
+    // Check if this is a closing command (Ciclo cerrado, Detección finalizada, Lápiz desactivado)
+    if (movingCommand.contains('Ciclo cerrado') ||
+        movingCommand.contains('Detección finalizada') ||
+        movingCommand.contains('Lápiz desactivado')) {
+      // Determine the corresponding opening command type
+      String openingCommand;
+      if (movingCommand.contains('Ciclo cerrado')) {
+        openingCommand = 'Ciclo abierto';
+      } else if (movingCommand.contains('Detección finalizada')) {
+        openingCommand = 'Detección iniciada';
+      } else {
+        openingCommand = 'Lápiz activado';
+      }
+
+      // Find the latest opening command before this closing command
+      int openingIndex = -1;
+      for (int i = oldIndex - 1; i >= 0; i--) {
+        if (commands[i].toUiString().contains(openingCommand)) {
+          openingIndex = i;
+          break;
+        }
+      }
+
+      // If we found an opening command, ensure the closing command stays after it
+      if (openingIndex != -1 && newIndex <= openingIndex) {
+        return false;
+      }
+    }
+
+    // Check if this is an opening command (Ciclo abierto, Detección iniciada, Lápiz activado)
+    else if (movingCommand.contains('Ciclo abierto') ||
+        movingCommand.contains('Detección iniciada') ||
+        movingCommand.contains('Lápiz activado')) {
+      // Determine the corresponding closing command type
+      String closingCommand;
+      if (movingCommand.contains('Ciclo abierto')) {
+        closingCommand = 'Ciclo cerrado';
+      } else if (movingCommand.contains('Detección iniciada')) {
+        closingCommand = 'Detección finalizada';
+      } else {
+        closingCommand = 'Lápiz desactivado';
+      }
+
+      // Find the earliest closing command after this opening command
+      int closingIndex = -1;
+      for (int i = oldIndex + 1; i < commands.length; i++) {
+        if (commands[i].toUiString().contains(closingCommand)) {
+          closingIndex = i;
+          break;
+        }
+      }
+      if (closingIndex != -1 && newIndex >= closingIndex) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  Widget _proxyDecorator(Widget child, int index, Animation<double> animation) {
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (BuildContext context, Widget? child) {
+        return Material(
+          elevation: 8.0 * animation.value,
+          borderRadius: BorderRadius.circular(15),
+          color: Colors.transparent,
+          shadowColor: Colors.black.withOpacity(0.6),
+          child: Opacity(
+            opacity: 0.85,
+            child: child,
+          ),
+        );
+      },
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -162,37 +254,52 @@ class _HistoryPageState extends State<HistoryPage> {
                     ),
                   ),
                   Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(0, 0, 20, 0),
-                      child: RawScrollbar(
-                        thumbVisibility: true,
-                        thumbColor: neutralWhite,
-                        radius: const Radius.circular(6),
-                        thickness: 7,
-                        trackVisibility: true,
-                        trackColor: neutralWhite.withOpacity(.3),
-                        trackRadius: const Radius.circular(6),
-                        padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
-                        child: ListView.builder(
-                          itemCount: historial.commandHistory.length,
-                          padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
-                          itemBuilder: (context, index) {
-                            return InstructionTile(
-                              key: ValueKey(historial.commandHistory[index]),
-                              color: processInstruction(
-                                historial.commandHistory[index].toUiString(),
-                              ),
-                              tilePadding: processPadding((historial
-                                  .commandHistory[index]
-                                  .toUiString())),
-                              title:
-                                  historial.commandHistory[index].toUiString(),
-                              trailing: setTrailing(
-                                historial.commandHistory[index].toUiString(),
-                                index,
-                              ),
-                            );
-                          },
+                    child: ReorderableListView(
+                      proxyDecorator: _proxyDecorator,
+                      buildDefaultDragHandles: false,
+                      scrollController: ScrollController(),
+                      scrollDirection: Axis.vertical,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      onReorder: (oldIndex, newIndex) {
+                        // Ajustar el índice si se mueve hacia abajo
+                        if (oldIndex < newIndex) {
+                          newIndex -= 1;
+                        }
+                        // Obtener el CommandService
+                        final commandService = context.read<CommandService>();
+                        if (isValidMove(oldIndex, newIndex)) {
+                          setState(() {
+                            commandService.reorderCommand(oldIndex, newIndex);
+                          });
+                          tilePadding = 10;
+                        } else {
+                          // Mostrar un mensaje de error o manejar el caso no válido
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              duration: Durations.extralong4,
+                              content:
+                                  Center(child: Text('Movimiento no válido')),
+                            ),
+                          );
+                          return;
+                        }
+                      },
+                      // Generate all items at once instead of using itemBuilder
+                      children: List.generate(
+                        historial.commandHistory.length,
+                        (index) => InstructionTile(
+                          key: ValueKey('instruction_$index'),
+                          color: processInstruction(
+                            historial.commandHistory[index].toUiString(),
+                          ),
+                          tilePadding: processPadding(
+                              historial.commandHistory[index].toUiString()),
+                          title: historial.commandHistory[index].toUiString(),
+                          trailing: setTrailing(
+                            historial.commandHistory[index].toUiString(),
+                            index,
+                          ),
+                          index: index,
                         ),
                       ),
                     ),

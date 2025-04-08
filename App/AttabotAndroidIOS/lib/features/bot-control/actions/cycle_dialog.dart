@@ -21,7 +21,7 @@ class CycleDialog extends StatefulWidget {
 }
 
 class _CycleDialogState extends State<CycleDialog> {
-  int cycleCount = 0;
+  int cycleCount = 1;
 
   @override
   Widget build(BuildContext context) {

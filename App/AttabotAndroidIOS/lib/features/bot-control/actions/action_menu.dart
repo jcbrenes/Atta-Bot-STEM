@@ -22,10 +22,6 @@ class ActionMenu extends StatefulWidget {
 
 class _ActionMenuState extends State<ActionMenu> {
   String? selectedValue = ""; // Initial selected value
-  bool obstacleDetection = false;
-  bool pencilActive = false;
-  bool clawActive = false;
-  bool initCycle = false;
   int cycleCount = 1;
   late StreamSubscription scanSubscription;
   List<BluetoothDevice> devices = [];
@@ -77,6 +73,7 @@ class _ActionMenuState extends State<ActionMenu> {
 
   @override
   Widget build(BuildContext context) {
+    final commandService = context.read<CommandService>();
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -84,8 +81,7 @@ class _ActionMenuState extends State<ActionMenu> {
           color: secondaryPurple,
           buttonType: ButtonType.primaryIcon,
           onPressed: () {
-            pencilActive = !pencilActive;
-            if (pencilActive) {
+            if (!commandService.pencilActive) {
               showInfoDialog(context, 'Se ha activado \n el lápiz');
               context.read<CommandService>().activateTool();
             } else {
@@ -100,8 +96,7 @@ class _ActionMenuState extends State<ActionMenu> {
           color: primaryYellow,
           buttonType: ButtonType.primaryIcon,
           onPressed: () {
-            obstacleDetection = !obstacleDetection;
-            if (obstacleDetection) {
+            if (!commandService.pencilActive) {
               showInfoDialog(
                   context, 'Se ha activado \nla detección \nde obstáculos');
               context.read<CommandService>().activateObjectDetection();
@@ -118,8 +113,7 @@ class _ActionMenuState extends State<ActionMenu> {
           color: secondaryGreen,
           buttonType: ButtonType.primaryIcon,
           onPressed: () {
-            initCycle = !initCycle;
-            if (initCycle) {
+            if (!commandService.cycleActive) {
               CycleDialog.show(context);
             } else {
               context.read<CommandService>().endCycle();

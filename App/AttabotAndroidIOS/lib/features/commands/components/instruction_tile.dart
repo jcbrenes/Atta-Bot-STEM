@@ -6,13 +6,16 @@ class InstructionTile extends StatelessWidget {
   final String title;
   final Widget? trailing;
   final double tilePadding;
+  final int index;
 
-  const InstructionTile(
-      {super.key,
-      required this.color,
-      required this.title,
-      this.trailing,
-      required this.tilePadding});
+  const InstructionTile({
+    super.key,
+    required this.color,
+    required this.title,
+    this.trailing,
+    required this.tilePadding,
+    required this.index,
+  });
 
   double get tileMargin => 8;
 
@@ -29,8 +32,10 @@ class InstructionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    // Construimos el widget principal
+    Widget mainContent = Row(
       children: [
+        // Punto indicador (mantenido del original)
         Padding(
           padding: EdgeInsets.fromLTRB(10, 0, tilePadding, 0),
           child: const Icon(
@@ -39,15 +44,17 @@ class InstructionTile extends StatelessWidget {
             size: 6,
           ),
         ),
+        // Contenido principal del tile
         Expanded(
           child: Container(
             decoration: tileDecoration,
-            margin: EdgeInsets.fromLTRB(0, tileMargin, 35, tileMargin),
+            margin: EdgeInsets.fromLTRB(0, tileMargin, 25, tileMargin),
             padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
             child: ListTile(
               contentPadding: EdgeInsets.zero,
               title: Row(
                 children: [
+                  // Contenedor del título con color de fondo
                   Container(
                     decoration: BoxDecoration(
                       borderRadius: const BorderRadius.only(
@@ -56,13 +63,15 @@ class InstructionTile extends StatelessWidget {
                       ),
                       color: color.withOpacity(0.5),
                     ),
-                    padding: const EdgeInsets.fromLTRB(15, 2, 8, 2),
+                    padding: const EdgeInsets.fromLTRB(15, 2, 15, 2),
                     child: Text(
                       title,
                       style: titleTextStyle,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
                   ),
-                  const Spacer(), // Add this to push trailing widget to the end
+                  const Spacer(),
                   trailing ?? const SizedBox(),
                 ],
               ),
@@ -70,6 +79,11 @@ class InstructionTile extends StatelessWidget {
           ),
         ),
       ],
+    );
+
+    return ReorderableDragStartListener(
+      index: index,
+      child: mainContent,
     );
   }
 }
