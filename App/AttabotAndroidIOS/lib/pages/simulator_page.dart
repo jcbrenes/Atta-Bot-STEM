@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:proyecto_tec/features/bot-control/actions/action_menu.dart';
-import 'package:proyecto_tec/features/bot-control/actions/history_menu.dart';
-import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog.dart';
+import 'package:provider/provider.dart';
 import 'package:proyecto_tec/features/bot-control/dialogs/simulator_actions_dialog.dart';
-import 'package:proyecto_tec/features/bot-control/movement/movement_menu.dart';
+import 'package:proyecto_tec/features/commands/services/command_service.dart';
 import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
 import 'package:proyecto_tec/shared/features/navigation/services/navigation.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
-import 'package:proyecto_tec/features/commands/services/command_service.dart';
-import 'package:proyecto_tec/shared/components/ui/simulator/grid_simulator.dart'; // Asegúrate de la ruta correcta
+import 'package:proyecto_tec/shared/components/ui/simulator/grid_simulator.dart';
 
 class SimulatorPage extends StatefulWidget {
   const SimulatorPage({super.key});
@@ -19,11 +16,13 @@ class SimulatorPage extends StatefulWidget {
 
 class _SimulatorPageState extends State<SimulatorPage> {
   NavigationService navService = DependencyManager().getNavigationService();
+  String currentInstruction = '';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
+      backgroundColor: neutralDarkBlue,
+      extendBodyBehindAppBar: false,
       appBar: AppBar(
         title: const Text('Simulador'),
         titleTextStyle: const TextStyle(
@@ -34,15 +33,15 @@ class _SimulatorPageState extends State<SimulatorPage> {
         ),
         automaticallyImplyLeading: false,
         backgroundColor: Colors.transparent,
+        elevation: 0,
         actions: <Widget>[
           IconButton(
             icon: Image.asset(
-              'assets/button_icons/question_mark.png',
+              'assets/button_icons/carpeta_vacia.png',
               color: neutralWhite,
               height: 18,
               width: 18,
             ),
-            color: neutralWhite,
             onPressed: () {
               showSimulatorActionsDialog(context);
             },
@@ -63,20 +62,53 @@ class _SimulatorPageState extends State<SimulatorPage> {
           ),
         ],
       ),
-      body: Container(
-        color: neutralDarkBlue,
-        alignment: Alignment.center,
-        padding: const EdgeInsets.all(0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            SizedBox(height: 70),
-            // Aquí se inserta el área de simulación
-            SimulationArea(),
-            SizedBox(height: 10),
-            HistoryMenu(),
-            Spacer(),
-          ],
+      body: SafeArea(
+        child: Center(
+          child: Builder(
+            builder: (context) {
+              final instructions = context
+                  .read<CommandService>()
+                  .commandHistory
+                  .map((cmd) => cmd.toUiString())
+                  .toList();
+
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 20),
+                  SimulationArea(
+                    instructions: instructions,
+                    useImage:
+                        true, // 🔁 cámbialo a false si quieres el triángulo
+                    botImagePath: 'assets/generic_atta_bot.png',
+                    onInstructionChange: (instruction) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) {
+                          setState(() {
+                            currentInstruction = instruction;
+                          });
+                        }
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      currentInstruction,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
