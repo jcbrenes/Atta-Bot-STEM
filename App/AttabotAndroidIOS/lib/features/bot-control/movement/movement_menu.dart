@@ -18,6 +18,7 @@ class MovementMenu extends StatelessWidget {
             children: [
               DefaultButtonFactory.getButton(
                 color: primaryBlue,
+                iconSize: MediaQuery.of(context).size.width * 0.06,
                 buttonType: ButtonType.primaryIcon,
                 onPressed: () {
                   showDialog(
@@ -36,6 +37,7 @@ class MovementMenu extends StatelessWidget {
                   children: [
                     DefaultButtonFactory.getButton(
                       color: primaryOrange,
+                      iconSize: MediaQuery.of(context).size.width * 0.06,
                       buttonType: ButtonType.primaryIcon,
                       onPressed: () {
                         showDialog(
@@ -49,8 +51,8 @@ class MovementMenu extends StatelessWidget {
                     ),
                     SizedBox(width: 15),
                     Container(
-                      width: 200,
-                      height: 250,
+                      width: MediaQuery.of(context).size.width * 0.5,
+                      height: MediaQuery.of(context).size.width * 0.5,
                       child: Image.asset(
                         "assets/generic_atta_bot.png",
                         color: neutralWhite,
@@ -60,6 +62,7 @@ class MovementMenu extends StatelessWidget {
                     SizedBox(width: 15),
                     DefaultButtonFactory.getButton(
                       color: primaryOrange,
+                      iconSize: MediaQuery.of(context).size.width * 0.06,
                       buttonType: ButtonType.primaryIcon,
                       onPressed: () {
                         showDialog(
@@ -75,6 +78,7 @@ class MovementMenu extends StatelessWidget {
               const SizedBox(height: 15),
               DefaultButtonFactory.getButton(
                 color: primaryBlue,
+                iconSize: MediaQuery.of(context).size.width * 0.06,
                 buttonType: ButtonType.primaryIcon,
                 onPressed: () {
                   showDialog(

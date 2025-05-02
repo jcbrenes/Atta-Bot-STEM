@@ -79,6 +79,7 @@ class _ActionMenuState extends State<ActionMenu> {
       children: [
         DefaultButtonFactory.getButton(
           color: secondaryPurple,
+          iconSize: MediaQuery.of(context).size.width * 0.06,
           buttonType: ButtonType.primaryIcon,
           onPressed: () {
             if (!commandService.pencilActive) {
@@ -94,9 +95,10 @@ class _ActionMenuState extends State<ActionMenu> {
         const SizedBox(width: 15),
         DefaultButtonFactory.getButton(
           color: primaryYellow,
+          iconSize: MediaQuery.of(context).size.width * 0.06,
           buttonType: ButtonType.primaryIcon,
           onPressed: () {
-            if (!commandService.pencilActive) {
+            if (!commandService.obstacleDetection) {
               showInfoDialog(
                   context, 'Se ha activado \nla detección \nde obstáculos');
               context.read<CommandService>().activateObjectDetection();
@@ -111,6 +113,7 @@ class _ActionMenuState extends State<ActionMenu> {
         const SizedBox(width: 15),
         DefaultButtonFactory.getButton(
           color: secondaryGreen,
+          iconSize: MediaQuery.of(context).size.width * 0.06,
           buttonType: ButtonType.primaryIcon,
           onPressed: () {
             if (!commandService.cycleActive) {
@@ -154,8 +157,8 @@ class _ActionMenuState extends State<ActionMenu> {
           child: Image.asset(
             'assets/button_icons/play.png',
             color: neutralWhite,
-            width: 40,
-            height: 40,
+            width: MediaQuery.of(context).size.width > 600 ? 60 : 40,
+            height: MediaQuery.of(context).size.width > 600 ? 60 : 40,
             alignment: const Alignment(0, 3),
           ),
         ),

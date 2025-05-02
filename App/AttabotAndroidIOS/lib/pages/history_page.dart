@@ -53,10 +53,6 @@ class _HistoryPageState extends State<HistoryPage> {
   final Map<String, double> paddingInstructions = {
     'Ciclo abierto': 20,
     'Ciclo cerrado': -20,
-    'Detección iniciada': 20,
-    'Detección finalizada': -20,
-    'Lápiz activado': 20,
-    'Lápiz desactivado': -20,
   };
 
   double tilePadding = 10;
@@ -91,9 +87,7 @@ class _HistoryPageState extends State<HistoryPage> {
       tilePadding = tilePadding + paddingInstructions[shortInstruction]!;
     }
     if (tilePadding < 0) tilePadding = 10;
-    if (shortInstruction == 'Ciclo cerrado' ||
-        shortInstruction == 'Detección finalizada' ||
-        shortInstruction == 'Lápiz desactivado') {
+    if (shortInstruction == 'Ciclo cerrado') {
       tilePadding = 10;
       return tilePadding;
     }
@@ -254,52 +248,60 @@ class _HistoryPageState extends State<HistoryPage> {
                     ),
                   ),
                   Expanded(
-                    child: ReorderableListView(
-                      proxyDecorator: _proxyDecorator,
-                      buildDefaultDragHandles: false,
-                      scrollController: ScrollController(),
-                      scrollDirection: Axis.vertical,
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      onReorder: (oldIndex, newIndex) {
-                        // Ajustar el índice si se mueve hacia abajo
-                        if (oldIndex < newIndex) {
-                          newIndex -= 1;
-                        }
-                        // Obtener el CommandService
-                        final commandService = context.read<CommandService>();
-                        if (isValidMove(oldIndex, newIndex)) {
-                          setState(() {
-                            commandService.reorderCommand(oldIndex, newIndex);
-                          });
-                          tilePadding = 10;
-                        } else {
-                          // Mostrar un mensaje de error o manejar el caso no válido
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              duration: Durations.extralong4,
-                              content:
-                                  Center(child: Text('Movimiento no válido')),
+                    child: RawScrollbar(
+                      trackVisibility: true,
+                      thumbVisibility: true,
+                      controller: ScrollController(),
+                      interactive: true,
+                      radius: const Radius.circular(10),
+                      thumbColor: neutralWhite,
+                      trackColor: neutralWhite.withOpacity(0.2),
+                      trackRadius: Radius.circular(10),
+                      padding: EdgeInsets.fromLTRB(0, 0, 20, 0),
+                      child: ReorderableListView(
+                        proxyDecorator: _proxyDecorator,
+                        buildDefaultDragHandles: false,
+                        onReorder: (oldIndex, newIndex) {
+                          // Ajustar el índice si se mueve hacia abajo
+                          if (oldIndex < newIndex) {
+                            newIndex -= 1;
+                          }
+                          // Obtener el CommandService
+                          final commandService = context.read<CommandService>();
+                          if (isValidMove(oldIndex, newIndex)) {
+                            setState(() {
+                              commandService.reorderCommand(oldIndex, newIndex);
+                            });
+                            tilePadding = 10;
+                          } else {
+                            // Mostrar un mensaje de error o manejar el caso no válido
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                duration: Durations.extralong4,
+                                content:
+                                    Center(child: Text('Movimiento no válido')),
+                              ),
+                            );
+                            return;
+                          }
+                        },
+                        // Generate all items at once instead of using itemBuilder
+                        children: List.generate(
+                          historial.commandHistory.length,
+                          (index) => InstructionTile(
+                            key: ValueKey('instruction_$index'),
+                            color: processInstruction(
+                              historial.commandHistory[index].toUiString(),
                             ),
-                          );
-                          return;
-                        }
-                      },
-                      // Generate all items at once instead of using itemBuilder
-                      children: List.generate(
-                        historial.commandHistory.length,
-                        (index) => InstructionTile(
-                          key: ValueKey('instruction_$index'),
-                          color: processInstruction(
-                            historial.commandHistory[index].toUiString(),
+                            tilePadding: processPadding(
+                                historial.commandHistory[index].toUiString()),
+                            title: historial.commandHistory[index].toUiString(),
+                            trailing: setTrailing(
+                              historial.commandHistory[index].toUiString(),
+                              index,
+                            ),
+                            index: index,
                           ),
-                          tilePadding: processPadding(
-                              historial.commandHistory[index].toUiString()),
-                          title: historial.commandHistory[index].toUiString(),
-                          trailing: setTrailing(
-                            historial.commandHistory[index].toUiString(),
-                            index,
-                          ),
-                          index: index,
                         ),
                       ),
                     ),

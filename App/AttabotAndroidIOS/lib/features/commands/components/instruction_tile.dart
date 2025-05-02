@@ -48,7 +48,7 @@ class InstructionTile extends StatelessWidget {
         Expanded(
           child: Container(
             decoration: tileDecoration,
-            margin: EdgeInsets.fromLTRB(0, tileMargin, 25, tileMargin),
+            margin: EdgeInsets.fromLTRB(0, tileMargin, 40, tileMargin),
             padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
             child: ListTile(
               contentPadding: EdgeInsets.zero,
