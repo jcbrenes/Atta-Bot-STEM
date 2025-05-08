@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:proyecto_tec/features/bot-control/dialogs/simulator_actions_dialog.dart';
+import 'package:proyecto_tec/features/simulator/dialogs/simulator_actions_dialog.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
 import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
 import 'package:proyecto_tec/shared/features/navigation/services/navigation.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
-import 'package:proyecto_tec/shared/components/ui/simulator/grid_simulator.dart';
+import 'package:proyecto_tec/features/simulator/components/grid_simulator.dart';
 
 class SimulatorPage extends StatefulWidget {
   const SimulatorPage({super.key});
@@ -78,8 +78,7 @@ class _SimulatorPageState extends State<SimulatorPage> {
                   const SizedBox(height: 20),
                   SimulationArea(
                     instructions: instructions,
-                    useImage:
-                        true, // 🔁 cámbialo a false si quieres el triángulo
+                    useImage: false, // cámbiar a false si quieres el triángulo
                     botImagePath: 'assets/generic_atta_bot.png',
                     onInstructionChange: (instruction) {
                       WidgetsBinding.instance.addPostFrameCallback((_) {
