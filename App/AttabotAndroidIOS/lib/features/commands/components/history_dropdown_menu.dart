@@ -28,18 +28,24 @@ class _InstructionHistoryDropdownState
     PopupMenuItem(
       value: 1,
       child: Text('Guardar Instrucciones',
-          style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
+          style: TextStyle(
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.bold,
+              color: neutralWhite)),
     ),
     PopupMenuItem(
       value: 2,
       child: Text('Cargar Instrucciones',
-          style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
+          style: TextStyle(
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.bold,
+              color: neutralWhite)),
     ),
     PopupMenuItem(
       value: 3,
       child: Text('Borrar Instrucciones',
           style: TextStyle(
-              color: Colors.red,
+              color: neutralWhite,
               fontFamily: 'Poppins',
               fontWeight: FontWeight.bold)),
     )
@@ -239,12 +245,20 @@ class _InstructionHistoryDropdownState
           context: this.context,
           position: RelativeRect.fromLTRB(
             MediaQuery.of(this.context).size.width,
-            kToolbarHeight,
-            0.0,
+            kToolbarHeight + 20,
+            45,
             0.0,
           ),
           items: menuItems,
           elevation: 8.0,
+          color: neutralDarkBlueAD,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+            side: const BorderSide(
+              color: neutralWhite,
+              width: 4,
+            ),
+          ),
         );
 
         switch (value) {
