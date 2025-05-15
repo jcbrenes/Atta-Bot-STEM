@@ -7,7 +7,7 @@ using namespace std;
 const int samplingTime = 25; // units: miliseconds
 const float pulsesPerRev = 574; // number of pulses from a single encoder output
 const float wheelRadius = 22.5; // Wheel circumference = 139.5mm
-const float distanceWheelToWheel = 104;
+const float distanceWheelToWheel = 112; // actualizado a chasís v2.3 
 const float distanceCenterToWheel = distanceWheelToWheel / 2 ; // Turning radius of the robot, distance in mm between the center and one wheel
 
 // Constants for PID control with samplingTime = 25ms
@@ -251,9 +251,9 @@ void loop() {
             mensajeBLE = string( caracteristico.value().c_str() );
             caracteristico.writeValue("");
           }
-        } else {
+        } 
+      } else {
           flagBluetooth = 0;
-        }
       }
       //Lógica de estado siguiente
       if (!lecturaBotonStart ) {
@@ -276,12 +276,11 @@ void loop() {
         }else {
         inst_actual++;
         }
-      } else {
-        flagEjecucion = 0;
       }
       //Lógica estado siguiente
       if (!lecturaBotonStop  ||  inst_actual == inst_final) { 
         estado = ESPERA;
+        flagEjecucion = 0;
 
       }else if (instruccion == inst_Avanzar) {
         estado = MOVERSE;
@@ -362,9 +361,9 @@ void loop() {
 
     case DETENERSE: {
       
-      flagEjecucion = 0;
 
       if (!lecturaBotonStop || paro_emergencia || obstaculo_detectado) { //en caso de apretar STOP o detectar obstaculo
+        flagEjecucion = 0;
         configureHBridge(false, 3, 0, 0); //Detiene el robot 
       } // Ojo que la funcion avanzar y girar ya detiene el robot al final
         //configureHBridgeTurn(false, 3, 0, 0);
