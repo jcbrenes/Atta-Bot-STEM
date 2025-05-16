@@ -1,1 +1,24 @@
-*.lock
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+/App/AttabotAndroidIOS/android/app/.cxx/Debug/3s4f326q/armeabi-v7a/CMakeFiles/3.22.1-g37088a8-dirty/CompilerIdC
+/App/AttabotAndroidIOS/android/app/.cxx/Debug

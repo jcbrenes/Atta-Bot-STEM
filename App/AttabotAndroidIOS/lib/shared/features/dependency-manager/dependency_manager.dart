@@ -4,15 +4,14 @@ import 'package:proyecto_tec/shared/features/navigation/services/navigation.dart
 import 'package:proyecto_tec/shared/features/permissions/services/permission.dart';
 
 class DependencyManager {
-  
   static final DependencyManager _instance = DependencyManager._internal();
-  
+
   factory DependencyManager() {
     return _instance;
   }
-  
+
   DependencyManager._internal();
-  
+
   BluetoothServiceInterface getBluetoothService() {
     return FlutterBluePlusService();
   }
