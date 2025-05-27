@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:proyecto_tec/config/app_config.dart';
 import 'package:proyecto_tec/features/commands/models/command.dart';
 import 'package:proyecto_tec/features/file-management/services/file_management_service.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
-import 'package:proyecto_tec/shared/components/ui/buttons/text/button_factory.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 
 class InstructionHistoryDropdown extends StatefulWidget {
@@ -51,11 +49,31 @@ class _InstructionHistoryDropdownState
     )
   ];
 
+  TextStyle get contentTextStyle => const TextStyle(
+        fontFamily: 'Poppins',
+        color: neutralWhite,
+        fontSize: 14,
+      );
+  TextStyle get titleTextStyle => const TextStyle(
+        fontFamily: 'Poppins',
+        color: neutralWhite,
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+      );
+
   Future<void> openSaveFileDialog() async {
     await showDialog(
         context: context,
         builder: (context) => AlertDialog(
-              title: const Text('Guardar Instrucciones'),
+              title: Text(
+                'Guardar Instrucciones',
+                style: titleTextStyle,
+              ),
+              backgroundColor: neutralDarkBlueAD,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24.0),
+                side: const BorderSide(color: neutralWhite, width: 4.0),
+              ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -63,9 +81,16 @@ class _InstructionHistoryDropdownState
                     key: _fileNameKey,
                     child: TextFormField(
                       controller: fileNameController,
-                      decoration: const InputDecoration(
-                          border: AppConfig.textFormFieldBorder,
-                          label: Text("Nombre del archivo")),
+                      decoration: InputDecoration(
+                          border: const UnderlineInputBorder(
+                            borderSide: BorderSide(
+                              color: neutralWhite,
+                            ),
+                          ),
+                          label: Text(
+                            "Nombre del archivo",
+                            style: contentTextStyle,
+                          )),
                       validator: (value) =>
                           value!.isEmpty ? 'Campo requerido' : null,
                     ),
@@ -73,18 +98,27 @@ class _InstructionHistoryDropdownState
                 ],
               ),
               actions: [
-                TextButtonFactory.getButton(
-                  type: TextButtonType.outline,
-                  text: "Cancelar",
-                  handleButtonPress: () => Navigator.of(context).pop(),
+                TextButton(
+                  child: const Text("Cancelar",
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontFamily: "Poppins",
+                          color: neutralWhite)),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
                 ),
-                TextButtonFactory.getButton(
-                    type: TextButtonType.filled,
-                    text: "Guardar",
-                    handleButtonPress: () {
-                      onSaveFile();
-                      Navigator.of(context).pop();
-                    })
+                TextButton(
+                  child: const Text("Guardar",
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontFamily: "Poppins",
+                          color: neutralWhite)),
+                  onPressed: () {
+                    onSaveFile();
+                    Navigator.of(context).pop();
+                  },
+                ),
               ],
             ));
   }
@@ -93,25 +127,41 @@ class _InstructionHistoryDropdownState
     await showDialog(
         context: context,
         builder: (context) => AlertDialog(
-              title: const Text('Sobrescribir Instrucciones'),
-              content:
-                  const Text("El archivo ya existe, ¿deseas sobrescribirlo?"),
+              title: Text(
+                'Sobrescribir Instrucciones',
+                style: contentTextStyle,
+              ),
+              backgroundColor: neutralDarkBlueAD,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24.0),
+                side: const BorderSide(color: neutralWhite, width: 4.0),
+              ),
+              content: Text(
+                "El archivo ya existe, ¿deseas sobrescribirlo?",
+                style: contentTextStyle,
+              ),
               actions: [
-                TextButtonFactory.getButton(
-                  type: TextButtonType.outline,
-                  text: "Cancelar",
-                  handleButtonPress: () {
+                TextButton(
+                  child: const Text("Cancelar",
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontFamily: "Poppins",
+                          color: neutralWhite)),
+                  onPressed: () {
                     Navigator.of(context).pop();
                   },
                 ),
-                TextButtonFactory.getButton(
-                  type: TextButtonType.filled,
-                  text: "Aceptar",
-                  handleButtonPress: () {
+                TextButton(
+                  child: const Text("Guardar",
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontFamily: "Poppins",
+                          color: neutralWhite)),
+                  onPressed: () {
                     onOverwriteFile();
                     Navigator.of(context).pop();
                   },
-                )
+                ),
               ],
             ));
   }
@@ -127,7 +177,15 @@ class _InstructionHistoryDropdownState
     showDialog(
         context: context,
         builder: (context) => AlertDialog(
-            title: const Text('Cargar Instrucciones'),
+            title: Text(
+              'Cargar Instrucciones',
+              style: titleTextStyle,
+            ),
+            backgroundColor: neutralDarkBlueAD,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24.0),
+              side: const BorderSide(color: neutralWhite, width: 4.0),
+            ),
             content: SizedBox(
                 width: double.maxFinite,
                 child: SingleChildScrollView(
@@ -136,7 +194,8 @@ class _InstructionHistoryDropdownState
                       itemCount: fileNames.length,
                       itemBuilder: (context, index) {
                         return ListTile(
-                          title: Text(fileNames[index]),
+                          title:
+                              Text(fileNames[index], style: contentTextStyle),
                           onTap: () {
                             onLoadFile(fileNames[index]);
                             Navigator.of(context).pop();
@@ -151,24 +210,41 @@ class _InstructionHistoryDropdownState
         context: context,
         builder: (context) {
           return AlertDialog(
-            title: const Text('Borrar Instrucciones'),
-            content: const Text(
-                '¿Estás seguro de que deseas borrar todas las instrucciones?'),
+            title: Text(
+              'Borrar Instrucciones',
+              style: titleTextStyle,
+            ),
+            backgroundColor: neutralDarkBlueAD,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24.0),
+              side: const BorderSide(color: neutralWhite, width: 4.0),
+            ),
+            content: Text(
+              '¿Estás seguro de que deseas borrar todas las instrucciones?',
+              style: contentTextStyle,
+            ),
             actions: [
-              TextButtonFactory.getButton(
-                type: TextButtonType.outline,
-                text: "Cancelar",
-                handleButtonPress: () {
+              TextButton(
+                child: const Text("Cancelar",
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontFamily: "Poppins",
+                        color: neutralWhite)),
+                onPressed: () {
                   Navigator.of(context).pop();
                 },
               ),
-              TextButtonFactory.getButton(
-                  type: TextButtonType.warning,
-                  text: "Borrar",
-                  handleButtonPress: () {
-                    onClearInstructions();
-                    Navigator.of(context).pop();
-                  })
+              TextButton(
+                child: const Text("Borrar",
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontFamily: "Poppins",
+                        color: neutralWhite)),
+                onPressed: () {
+                  onClearInstructions();
+                  Navigator.of(context).pop();
+                },
+              ),
             ],
           );
         });
@@ -212,9 +288,13 @@ class _InstructionHistoryDropdownState
       await fmService.overwriteFile(fileName, fileData);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           behavior: SnackBarBehavior.floating,
-          content: Text('Error al sobrescribir archivo')));
+          backgroundColor: neutralDarkBlueAD,
+          content: Text(
+            'Error al sobrescribir archivo',
+            style: contentTextStyle,
+          )));
     }
   }
 
