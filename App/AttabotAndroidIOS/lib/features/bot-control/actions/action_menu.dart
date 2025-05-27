@@ -146,8 +146,6 @@ class _ActionMenuState extends State<ActionMenu> {
               showEmptyHistorySnackBar(context);
               return;
             }
-
-            // Send commands to the bot using the bluetooth service
             String message =
                 context.read<CommandService>().getCommandsBotString();
             bool messageSent = await btService.sendStringToDevice(message);

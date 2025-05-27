@@ -140,18 +140,14 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   bool isValidMove(int oldIndex, int newIndex) {
-    // Get the CommandService and command history
     final commandService = context.read<CommandService>();
     final commands = commandService.commandHistory;
 
-    // Get the command being moved
     final movingCommand = commands[oldIndex].toUiString();
 
-    // Check if this is a closing command (Ciclo cerrado, Detección finalizada, Lápiz desactivado)
     if (movingCommand.contains('Ciclo cerrado') ||
         movingCommand.contains('Detección finalizada') ||
         movingCommand.contains('Lápiz desactivado')) {
-      // Determine the corresponding opening command type
       String openingCommand;
       if (movingCommand.contains('Ciclo cerrado')) {
         openingCommand = 'Ciclo abierto';
@@ -161,7 +157,6 @@ class _HistoryPageState extends State<HistoryPage> {
         openingCommand = 'Lápiz activado';
       }
 
-      // Find the latest opening command before this closing command
       int openingIndex = -1;
       for (int i = oldIndex - 1; i >= 0; i--) {
         if (commands[i].toUiString().contains(openingCommand)) {
@@ -170,17 +165,12 @@ class _HistoryPageState extends State<HistoryPage> {
         }
       }
 
-      // If we found an opening command, ensure the closing command stays after it
       if (openingIndex != -1 && newIndex <= openingIndex) {
         return false;
       }
-    }
-
-    // Check if this is an opening command (Ciclo abierto, Detección iniciada, Lápiz activado)
-    else if (movingCommand.contains('Ciclo abierto') ||
+    } else if (movingCommand.contains('Ciclo abierto') ||
         movingCommand.contains('Detección iniciada') ||
         movingCommand.contains('Lápiz activado')) {
-      // Determine the corresponding closing command type
       String closingCommand;
       if (movingCommand.contains('Ciclo abierto')) {
         closingCommand = 'Ciclo cerrado';
@@ -190,7 +180,6 @@ class _HistoryPageState extends State<HistoryPage> {
         closingCommand = 'Lápiz desactivado';
       }
 
-      // Find the earliest closing command after this opening command
       int closingIndex = -1;
       for (int i = oldIndex + 1; i < commands.length; i++) {
         if (commands[i].toUiString().contains(closingCommand)) {
@@ -262,11 +251,9 @@ class _HistoryPageState extends State<HistoryPage> {
                         proxyDecorator: _proxyDecorator,
                         buildDefaultDragHandles: false,
                         onReorder: (oldIndex, newIndex) {
-                          // Ajustar el índice si se mueve hacia abajo
                           if (oldIndex < newIndex) {
                             newIndex -= 1;
                           }
-                          // Obtener el CommandService
                           final commandService = context.read<CommandService>();
                           if (isValidMove(oldIndex, newIndex)) {
                             setState(() {
@@ -274,7 +261,6 @@ class _HistoryPageState extends State<HistoryPage> {
                             });
                             tilePadding = 10;
                           } else {
-                            // Mostrar un mensaje de error o manejar el caso no válido
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 duration: Durations.extralong4,
@@ -285,7 +271,6 @@ class _HistoryPageState extends State<HistoryPage> {
                             return;
                           }
                         },
-                        // Generate all items at once instead of using itemBuilder
                         children: List.generate(
                           historial.commandHistory.length,
                           (index) => InstructionTile(
