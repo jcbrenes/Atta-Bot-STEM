@@ -221,6 +221,7 @@ void setup() {
   BLE.addService(servicio);
   BLE.advertise();
 
+  tiempoDeEncendidoDeLed = millis();
 }
 
 
@@ -248,7 +249,9 @@ void loop() {
           flagBluetooth = 1;
           if (caracteristico.written()) {
             recibeProgra = 1;
+            recibePrograTiempo0 = millis();
             mensajeBLE = string( caracteristico.value().c_str() );
+            Serial.println(mensajeBLE.c_str()); 
             caracteristico.writeValue("");
           }
         } 
@@ -258,7 +261,7 @@ void loop() {
       //Lógica de estado siguiente
       if (!lecturaBotonStart ) {
           flagEjecucion = 1; 
-          Interpreta_mensajeBLE(mensajeBLE); 
+          Interpreta_mensajeBLE(mensajeBLE);
           delay (1000);
           estado = LEE_MEMORIA;
           inst_actual = 0;
@@ -473,7 +476,8 @@ void loop() {
   }
   
   ConfigurarEstadoLedRgb(flagBateriaBaja, flagBluetooth, flagEjecucion, flagObstaculo, recibeProgra);
-
+  Serial.println(String("flagBateriaBaja:") + flagBateriaBaja + String(", flagBluetooth:") + flagBluetooth + String(", flagEjecucion:") +  flagEjecucion + String(", flagObstaculo:") + flagObstaculo + String(", recibeProgra:") + recibeProgra);
+  delay(5);
 }
 
 
@@ -999,7 +1003,7 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
 
   //Bateria baja -> rojo parpadeante
   if (flagBateriaBaja == LOW) {
-    Serial.println("Bateria baja"); 
+    // Serial.println("Bateria baja"); 
     // setear el tiempo de Encendido de LED en el momento de activar la flag
     if (tiempoActual <= tiempoDeEncendidoDeLed + duracionParpadeoLed && tiempoActual > tiempoDeEncendidoDeLed) {
       analogWrite(pinLedRgbRojo, 255);
@@ -1017,13 +1021,13 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
     }
    
   } else if (flagObstaculo == 1) { //Obstaculo -> rojo fijo
-    Serial.println("Obstaculo"); 
+    // Serial.println("Obstaculo"); 
     analogWrite(pinLedRgbRojo, 255);
     analogWrite(pinLedRgbVerde, 0);
     analogWrite(pinLedRgbAzul, 0);
 
   } else if (flagBluetooth == 0) { //Bluetooth no conectado -> azul y verde intercalados
-    Serial.println("Bluetooth no conectado"); 
+    // Serial.println("Bluetooth no conectado"); 
     // setear el tiempo de Encendido de LED en el momento de activar la flag
     if (tiempoActual <= tiempoDeEncendidoDeLed + duracionParpadeoLed && tiempoActual > tiempoDeEncendidoDeLed) {
       analogWrite(pinLedRgbRojo, 0);
@@ -1041,7 +1045,7 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
     } 
 
   } else if (recibeProgra == 1) { //Recibe progra de la App -> azul parpadeante
-    Serial.println("Recibe progra"); 
+    // Serial.println("Recibe progra"); 
     // setear el tiempo de Encendido de LED en el momento de activar la flag
     if (tiempoActual <= tiempoDeEncendidoDeLed + duracionParpadeoLed && tiempoActual > tiempoDeEncendidoDeLed) {
       analogWrite(pinLedRgbRojo, 0);
@@ -1059,13 +1063,13 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
     }
 
   } else if (flagEjecucion == 1) { //Robot ejecutando progra -> verde fijo
-    Serial.println("Ejecucion progra"); 
+    // Serial.println("Ejecucion progra"); 
     analogWrite(pinLedRgbRojo, 0);
     analogWrite(pinLedRgbVerde, 255);
     analogWrite(pinLedRgbAzul, 0);
     
   } else if (flagBluetooth == 1) { //Bluetooth conectado -> azul fijo
-    Serial.println("Bluetooth conectado");
+    // Serial.println("Bluetooth conectado");
     analogWrite(pinLedRgbRojo, 0);
     analogWrite(pinLedRgbVerde, 0);
     analogWrite(pinLedRgbAzul, 255);
