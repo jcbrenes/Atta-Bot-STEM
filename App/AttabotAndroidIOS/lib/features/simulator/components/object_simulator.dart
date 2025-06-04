@@ -2,30 +2,91 @@ import 'package:flutter/material.dart';
 
 class ObjectSimulator extends StatelessWidget {
   final String botImagePath;
-  final double size; // Tamaño del triángulo
+  final double size;
   final bool useImage;
+  final bool penActive;
+  final bool obstacleDetectionActive;
 
   const ObjectSimulator({
     super.key,
     this.botImagePath = '',
     this.size = 40,
-    this.useImage = false, // por defecto usa el triángulo
+    this.useImage = false,
+    this.penActive = false,
+    this.obstacleDetectionActive = false,
   });
 
   @override
   Widget build(BuildContext context) {
     if (useImage && botImagePath.isNotEmpty) {
-      return Image.asset(botImagePath, width: size, height: size);
+      return Stack(
+        alignment: Alignment.center,
+        children: [
+          Image.asset(botImagePath, width: size, height: size),
+          if (penActive)
+            Positioned(
+              left: 0,
+              child: Container(
+                width: 6,
+                height: 6,
+                decoration: const BoxDecoration(
+                  color: Colors.green,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          if (obstacleDetectionActive)
+            Positioned(
+              right: 0,
+              child: Container(
+                width: 6,
+                height: 6,
+                decoration: const BoxDecoration(
+                  color: Colors.blue,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+        ],
+      );
     } else {
-      return CustomPaint(
-        size: Size(size, size),
-        painter: TrianglePainter(),
+      return Stack(
+        alignment: Alignment.center,
+        children: [
+          CustomPaint(
+            size: Size(size, size),
+            painter: TrianglePainter(),
+          ),
+          if (penActive)
+            Positioned(
+              left: 0,
+              child: Container(
+                width: 6,
+                height: 6,
+                decoration: const BoxDecoration(
+                  color: Colors.green,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          if (obstacleDetectionActive)
+            Positioned(
+              right: 0,
+              child: Container(
+                width: 6,
+                height: 6,
+                decoration: const BoxDecoration(
+                  color: Colors.blue,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+        ],
       );
     }
   }
 }
 
-// CustomPainter para dibujar un triángulo
 class TrianglePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -34,22 +95,18 @@ class TrianglePainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     final Path path = Path();
-
-    // Triángulo isósceles (más alargado verticalmente)
-    path.moveTo(size.width / 2, 0); // Vértice superior (frente)
-    path.lineTo(size.width * 0.1, size.height); // Inferior izquierda
-    path.lineTo(size.width * 0.9, size.height); // Inferior derecha
+    path.moveTo(size.width / 2, 0);
+    path.lineTo(size.width * 0.1, size.height);
+    path.lineTo(size.width * 0.9, size.height);
     path.close();
 
     canvas.drawPath(path, trianglePaint);
 
-    // Punto en el frente del triángulo
     final Paint dotPaint = Paint()
       ..color = const Color.fromARGB(255, 38, 18, 226)
       ..style = PaintingStyle.fill;
 
-    canvas.drawCircle(
-        Offset(size.width / 2, 4), 3, dotPaint); // punto en la punta superior
+    canvas.drawCircle(Offset(size.width / 2, 4), 3, dotPaint);
   }
 
   @override

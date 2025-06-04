@@ -7,12 +7,14 @@ class SimulationArea extends StatefulWidget {
   final double width;
   final double height;
   final void Function(String)? onInstructionChange;
-  final bool useImage; // 👈 nuevo parámetro
+  final bool useImage;
   final String? botImagePath;
+  final bool paused;
 
   const SimulationArea({
     Key? key,
     required this.instructions,
+    required this.paused,
     this.width = 300,
     this.height = 300,
     this.onInstructionChange,
@@ -29,6 +31,8 @@ class _SimulationAreaState extends State<SimulationArea> {
   double posY = 130;
   double rotation = 0; // grados actuales
   double previousRotation = 0; // para animación
+  bool obstacleDetectionActive = false;
+  bool penActive = false;
 
   final double step = 30;
   final double objectSize = 40;
@@ -41,15 +45,20 @@ class _SimulationAreaState extends State<SimulationArea> {
 
   Future<void> _runInstructions() async {
     for (final instruction in widget.instructions) {
-      // 🔔 Notifica la instrucción actual
+      // Notifica la instrucción actual
       widget.onInstructionChange?.call(instruction);
+
+      // Esperar si está en pausa
+      while (widget.paused) {
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
 
       await Future.delayed(const Duration(milliseconds: 600));
 
       setState(() {
         final inst = instruction.toLowerCase();
 
-        // 🔁 Ajustar rotación para movimiento real (0° es arriba)
+        // 🔥 Ajuste clave: -90° para alinear con la orientación del triángulo
         double angle = _radians(rotation - 90);
 
         if (inst.contains("avanzar")) {
@@ -69,6 +78,14 @@ class _SimulationAreaState extends State<SimulationArea> {
               rotation += degrees;
             }
           }
+        } else if (inst.contains("lápiz activado")) {
+          penActive = true;
+        } else if (inst.contains("lápiz desactivado")) {
+          penActive = false;
+        } else if (inst.contains("detección iniciada")) {
+          obstacleDetectionActive = true;
+        } else if (inst.contains("detección finalizada")) {
+          obstacleDetectionActive = false;
         }
 
         // Limita el movimiento dentro del contenedor
@@ -104,16 +121,23 @@ class _SimulationAreaState extends State<SimulationArea> {
               builder: (context, angle, child) {
                 return Transform.rotate(
                   angle: angle,
-                  child: child,
+                  child: SizedBox(
+                    width: objectSize,
+                    height: objectSize,
+                    child: ObjectSimulator(
+                      size: objectSize,
+                      useImage: widget.useImage,
+                      botImagePath: widget.botImagePath ?? '',
+                      penActive: penActive,
+                      obstacleDetectionActive: obstacleDetectionActive,
+                    ),
+                  ),
                 );
               },
-              child: ObjectSimulator(
-                size: objectSize,
-                useImage: widget.useImage,
-                botImagePath: widget.botImagePath ?? '',
-              ),
               onEnd: () {
-                previousRotation = rotation;
+                setState(() {
+                  previousRotation = rotation;
+                });
               },
             ),
           ),
