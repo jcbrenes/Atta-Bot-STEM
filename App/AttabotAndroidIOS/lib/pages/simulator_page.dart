@@ -100,6 +100,8 @@ class _SimulatorPageState extends State<SimulatorPage> {
                       child: SimulationArea(
                         instructions: instructions,
                         paused: isPaused,
+                        width: 300,
+                        height: 300,
                         useImage: false,
                         botImagePath: 'assets/generic_atta_bot.png',
                         onInstructionChange: (instruction) {
