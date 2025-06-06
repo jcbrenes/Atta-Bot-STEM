@@ -8,14 +8,30 @@ class HelpDialog {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text(
-            '¿Cómo funciono?',
-            textAlign: TextAlign.left,
-            style: TextStyle(
-                color: neutralWhite,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                fontFamily: 'Poppins'),
+          titlePadding: EdgeInsets.fromLTRB(30, 10, 10, 0),
+          contentPadding: EdgeInsets.fromLTRB(30, 10, 30, 20),
+          title: Row(
+            children: [
+              Expanded(
+                child: const Text(
+                  '¿Cómo funciono?',
+                  textAlign: TextAlign.left,
+                  style: TextStyle(
+                      color: neutralWhite,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      fontFamily: 'Poppins'),
+                ),
+              ),
+              IconButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  icon: const Icon(
+                    Icons.close,
+                    color: neutralWhite,
+                  ))
+            ],
           ),
           backgroundColor: neutralDarkBlueAD,
           shape: RoundedRectangleBorder(
@@ -252,7 +268,7 @@ class HelpDialog {
                     borderWidth: 3,
                     horizontalPadding: 10,
                     verticalPadding: 10,
-                    color: secondaryIconBlue,
+                    color: secondaryPurple,
                     disabled: true,
                     onPressed: () {},
                     child: Image.asset(
@@ -281,49 +297,13 @@ class HelpDialog {
                     ),
                   ),
                 ),
-                ListTile(
-                  contentPadding: const EdgeInsets.fromLTRB(10, 0, 0, 0),
-                  leading: PrimaryIconButton(
-                    borderRadius: 6,
-                    borderWidth: 3,
-                    horizontalPadding: 10,
-                    verticalPadding: 10,
-                    color: secondaryPink,
-                    disabled: true,
-                    onPressed: () {},
-                    child: Image.asset(
-                      'assets/button_icons/claw.png',
-                      color: neutralWhite,
-                      height: 20,
-                      width: 20,
-                    ),
-                  ),
-                  title: RichText(
-                    text: const TextSpan(
-                      text: '  Activar garra ',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: neutralWhite,
-                          fontFamily: 'Poppins'),
-                      children: <TextSpan>[
-                        TextSpan(
-                          text: 'del AttaBot',
-                          style: TextStyle(
-                              fontWeight: FontWeight.normal,
-                              color: neutralWhite,
-                              fontFamily: 'Poppins'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
                 Spacer(),
                 ListTile(
                   contentPadding: const EdgeInsets.all(0),
                   leading: TextButton(
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.all(15),
-                      backgroundColor: secondaryPurple,
+                      backgroundColor: neutralDarkBlueAD,
                       alignment: Alignment.center,
                       shape: const CircleBorder(
                         side: BorderSide(color: neutralWhite, width: 3.0),
@@ -361,21 +341,6 @@ class HelpDialog {
               ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text(
-                'Cerrar',
-                style: TextStyle(
-                    color: neutralWhite,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    fontFamily: 'Poppins'),
-              ),
-            ),
-          ],
         );
       },
     );

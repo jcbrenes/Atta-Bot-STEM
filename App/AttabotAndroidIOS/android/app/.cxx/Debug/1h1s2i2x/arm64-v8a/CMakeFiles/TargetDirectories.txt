@@ -1,0 +1,2 @@
+C:/Users/joseg/OneDrive/Desktop/Work/Asistencia/AttaBot/Atta-Bot-STEM/App/AttabotAndroidIOS/android/app/.cxx/Debug/1h1s2i2x/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/Users/joseg/OneDrive/Desktop/Work/Asistencia/AttaBot/Atta-Bot-STEM/App/AttabotAndroidIOS/android/app/.cxx/Debug/1h1s2i2x/arm64-v8a/CMakeFiles/rebuild_cache.dir

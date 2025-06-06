@@ -9,6 +9,7 @@ import 'package:proyecto_tec/shared/styles/colors.dart';
 import 'package:proyecto_tec/shared/components/ui/buttons/default_button_factory.dart';
 import 'package:proyecto_tec/features/bot-control/actions/cycle_dialog.dart';
 import 'package:proyecto_tec/features/bot-control/dialogs/info_dialog.dart';
+import 'package:proyecto_tec/features/simulator/dialogs/simulator_bluetooth_dialog.dart';
 // import provider and service commands
 import 'package:provider/provider.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
@@ -22,10 +23,6 @@ class ActionMenu extends StatefulWidget {
 
 class _ActionMenuState extends State<ActionMenu> {
   String? selectedValue = ""; // Initial selected value
-  bool obstacleDetection = false;
-  bool pencilActive = false;
-  bool clawActive = false;
-  bool initCycle = false;
   int cycleCount = 1;
   late StreamSubscription scanSubscription;
   List<BluetoothDevice> devices = [];
@@ -77,30 +74,32 @@ class _ActionMenuState extends State<ActionMenu> {
 
   @override
   Widget build(BuildContext context) {
+    final commandService = context.read<CommandService>();
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         DefaultButtonFactory.getButton(
-          color: secondaryGreen,
+          color: secondaryPurple,
+          iconSize: MediaQuery.of(context).size.width * 0.06,
           buttonType: ButtonType.primaryIcon,
           onPressed: () {
-            initCycle = !initCycle;
-            if (initCycle) {
-              CycleDialog.show(context);
+            if (!commandService.pencilActive) {
+              showInfoDialog(context, 'Se ha activado \n el lápiz');
+              context.read<CommandService>().activateTool();
             } else {
-              context.read<CommandService>().endCycle();
-              showInfoDialog(context, 'Se ha cerrado el ciclo');
+              showInfoDialog(context, 'Se ha desactivado \n el lápiz');
+              context.read<CommandService>().deactivateTool();
             }
           },
-          icon: IconType.cycle,
+          icon: IconType.pencil,
         ),
         const SizedBox(width: 15),
         DefaultButtonFactory.getButton(
           color: primaryYellow,
+          iconSize: MediaQuery.of(context).size.width * 0.06,
           buttonType: ButtonType.primaryIcon,
           onPressed: () {
-            obstacleDetection = !obstacleDetection;
-            if (obstacleDetection) {
+            if (!commandService.obstacleDetection) {
               showInfoDialog(
                   context, 'Se ha activado \nla detección \nde obstáculos');
               context.read<CommandService>().activateObjectDetection();
@@ -113,26 +112,40 @@ class _ActionMenuState extends State<ActionMenu> {
           icon: IconType.obstacleDetection,
         ),
         const SizedBox(width: 15),
+        DefaultButtonFactory.getButton(
+          color: secondaryGreen,
+          iconSize: MediaQuery.of(context).size.width * 0.06,
+          buttonType: ButtonType.primaryIcon,
+          onPressed: () {
+            if (!commandService.cycleActive) {
+              CycleDialog.show(context);
+            } else {
+              context.read<CommandService>().endCycle();
+              showInfoDialog(context, 'Se ha cerrado el ciclo');
+            }
+          },
+          icon: IconType.cycle,
+        ),
+        const SizedBox(width: 15),
         TextButton(
           style: TextButton.styleFrom(
             alignment: Alignment.center,
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(22),
             shape: const CircleBorder(
-              side: BorderSide(color: neutralWhite, width: 4.0),
+              side: BorderSide(color: neutralWhite, width: 5.0),
             ),
             iconColor: neutralWhite,
           ),
           onPressed: () async {
             if (!btService.isConnected) {
-              navService.goToBluetoothDevicesPage(context);
+              SimulatorBluetoothDialog.show(context);
+              //navService.goToBluetoothDevicesPage(context);
               return;
             }
             if (context.read<CommandService>().commandHistory.isEmpty) {
               showEmptyHistorySnackBar(context);
               return;
             }
-    
-            // Send commands to the bot using the bluetooth service
             String message =
                 context.read<CommandService>().getCommandsBotString();
             bool messageSent = await btService.sendStringToDevice(message);
@@ -144,40 +157,10 @@ class _ActionMenuState extends State<ActionMenu> {
           child: Image.asset(
             'assets/button_icons/play.png',
             color: neutralWhite,
-            width: 32,
-            height: 32,
+            width: MediaQuery.of(context).size.width > 600 ? 60 : 40,
+            height: MediaQuery.of(context).size.width > 600 ? 60 : 40,
             alignment: const Alignment(0, 3),
           ),
-        ),
-        const SizedBox(width: 15),
-        DefaultButtonFactory.getButton(
-          color: secondaryPink,
-          buttonType: ButtonType.primaryIcon,
-          onPressed: () {
-            pencilActive = !pencilActive;
-            if (pencilActive) {
-              showInfoDialog(context, 'Se ha activado \n el lápiz');
-              context.read<CommandService>().activateTool();
-            } else {
-              showInfoDialog(context, 'Se ha desactivado \n el lápiz');
-              context.read<CommandService>().deactivateTool();
-            }
-          },
-          icon: IconType.pencil,
-        ),
-        const SizedBox(width: 15),
-        DefaultButtonFactory.getButton(
-          color: secondaryPurple,
-          buttonType: ButtonType.primaryIcon,
-          onPressed: () {
-            clawActive = !clawActive;
-            if (clawActive) {
-              showInfoDialog(context, 'Se ha activado \n _____');
-            } else {
-              showInfoDialog(context, 'Se ha desactivado \n _____');
-            }
-          },
-          icon: IconType.claw,
         ),
       ],
     );

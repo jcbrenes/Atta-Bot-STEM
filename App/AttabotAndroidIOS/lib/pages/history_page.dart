@@ -15,9 +15,12 @@ class HistoryPage extends StatefulWidget {
 
 class _HistoryPageState extends State<HistoryPage> {
   final Text pageTitle = const Text(
-    'Historial de Instrucciones',
+    'Instrucciones',
+    textAlign: TextAlign.left,
     style: TextStyle(
-      fontWeight: FontWeight.bold,
+      fontWeight: FontWeight.w700,
+      color: neutralWhite,
+      fontSize: 18,
     ),
   );
 
@@ -26,23 +29,33 @@ class _HistoryPageState extends State<HistoryPage> {
     'background': Colors.transparent,
   };
 
-  final BoxDecoration bodyDecoration = const BoxDecoration(
+  final BoxDecoration bodyDecoration = BoxDecoration(
     color: neutralDarkBlue,
+    borderRadius: BorderRadius.circular(20),
+    border: Border.all(
+      color: Colors.white,
+      width: 3,
+    ),
   );
 
   final Map<String, Color> stateInstructions = {
-    'Inicio de ciclo': const Color(0xFFF2B100),
-    'Fin del ciclo': const Color(0xFFF2B100),
-    'Detección de obstáculos activada': const Color.fromARGB(255, 11, 158, 158),
-    'Fin detección de obstáculos': const Color.fromARGB(255, 11, 158, 158),
+    'Ciclo': secondaryGreen,
+    'Detección': primaryYellow,
+    'Lápiz': secondaryPurple,
   };
 
   final Map<String, Color> movementInstructions = {
-    'Avanzar': const Color(0XFF006DBD),
-    'Retroceder': const Color(0XFF006DBD),
-    'derecha': const Color(0xFFF47E3E),
-    'izquierda': const Color(0xFFF47E3E),
+    'Avanzar': primaryBlue,
+    'Retroceder': primaryBlue,
+    'Girar': primaryOrange,
   };
+
+  final Map<String, double> paddingInstructions = {
+    'Ciclo abierto': 20,
+    'Ciclo cerrado': -20,
+  };
+
+  double tilePadding = 10;
 
   AnimatedBuilder reorderingAnimation(child, index, animation) {
     return AnimatedBuilder(
@@ -62,80 +75,231 @@ class _HistoryPageState extends State<HistoryPage> {
     List<String> instructionParts;
     instructionParts = instruction.split(' ');
 
-    Color? color = movementInstructions[instructionParts.first] ??
-        movementInstructions[instructionParts.last];
-
+    Color? color = movementInstructions[instructionParts.first];
     if (color != null) return color;
-    instructionParts = instruction.split(',');
     return stateInstructions[instructionParts.first] ?? Colors.white;
   }
 
-  Widget? setTrailing(String instruction, index) {
-    if (instruction.contains('Fin del ciclo')) return null;
+  double processPadding(String instruction) {
+    String shortInstruction = instruction.split(' ').take(2).join(' ');
+    double preSum = tilePadding;
+    if (paddingInstructions[shortInstruction] != null && tilePadding < 30) {
+      tilePadding = tilePadding + paddingInstructions[shortInstruction]!;
+    }
+    if (tilePadding < 0) tilePadding = 10;
+    if (shortInstruction == 'Ciclo cerrado') {
+      tilePadding = 10;
+      return tilePadding;
+    }
+    return preSum;
+  }
 
-    return IconButton(
-        icon: const Icon(Icons.delete),
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: const Text('Confirmación'),
-                content: const Text(
-                    '¿Estás seguro de que quieres eliminar este elemento?'),
-                actions: <Widget>[
-                  TextButtonFactory.getButton(
-                      type: TextButtonType.text,
-                      text: "Cancelar",
-                      handleButtonPress: () => Navigator.of(context).pop()),
-                  TextButtonFactory.getButton(
-                    type: TextButtonType.warning,
-                    text: "Eliminar",
-                    handleButtonPress: () {
-                      context.read<CommandService>().removeCommand(index);
-                      Navigator.of(context).pop();
-                    },
-                  )
-                ],
-              );
-            },
-          );
-        });
+  Widget? setTrailing(String instruction, index) {
+    if (instruction == 'Ciclo cerrado' ||
+        instruction == "Detección finalizada" ||
+        instruction == "Lápiz desactivado") {
+      return null;
+    }
+    ;
+
+    return Container(
+      height: 20,
+      child: IconButton(
+          padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+          icon: Icon(
+            Icons.delete,
+            color: Colors.grey[400],
+          ),
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text('Confirmación'),
+                  content: const Text(
+                      '¿Estás seguro de que quieres eliminar este elemento?'),
+                  actions: <Widget>[
+                    TextButtonFactory.getButton(
+                        type: TextButtonType.text,
+                        text: "Cancelar",
+                        handleButtonPress: () => Navigator.of(context).pop()),
+                    TextButtonFactory.getButton(
+                      type: TextButtonType.warning,
+                      text: "Eliminar",
+                      handleButtonPress: () {
+                        context.read<CommandService>().removeCommand(index);
+                        Navigator.of(context).pop();
+                      },
+                    )
+                  ],
+                );
+              },
+            );
+          }),
+    );
+  }
+
+  bool isValidMove(int oldIndex, int newIndex) {
+    final commandService = context.read<CommandService>();
+    final commands = commandService.commandHistory;
+
+    final movingCommand = commands[oldIndex].toUiString();
+
+    if (movingCommand.contains('Ciclo cerrado') ||
+        movingCommand.contains('Detección finalizada') ||
+        movingCommand.contains('Lápiz desactivado')) {
+      String openingCommand;
+      if (movingCommand.contains('Ciclo cerrado')) {
+        openingCommand = 'Ciclo abierto';
+      } else if (movingCommand.contains('Detección finalizada')) {
+        openingCommand = 'Detección iniciada';
+      } else {
+        openingCommand = 'Lápiz activado';
+      }
+
+      int openingIndex = -1;
+      for (int i = oldIndex - 1; i >= 0; i--) {
+        if (commands[i].toUiString().contains(openingCommand)) {
+          openingIndex = i;
+          break;
+        }
+      }
+
+      if (openingIndex != -1 && newIndex <= openingIndex) {
+        return false;
+      }
+    } else if (movingCommand.contains('Ciclo abierto') ||
+        movingCommand.contains('Detección iniciada') ||
+        movingCommand.contains('Lápiz activado')) {
+      String closingCommand;
+      if (movingCommand.contains('Ciclo abierto')) {
+        closingCommand = 'Ciclo cerrado';
+      } else if (movingCommand.contains('Detección iniciada')) {
+        closingCommand = 'Detección finalizada';
+      } else {
+        closingCommand = 'Lápiz desactivado';
+      }
+
+      int closingIndex = -1;
+      for (int i = oldIndex + 1; i < commands.length; i++) {
+        if (commands[i].toUiString().contains(closingCommand)) {
+          closingIndex = i;
+          break;
+        }
+      }
+      if (closingIndex != -1 && newIndex >= closingIndex) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  Widget _proxyDecorator(Widget child, int index, Animation<double> animation) {
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (BuildContext context, Widget? child) {
+        return Material(
+          elevation: 8.0 * animation.value,
+          borderRadius: BorderRadius.circular(15),
+          color: Colors.transparent,
+          shadowColor: Colors.black.withOpacity(0.6),
+          child: Opacity(
+            opacity: 0.85,
+            child: child,
+          ),
+        );
+      },
+      child: child,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-            title: pageTitle,
-            automaticallyImplyLeading: false,
-            foregroundColor: appbarColors['foreground'],
-            backgroundColor: appbarColors['background'],
-            actions: const <Widget>[InstructionHistoryDropdown()]),
-        extendBodyBehindAppBar: true,
-        body: Container(
+      backgroundColor: neutralDarkBlue,
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 50, 20, 24),
+        child: Container(
           decoration: bodyDecoration,
           child: Consumer<CommandService>(
             builder: (context, historial, child) {
-              return ListView.builder(
-                itemCount: historial.commandHistory.length,
-                itemBuilder: (context, index) {
-                  return Column(
-                    children: [
-                      InstructionTile(
-                          key: ValueKey(historial.commandHistory[index]),
-                          color: processInstruction(
-                              historial.commandHistory[index].toUiString()),
-                          title: historial.commandHistory[index].toUiString(),
-                          trailing: setTrailing(
+              return Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 5, 0, 0),
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 10),
+                        pageTitle,
+                        const Spacer(),
+                        InstructionHistoryDropdown(),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: RawScrollbar(
+                      trackVisibility: true,
+                      thumbVisibility: true,
+                      controller: ScrollController(),
+                      interactive: true,
+                      radius: const Radius.circular(10),
+                      thumbColor: neutralWhite,
+                      trackColor: neutralWhite.withOpacity(0.2),
+                      trackRadius: Radius.circular(10),
+                      padding: EdgeInsets.fromLTRB(0, 0, 20, 0),
+                      child: ReorderableListView(
+                        proxyDecorator: _proxyDecorator,
+                        buildDefaultDragHandles: false,
+                        onReorder: (oldIndex, newIndex) {
+                          if (oldIndex < newIndex) {
+                            newIndex -= 1;
+                          }
+                          final commandService = context.read<CommandService>();
+                          if (isValidMove(oldIndex, newIndex)) {
+                            setState(() {
+                              commandService.reorderCommand(oldIndex, newIndex);
+                            });
+                            tilePadding = 10;
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                duration: Durations.extralong4,
+                                content:
+                                    Center(child: Text('Movimiento no válido')),
+                              ),
+                            );
+                            return;
+                          }
+                        },
+                        children: List.generate(
+                          historial.commandHistory.length,
+                          (index) => InstructionTile(
+                            key: ValueKey('instruction_$index'),
+                            color: processInstruction(
                               historial.commandHistory[index].toUiString(),
-                              index)),
-                    ],
-                  );
-                },
+                            ),
+                            tilePadding: processPadding(
+                                historial.commandHistory[index].toUiString()),
+                            title: historial.commandHistory[index].toUiString(),
+                            trailing: setTrailing(
+                              historial.commandHistory[index].toUiString(),
+                              index,
+                            ),
+                            index: index,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                ],
               );
             },
           ),
-        ));
+        ),
+      ),
+    );
   }
 }
