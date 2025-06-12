@@ -61,7 +61,9 @@ class _DistanceInputState extends State<DistanceInput> {
               },
               icon: IconType.remove,
             ),
-            const SizedBox(width: 20,),
+            const SizedBox(
+              width: 20,
+            ),
             SizedBox(
               width: 110,
               child: TextFormField(
@@ -89,7 +91,9 @@ class _DistanceInputState extends State<DistanceInput> {
                   ],
                   onChanged: handleOnChanged),
             ),
-            const SizedBox(width: 20,),
+            const SizedBox(
+              width: 20,
+            ),
             DefaultButtonFactory.getButton(
               color: secondaryIconBlue,
               buttonType: ButtonType.secondaryIcon,

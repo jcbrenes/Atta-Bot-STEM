@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:proyecto_tec/shared/styles/colors.dart';
 import 'package:proyecto_tec/shared/components/ui/buttons/default_button_factory.dart';
+import 'package:proyecto_tec/shared/styles/colors.dart';
 
 class CycleInput extends StatefulWidget {
   final Function(int) onCycleSelected;
@@ -18,9 +18,11 @@ class _CycleInputState extends State<CycleInput> {
 
   int value = 1;
 
+  // Configuración inicial de listeners para el campo de texto
   @override
   void initState() {
     super.initState();
+    // Limpia el campo cuando recibe el foco y muestra valor por defecto
     _focusNode.addListener(() {
       if (_focusNode.hasFocus && _controller.text == "1") {
         _controller.clear();
@@ -37,16 +39,20 @@ class _CycleInputState extends State<CycleInput> {
     super.dispose();
   }
 
-  void handleOnChanged(String value) {
-    int newValue = int.tryParse(value) ?? 1;
+  // Actualiza el valor y notifica al padre cuando cambia
+  void handleOnChanged(String text) {
+    int newValue = int.tryParse(text) ?? 1;
     widget.onCycleSelected(newValue);
-    _controller.text = value;
   }
 
+  // Actualiza el texto del sufijo según el valor (singular o plural)
   void _updateSuffixText() {
-    setState(() {
-      value = int.tryParse(_controller.text) ?? 1;
-    });
+    final newValue = int.tryParse(_controller.text) ?? 1;
+    if (newValue != value) {
+      setState(() {
+        value = newValue;
+      });
+    }
   }
 
   @override
@@ -54,67 +60,67 @@ class _CycleInputState extends State<CycleInput> {
     return SizedBox(
       height: 100,
       width: 500,
-      child: Expanded(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            DefaultButtonFactory.getButton(
-              color: secondaryIconGreen,
-              buttonType: ButtonType.secondaryIcon,
-              onPressed: () {
-                int currentValue = int.parse(_controller.text);
-                if (currentValue > 1) {
-                  currentValue--;
-                  _controller.text = currentValue.toString();
-                  handleOnChanged(_controller.text);
-                }
-              },
-              icon: IconType.remove,
-            ),
-            SizedBox(
-              width: 150,
-              child: IntrinsicWidth(
-                child: TextFormField(
-                    controller: _controller,
-                    focusNode: _focusNode,
-                    textAlign: TextAlign.center,
-                    keyboardType: TextInputType.number,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 28,
-                        fontFamily: "Poppins",
-                        color: neutralWhite),
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.all(value == 1 ? 0 : 10),
-                      suffixText: value == 1 ? "vez    " : "veces",
-                      suffixStyle: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 28,
-                          fontFamily: "Poppins",
-                          color: neutralWhite),
-                    ),
-                    inputFormatters: [
-                      LengthLimitingTextInputFormatter(2), // Limit to 2 digits
-                      FilteringTextInputFormatter.digitsOnly, // Allow only digits
-                    ],
-                    onChanged: handleOnChanged),
-              ),
-            ),
-            DefaultButtonFactory.getButton(
-              color: secondaryIconGreen,
-              buttonType: ButtonType.secondaryIcon,
-              onPressed: () {
-                int currentValue = int.parse(_controller.text);
-                currentValue++;
-                _controller.text = currentValue.toString();
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Botón de decremento
+          DefaultButtonFactory.getButton(
+            color: secondaryIconGreen,
+            buttonType: ButtonType.secondaryIcon,
+            onPressed: () {
+              final currentValue = int.tryParse(_controller.text) ?? 1;
+              if (currentValue > 1) {
+                _controller.text = (currentValue - 1).toString();
                 handleOnChanged(_controller.text);
-              },
-              icon: IconType.add,
+              }
+            },
+            icon: IconType.remove,
+          ),
+          // Campo de entrada numérica con sufijo contextual
+          SizedBox(
+            width: 150,
+            child: TextFormField(
+              controller: _controller,
+              focusNode: _focusNode,
+              textAlign: TextAlign.center,
+              keyboardType: TextInputType.number,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 28,
+                fontFamily: "Poppins",
+                color: neutralWhite,
+              ),
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.all(value == 1 ? 0 : 10),
+                suffixText: value == 1 ? "vez    " : "veces",
+                suffixStyle: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 28,
+                  fontFamily: "Poppins",
+                  color: neutralWhite,
+                ),
+              ),
+              inputFormatters: [
+                LengthLimitingTextInputFormatter(2), // Limitar a 2 dígitos
+                FilteringTextInputFormatter.digitsOnly, // Permitir solo dígitos
+              ],
+              onChanged: handleOnChanged,
             ),
-          ],
-        ),
+          ),
+          // Botón de incremento
+          DefaultButtonFactory.getButton(
+            color: secondaryIconGreen,
+            buttonType: ButtonType.secondaryIcon,
+            onPressed: () {
+              final currentValue = int.tryParse(_controller.text) ?? 0;
+              _controller.text = (currentValue + 1).toString();
+              handleOnChanged(_controller.text);
+            },
+            icon: IconType.add,
+          ),
+        ],
       ),
     );
   }

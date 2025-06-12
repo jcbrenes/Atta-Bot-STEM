@@ -2,17 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:provider/provider.dart';
+import 'package:proyecto_tec/features/bot-control/actions/cycle_dialog.dart';
+import 'package:proyecto_tec/features/bot-control/dialogs/info_dialog.dart';
+import 'package:proyecto_tec/features/commands/services/command_service.dart';
+import 'package:proyecto_tec/features/simulator/dialogs/simulator_bluetooth_dialog.dart';
+import 'package:proyecto_tec/shared/components/ui/buttons/default_button_factory.dart';
 import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
 import 'package:proyecto_tec/shared/features/navigation/services/navigation.dart';
 import 'package:proyecto_tec/shared/interfaces/bluetooth/bluetooth_service_interface.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
-import 'package:proyecto_tec/shared/components/ui/buttons/default_button_factory.dart';
-import 'package:proyecto_tec/features/bot-control/actions/cycle_dialog.dart';
-import 'package:proyecto_tec/features/bot-control/dialogs/info_dialog.dart';
-import 'package:proyecto_tec/features/simulator/dialogs/simulator_bluetooth_dialog.dart';
-// import provider and service commands
-import 'package:provider/provider.dart';
-import 'package:proyecto_tec/features/commands/services/command_service.dart';
 
 class ActionMenu extends StatefulWidget {
   const ActionMenu({super.key});
@@ -22,30 +21,22 @@ class ActionMenu extends StatefulWidget {
 }
 
 class _ActionMenuState extends State<ActionMenu> {
-  String? selectedValue = ""; // Initial selected value
-  int cycleCount = 1;
+  String selectedValue = ""; // Valor seleccionado inicial
   late StreamSubscription scanSubscription;
   List<BluetoothDevice> devices = [];
 
-  BluetoothServiceInterface btService =
+  // Servicios inicializados como final para mejor rendimiento
+  final BluetoothServiceInterface btService =
       DependencyManager().getBluetoothService();
-  NavigationService navService = DependencyManager().getNavigationService();
+  final NavigationService navService =
+      DependencyManager().getNavigationService();
 
-  void showEmptyHistorySnackBar(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Aún no hay comandos'),
-        duration: Duration(seconds: 3),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
-  void showMessageSnackBar(String message) {
+  // Método unificado para mostrar mensajes
+  void showSnackBar(String message, {int seconds = 3}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        duration: const Duration(seconds: 3),
+        duration: Duration(seconds: seconds),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -54,7 +45,7 @@ class _ActionMenuState extends State<ActionMenu> {
   @override
   void initState() {
     super.initState();
-
+    // Suscripción a cambios en dispositivos Bluetooth
     scanSubscription = btService.devices$.listen((event) {
       debugPrint("Devices: $event");
       setState(() {
@@ -68,6 +59,7 @@ class _ActionMenuState extends State<ActionMenu> {
 
   @override
   void dispose() {
+    // Cancelar suscripción al destruir el widget
     scanSubscription.cancel();
     super.dispose();
   }
@@ -75,94 +67,130 @@ class _ActionMenuState extends State<ActionMenu> {
   @override
   Widget build(BuildContext context) {
     final commandService = context.read<CommandService>();
+    final iconSize = MediaQuery.of(context).size.width * 0.06;
+    final playButtonSize =
+        MediaQuery.of(context).size.width > 600 ? 60.0 : 40.0;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        DefaultButtonFactory.getButton(
-          color: secondaryPurple,
-          iconSize: MediaQuery.of(context).size.width * 0.06,
-          buttonType: ButtonType.primaryIcon,
-          onPressed: () {
-            if (!commandService.pencilActive) {
-              showInfoDialog(context, 'Se ha activado \n el lápiz');
-              context.read<CommandService>().activateTool();
-            } else {
-              showInfoDialog(context, 'Se ha desactivado \n el lápiz');
-              context.read<CommandService>().deactivateTool();
-            }
-          },
-          icon: IconType.pencil,
-        ),
+        _buildToolButton(context, commandService, iconSize),
         const SizedBox(width: 15),
-        DefaultButtonFactory.getButton(
-          color: primaryYellow,
-          iconSize: MediaQuery.of(context).size.width * 0.06,
-          buttonType: ButtonType.primaryIcon,
-          onPressed: () {
-            if (!commandService.obstacleDetection) {
-              showInfoDialog(
-                  context, 'Se ha activado \nla detección \nde obstáculos');
-              context.read<CommandService>().activateObjectDetection();
-            } else {
-              showInfoDialog(
-                  context, 'Se ha desactivado \nla detección \nde obstáculos');
-              context.read<CommandService>().deactivateObjectDetection();
-            }
-          },
-          icon: IconType.obstacleDetection,
-        ),
+        _buildDetectionButton(context, commandService, iconSize),
         const SizedBox(width: 15),
-        DefaultButtonFactory.getButton(
-          color: secondaryGreen,
-          iconSize: MediaQuery.of(context).size.width * 0.06,
-          buttonType: ButtonType.primaryIcon,
-          onPressed: () {
-            if (!commandService.cycleActive) {
-              CycleDialog.show(context);
-            } else {
-              context.read<CommandService>().endCycle();
-              showInfoDialog(context, 'Se ha cerrado el ciclo');
-            }
-          },
-          icon: IconType.cycle,
-        ),
+        _buildCycleButton(context, commandService, iconSize),
         const SizedBox(width: 15),
-        TextButton(
-          style: TextButton.styleFrom(
-            alignment: Alignment.center,
-            padding: const EdgeInsets.all(22),
-            shape: const CircleBorder(
-              side: BorderSide(color: neutralWhite, width: 5.0),
-            ),
-            iconColor: neutralWhite,
-          ),
-          onPressed: () async {
-            if (!btService.isConnected) {
-              SimulatorBluetoothDialog.show(context);
-              //navService.goToBluetoothDevicesPage(context);
-              return;
-            }
-            if (context.read<CommandService>().commandHistory.isEmpty) {
-              showEmptyHistorySnackBar(context);
-              return;
-            }
-            String message =
-                context.read<CommandService>().getCommandsBotString();
-            bool messageSent = await btService.sendStringToDevice(message);
-            if (!messageSent) {
-              showMessageSnackBar("Error al enviar comandos");
-            }
-            showMessageSnackBar("Comandos enviados");
-          },
-          child: Image.asset(
-            'assets/button_icons/play.png',
-            color: neutralWhite,
-            width: MediaQuery.of(context).size.width > 600 ? 60 : 40,
-            height: MediaQuery.of(context).size.width > 600 ? 60 : 40,
-            alignment: const Alignment(0, 3),
-          ),
-        ),
+        _buildPlayButton(context, playButtonSize),
       ],
+    );
+  }
+
+  // Botón para activar/desactivar el lápiz
+  Widget _buildToolButton(
+      BuildContext context, CommandService commandService, double iconSize) {
+    return DefaultButtonFactory.getButton(
+      color: secondaryPurple,
+      iconSize: iconSize,
+      buttonType: ButtonType.primaryIcon,
+      onPressed: () {
+        final message = !commandService.pencilActive
+            ? 'Se ha activado \n el lápiz'
+            : 'Se ha desactivado \n el lápiz';
+
+        showInfoDialog(context, message);
+
+        if (!commandService.pencilActive) {
+          commandService.activateTool();
+        } else {
+          commandService.deactivateTool();
+        }
+      },
+      icon: IconType.pencil,
+    );
+  }
+
+  // Botón para activar/desactivar la detección de obstáculos
+  Widget _buildDetectionButton(
+      BuildContext context, CommandService commandService, double iconSize) {
+    return DefaultButtonFactory.getButton(
+      color: primaryYellow,
+      iconSize: iconSize,
+      buttonType: ButtonType.primaryIcon,
+      onPressed: () {
+        final message = !commandService.obstacleDetection
+            ? 'Se ha activado \nla detección \nde obstáculos'
+            : 'Se ha desactivado \nla detección \nde obstáculos';
+
+        showInfoDialog(context, message);
+
+        if (!commandService.obstacleDetection) {
+          commandService.activateObjectDetection();
+        } else {
+          commandService.deactivateObjectDetection();
+        }
+      },
+      icon: IconType.obstacleDetection,
+    );
+  }
+
+  // Botón para activar/cerrar ciclos
+  Widget _buildCycleButton(
+      BuildContext context, CommandService commandService, double iconSize) {
+    return DefaultButtonFactory.getButton(
+      color: secondaryGreen,
+      iconSize: iconSize,
+      buttonType: ButtonType.primaryIcon,
+      onPressed: () {
+        if (!commandService.cycleActive) {
+          CycleDialog.show(context);
+        } else {
+          commandService.endCycle();
+          showInfoDialog(context, 'Se ha cerrado el ciclo');
+        }
+      },
+      icon: IconType.cycle,
+    );
+  }
+
+  // Botón principal para enviar comandos al robot
+  Widget _buildPlayButton(BuildContext context, double size) {
+    return TextButton(
+      style: TextButton.styleFrom(
+        alignment: Alignment.center,
+        padding: const EdgeInsets.all(22),
+        shape: const CircleBorder(
+          side: BorderSide(color: neutralWhite, width: 5.0),
+        ),
+        iconColor: neutralWhite,
+      ),
+      onPressed: () async {
+        // Verificar conexión Bluetooth
+        if (!btService.isConnected) {
+          SimulatorBluetoothDialog.show(context);
+          return;
+        }
+
+        // Verificar que existan comandos para enviar
+        final commandService = context.read<CommandService>();
+        if (commandService.commandHistory.isEmpty) {
+          showSnackBar('Aún no hay comandos');
+          return;
+        }
+
+        // Enviar comandos al dispositivo
+        final message = commandService.getCommandsBotString();
+        final messageSent = await btService.sendStringToDevice(message);
+
+        showSnackBar(
+            messageSent ? "Comandos enviados" : "Error al enviar comandos");
+      },
+      child: Image.asset(
+        'assets/button_icons/play.png',
+        color: neutralWhite,
+        width: size,
+        height: size,
+        alignment: const Alignment(0, 3),
+      ),
     );
   }
 }
