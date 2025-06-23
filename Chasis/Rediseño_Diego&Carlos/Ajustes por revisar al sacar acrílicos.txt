@@ -1,0 +1,7 @@
+Resumen de piezas cuyo ajuste con otras es crítico: soporte servo, base nivel 2, tornillo M3 con cremallera, cremallera, sujetador cremallera, engrane, servomotor y sujetador marcador.
+Ajustes por revisar:
+1. Entre el soporte de servo y el acrílico del segundo nivel (ajuste forzado)
+2. Entre el engrane y el eje del servo (ajuste forzado)
+3. Entre sujetador cremallera y servo (ajuste bueno)
+4. Entre tornillos de sujetador cremallera (M3) y agujero guía de cremallera (que no haya mucho juego)
+5. Entre la cremallera y el sujetador de marcador (que no haya mucho juego)
