@@ -26,11 +26,11 @@ class DefaultButtonFactory {
     IconType? icon,
     required Color color,
     required ButtonType buttonType,
-    double? iconSize = 32,
-    double borderWidth = 4,
+    double? iconSize = 26,
+    double borderWidth = 3.5,
     double verticalPadding = 16,
     double horizontalPadding = 16,
-    double borderRadius = 16,
+    double borderRadius = 14,
     required void Function() onPressed,
   }) {
     Widget buttonData;
@@ -46,7 +46,7 @@ class DefaultButtonFactory {
           color: neutralWhite,
         );
       } else if (text != null) {
-        horizontalPadding = 35;
+        horizontalPadding = 20;
         verticalPadding = 4;
         buttonData = Text(
           text,
@@ -84,7 +84,6 @@ class DefaultButtonFactory {
       }
     } else {
       throw ArgumentError('Invalid button type');
-
     }
 
     Map<ButtonType, Widget> buttons = {
@@ -131,8 +130,6 @@ class DefaultButtonFactory {
         return 'assets/button_icons/pencil.png';
       case IconType.claw:
         return 'assets/button_icons/claw.png';
-      default:
-        throw ArgumentError('Invalid icon type');
     }
   }
 }

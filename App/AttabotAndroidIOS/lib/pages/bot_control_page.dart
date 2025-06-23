@@ -24,25 +24,18 @@ class _BotControlPageState extends State<BotControlPage> {
         title: const Text('Atta-Bot Educativo'),
         titleTextStyle: const TextStyle(
             color: neutralWhite,
-            fontSize: 20.0,
+            fontSize: 18.0,
             fontFamily: 'Poppins',
-            fontWeight: FontWeight.w600),
+            fontWeight: FontWeight.w700),
         automaticallyImplyLeading: false,
         backgroundColor: Colors.transparent,
         actions: <Widget>[
           IconButton(
-            icon: const Icon(Icons.bluetooth),
-            color: neutralWhite,
-            onPressed: () {
-              navService.goToBluetoothDevicesPage(context);
-            },
-          ),
-          IconButton(
             icon: Image.asset(
               'assets/button_icons/question_mark.png',
               color: neutralWhite,
-              height: 18,
-              width: 18,
+              height: 16,
+              width: 16,
             ),
             color: neutralWhite,
             onPressed: () {
@@ -60,12 +53,12 @@ class _BotControlPageState extends State<BotControlPage> {
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                SizedBox(height:70),
+                SizedBox(height: 70),
                 Spacer(),
                 MovementMenu(),
                 Expanded(child: SizedBox(height: 10)),
                 ActionMenu(),
-                Expanded(child: SizedBox(height: 15)),
+                Expanded(child: SizedBox(height: 10)),
                 HistoryMenu(),
                 Spacer()
               ]),

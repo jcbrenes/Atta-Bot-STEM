@@ -18,6 +18,7 @@ class MovementMenu extends StatelessWidget {
             children: [
               DefaultButtonFactory.getButton(
                 color: primaryBlue,
+                iconSize: MediaQuery.of(context).size.width * 0.06,
                 buttonType: ButtonType.primaryIcon,
                 onPressed: () {
                   showDialog(
@@ -29,13 +30,14 @@ class MovementMenu extends StatelessWidget {
                 },
                 icon: IconType.forwardArrow,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 15),
               Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     DefaultButtonFactory.getButton(
                       color: primaryOrange,
+                      iconSize: MediaQuery.of(context).size.width * 0.06,
                       buttonType: ButtonType.primaryIcon,
                       onPressed: () {
                         showDialog(
@@ -47,17 +49,20 @@ class MovementMenu extends StatelessWidget {
                       },
                       icon: IconType.rotateLeft,
                     ),
-                    Expanded(
-                      child: SizedBox(
-                        child: Image.asset(
-                          "assets/generic_atta_bot.png",
-                          color: neutralWhite,
-                          fit: BoxFit.scaleDown,
-                        ),
+                    SizedBox(width: 15),
+                    Container(
+                      width: MediaQuery.of(context).size.width * 0.5,
+                      height: MediaQuery.of(context).size.width * 0.5,
+                      child: Image.asset(
+                        "assets/generic_atta_bot.png",
+                        color: neutralWhite,
+                        fit: BoxFit.scaleDown,
                       ),
                     ),
+                    SizedBox(width: 15),
                     DefaultButtonFactory.getButton(
                       color: primaryOrange,
+                      iconSize: MediaQuery.of(context).size.width * 0.06,
                       buttonType: ButtonType.primaryIcon,
                       onPressed: () {
                         showDialog(
@@ -70,9 +75,10 @@ class MovementMenu extends StatelessWidget {
                       icon: IconType.rotateRight,
                     ),
                   ]),
-              const SizedBox(height: 10),
+              const SizedBox(height: 15),
               DefaultButtonFactory.getButton(
                 color: primaryBlue,
+                iconSize: MediaQuery.of(context).size.width * 0.06,
                 buttonType: ButtonType.primaryIcon,
                 onPressed: () {
                   showDialog(

@@ -14,15 +14,167 @@ class LandingPage extends StatefulWidget {
 
 class _LandingPageState extends State<LandingPage> {
   NavigationService navService = DependencyManager().getNavigationService();
-  int _selectedIndex = 0;
+  int _selectedIndex = 7;
   final List<NavigationDestination> destinations = [
     const NavigationDestination(
-      icon: Icon(Icons.home,color: neutralWhite,),
-      label: 'Inicio',
+      icon: Icon(
+        Icons.home,
+        size: 20,
+        color: Colors.transparent,
+      ),
+      label: "",
+      enabled: false,
     ),
     const NavigationDestination(
-      icon: Icon(Icons.history, color: neutralWhite,),
-      label: 'Historial',
+      icon: Icon(
+        Icons.home,
+        size: 20,
+        color: Colors.transparent,
+      ),
+      label: "",
+      enabled: false,
+    ),
+    const NavigationDestination(
+      icon: Icon(
+        Icons.home,
+        size: 20,
+        color: Colors.transparent,
+      ),
+      label: "",
+      enabled: false,
+    ),
+    const NavigationDestination(
+      icon: Icon(
+        Icons.home,
+        size: 20,
+        color: Colors.transparent,
+      ),
+      label: "",
+      enabled: false,
+    ),
+    const NavigationDestination(
+      icon: Icon(
+        Icons.home,
+        size: 20,
+        color: Colors.transparent,
+      ),
+      label: "",
+      enabled: false,
+    ),
+    const NavigationDestination(
+      icon: Icon(
+        Icons.home,
+        size: 20,
+        color: Colors.transparent,
+      ),
+      label: "",
+      enabled: false,
+    ),
+    const NavigationDestination(
+      icon: Icon(
+        Icons.home,
+        size: 20,
+        color: Colors.transparent,
+      ),
+      label: "",
+      enabled: false,
+    ),
+    NavigationDestination(
+      icon: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: neutralWhite,
+            width: 1,
+          ),
+        ),
+        child: Icon(
+          Icons.home,
+          size: 20,
+          color: Colors.transparent,
+        ),
+      ),
+      label: "",
+    ),
+    NavigationDestination(
+      icon: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: neutralWhite,
+            width: 1,
+          ),
+        ),
+        child: Icon(
+          Icons.history,
+          size: 20,
+          color: Colors.transparent,
+        ),
+      ),
+      label: "",
+    ),
+    const NavigationDestination(
+      icon: Icon(
+        Icons.home,
+        size: 20,
+        color: Colors.transparent,
+      ),
+      label: "",
+      enabled: false,
+    ),
+    const NavigationDestination(
+      icon: Icon(
+        Icons.home,
+        size: 20,
+        color: Colors.transparent,
+      ),
+      label: "",
+      enabled: false,
+    ),
+    const NavigationDestination(
+      icon: Icon(
+        Icons.home,
+        size: 20,
+        color: Colors.transparent,
+      ),
+      label: "",
+      enabled: false,
+    ),
+    const NavigationDestination(
+      icon: Icon(
+        Icons.home,
+        size: 20,
+        color: Colors.transparent,
+      ),
+      label: "",
+      enabled: false,
+    ),
+    const NavigationDestination(
+      icon: Icon(
+        Icons.home,
+        size: 20,
+        color: Colors.transparent,
+      ),
+      label: "",
+      enabled: false,
+    ),
+    const NavigationDestination(
+      icon: Icon(
+        Icons.home,
+        size: 20,
+        color: Colors.transparent,
+      ),
+      label: "",
+      enabled: false,
+    ),
+    const NavigationDestination(
+      icon: Icon(
+        Icons.home,
+        size: 20,
+        color: Colors.transparent,
+      ),
+      label: "",
+      enabled: false,
     ),
   ];
 
@@ -41,20 +193,45 @@ class _LandingPageState extends State<LandingPage> {
           ),
         ),
         child: Scaffold(
-          body: <Widget>[
-            const BotControlPage(),
-            const HistoryPage(),
-          ][_selectedIndex],
-          bottomNavigationBar: NavigationBar(
-            backgroundColor: neutralDarkBlue,
-            indicatorColor: neutralDarkBlueAD,
-            destinations: destinations,
-            selectedIndex: _selectedIndex,
-            onDestinationSelected: (index) {
-              setState(() {
-                _selectedIndex = index;
-              });
+          body: GestureDetector(
+            onHorizontalDragEnd: (DragEndDetails details) {
+              if (details.primaryVelocity! > 0) {
+                // Swiped right
+                if (_selectedIndex == 8) {
+                  setState(() {
+                    _selectedIndex--;
+                  });
+                }
+              } else if (details.primaryVelocity! < 0) {
+                // Swiped left
+                if (_selectedIndex == 7) {
+                  setState(() {
+                    _selectedIndex++;
+                  });
+                }
+              }
             },
+            child: <Widget>[
+              const BotControlPage(),
+              const HistoryPage(),
+            ][_selectedIndex - 7],
+          ),
+          bottomNavigationBar: Container(
+            color: neutralDarkBlue,
+            padding: const EdgeInsets.fromLTRB(0, 0, 0, 40),
+            child: NavigationBar(
+              backgroundColor: neutralDarkBlue,
+              indicatorColor: neutralWhite,
+              indicatorShape: const CircleBorder(),
+              destinations: destinations,
+              selectedIndex: _selectedIndex,
+              height: 10,
+              onDestinationSelected: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                });
+              },
+            ),
           ),
         ));
   }
