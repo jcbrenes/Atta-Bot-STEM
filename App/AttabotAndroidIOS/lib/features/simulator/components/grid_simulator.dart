@@ -29,8 +29,8 @@ class SimulationArea extends StatefulWidget {
 class _SimulationAreaState extends State<SimulationArea> {
   double posX = 130;
   double posY = 130;
-  double rotation = 0; // grados actuales
-  double previousRotation = 0; // para animación
+  double rotation = 0;
+  double previousRotation = 0;
   bool obstacleDetectionActive = false;
   bool penActive = false;
 
@@ -40,15 +40,48 @@ class _SimulationAreaState extends State<SimulationArea> {
   @override
   void initState() {
     super.initState();
+    previousRotation = rotation;
     _runInstructions();
   }
 
+  List<String> _expandCycles(List<String> instructions) {
+    List<String> output = [];
+    int i = 0;
+
+    while (i < instructions.length) {
+      final line = instructions[i].trim();
+      if (line.toLowerCase().startsWith("ciclo abierto")) {
+        final match =
+            RegExp(r'ciclo abierto\s*\·\s*(\d+)', caseSensitive: false)
+                .firstMatch(line);
+        final repeatCount = match != null ? int.parse(match.group(1)!) : 1;
+        int nest = 1;
+        int j = i + 1;
+        while (j < instructions.length && nest > 0) {
+          final current = instructions[j].toLowerCase();
+          if (current.startsWith("ciclo abierto"))
+            nest++;
+          else if (current.startsWith("ciclo cerrado")) nest--;
+          j++;
+        }
+        final block = _expandCycles(instructions.sublist(i + 1, j - 1));
+        for (int r = 0; r < repeatCount; r++) {
+          output.addAll(block);
+        }
+        i = j;
+      } else {
+        output.add(line);
+        i++;
+      }
+    }
+    return output;
+  }
+
   Future<void> _runInstructions() async {
-    for (final instruction in widget.instructions) {
-      // Notifica la instrucción actual
+    final expandedInstructions = _expandCycles(widget.instructions);
+    for (final instruction in expandedInstructions) {
       widget.onInstructionChange?.call(instruction);
 
-      // Esperar si está en pausa
       while (widget.paused) {
         await Future.delayed(const Duration(milliseconds: 100));
       }
@@ -57,8 +90,6 @@ class _SimulationAreaState extends State<SimulationArea> {
 
       setState(() {
         final inst = instruction.toLowerCase();
-
-        // 🔥 Ajuste clave: -90° para alinear con la orientación del triángulo
         double angle = _radians(rotation - 90);
 
         if (inst.contains("avanzar")) {
@@ -68,7 +99,8 @@ class _SimulationAreaState extends State<SimulationArea> {
           posX -= step * cos(angle);
           posY -= step * sin(angle);
         } else if (inst.contains("girar")) {
-          final match = RegExp(r'(\d+)\s*grados').firstMatch(inst);
+          final match = RegExp(r'(\d+)\s*[\u00b0]?', caseSensitive: false)
+              .firstMatch(inst);
           if (match != null) {
             final degrees = double.parse(match.group(1)!);
             previousRotation = rotation;
@@ -88,7 +120,6 @@ class _SimulationAreaState extends State<SimulationArea> {
           obstacleDetectionActive = false;
         }
 
-        // Limita el movimiento dentro del contenedor
         posX = posX.clamp(0, widget.width - objectSize);
         posY = posY.clamp(0, widget.height - objectSize);
       });
@@ -114,24 +145,15 @@ class _SimulationAreaState extends State<SimulationArea> {
             top: posY,
             child: TweenAnimationBuilder<double>(
               tween: Tween<double>(
-                begin: _radians(previousRotation),
-                end: _radians(rotation),
+                begin: previousRotation,
+                end: rotation,
               ),
               duration: const Duration(milliseconds: 400),
-              builder: (context, angle, child) {
+              builder: (context, angleDegrees, child) {
                 return Transform.rotate(
-                  angle: angle,
-                  child: SizedBox(
-                    width: objectSize,
-                    height: objectSize,
-                    child: ObjectSimulator(
-                      size: objectSize,
-                      useImage: widget.useImage,
-                      botImagePath: widget.botImagePath ?? '',
-                      penActive: penActive,
-                      obstacleDetectionActive: obstacleDetectionActive,
-                    ),
-                  ),
+                  angle: _radians(angleDegrees),
+                  origin: Offset(objectSize / 2, objectSize / 3),
+                  child: child,
                 );
               },
               onEnd: () {
@@ -139,6 +161,17 @@ class _SimulationAreaState extends State<SimulationArea> {
                   previousRotation = rotation;
                 });
               },
+              child: SizedBox(
+                width: objectSize,
+                height: objectSize,
+                child: ObjectSimulator(
+                  size: objectSize,
+                  useImage: widget.useImage,
+                  botImagePath: widget.botImagePath ?? '',
+                  penActive: penActive,
+                  obstacleDetectionActive: obstacleDetectionActive,
+                ),
+              ),
             ),
           ),
         ],
