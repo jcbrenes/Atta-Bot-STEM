@@ -5,9 +5,9 @@ using namespace std;
 
 // Robot constants
 const int samplingTime = 25; // units: miliseconds
-const float pulsesPerRev = 574; // number of pulses from a single encoder output 574
-const float wheelRadius = 22.5; // Wheel circumference = 139.5mm
-const float distanceWheelToWheel = 112; // actualizado a chasís v2.3 
+const float pulsesPerRev = 575; // number of pulses from a single encoder output 574
+const float wheelRadius = 24.5; // Wheel circumference = 139.5mm
+const float distanceWheelToWheel = 110; // actualizado a chasís v2.3 
 const float distanceCenterToWheel = distanceWheelToWheel / 2 ; // Turning radius of the robot, distance in mm between the center and one wheel
 
 // Constants for PID control with samplingTime = 25ms
@@ -286,18 +286,26 @@ void loop() {
         flagEjecucion = 0;
 
       }else if (instruccion == inst_Avanzar) {
+        rightEncoderPos = 0; 
+        leftEncoderPos = 0;
         estado = MOVERSE;
 
       }else if (instruccion == inst_Retroceder) {
         estado = MOVERSE;
         valor_instruccion = valor_instruccion * -1;
+        rightEncoderPos = 0; 
+        leftEncoderPos = 0;
 
       }else if (instruccion == inst_GiroIzquierdo) {
         estado = GIRAR;
         valor_instruccion = valor_instruccion * -1;
+        rightEncoderPos = 0;
+        leftEncoderPos = 0;
 
       }else if (instruccion == inst_GiroDerecho) {
         estado = GIRAR;
+        rightEncoderPos = 0;
+        leftEncoderPos = 0;
       
       }else if (instruccion == inst_CicloInicia  ||  instruccion == inst_CicloFin) {
         estado = CICLO;
@@ -325,6 +333,8 @@ void loop() {
 
       }else if ( movimiento_listo ) {
         estado = DETENERSE;
+        Serial.print("listo:");
+        
       }
       else if (obstaculos_activo) {
         if (!lecturaInfrarrojoDerecho||!lecturaInfrarrojoIzquierdo||lecturaSensorTrackerDerecho||lecturaSensorTrackerIzquierdo){
@@ -476,7 +486,8 @@ void loop() {
   }
   
   ConfigurarEstadoLedRgb(flagBateriaBaja, flagBluetooth, flagEjecucion, flagObstaculo, recibeProgra);
-  Serial.println(String("flagBateriaBaja:") + flagBateriaBaja + String(", flagBluetooth:") + flagBluetooth + String(", flagEjecucion:") +  flagEjecucion + String(", flagObstaculo:") + flagObstaculo + String(", recibeProgra:") + recibeProgra);
+  Serial.println(String("pulsosRight: ") + rightEncoderPos + String(", pulsosLeft: ") + leftEncoderPos);
+  //Serial.println(String("flagBateriaBaja:") + flagBateriaBaja + String(", flagBluetooth:") + flagBluetooth + String(", flagEjecucion:") +  flagEjecucion + String(", flagObstaculo:") + flagObstaculo + String(", recibeProgra:") + recibeProgra);
   delay(5);
 }
 
