@@ -6,8 +6,8 @@ using namespace std;
 // Robot constants
 const int samplingTime = 25; // units: miliseconds
 const float pulsesPerRev = 575; // number of pulses from a single encoder output 574
-const float wheelRadius = 24.5; // Wheel circumference = 139.5mm
-const float distanceWheelToWheel = 110; // actualizado a chasís v2.3 
+const float wheelRadius = 22; // Wheel circumference = 139.5mm
+const float distanceWheelToWheel = 112; // actualizado a chasís v2.4 
 const float distanceCenterToWheel = distanceWheelToWheel / 2 ; // Turning radius of the robot, distance in mm between the center and one wheel
 
 // Constants for PID control with samplingTime = 25ms
@@ -34,7 +34,7 @@ float sumErrorVelLeft = 0; // Accumulated integral error for the left wheel
 float prevErrorVelLeft = 0; // Previous error value for the left wheel (used for derivative calculation)
 
 int distanceTraveled = 0; // Variable to track the total distance traveled by the robot
-const float correctionFactorLines = 0.92; 
+const float correctionFactorLines = 0.95; //0.92 
 
 
 int prevPWMRight = 0;
