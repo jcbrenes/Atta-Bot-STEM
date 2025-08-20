@@ -135,6 +135,7 @@ bool flagBluetooth = 0;
 bool flagEjecucion = 0;
 bool flagObstaculo = 0;
 bool recibeProgra = 0;
+bool flancoNegRecibeProgra = 0;
 unsigned long recibePrograTiempo0 = 0;
 
 //******************************************************************************************************************
@@ -259,13 +260,12 @@ void loop() {
           flagBluetooth = 0;
       }
       //Lógica de estado siguiente
-      if (!lecturaBotonStart ) {
+      if (!lecturaBotonStart || flancoNegRecibeProgra) {
           flagEjecucion = 1; 
           Interpreta_mensajeBLE(mensajeBLE);
           delay (1000);
           estado = LEE_MEMORIA;
           inst_actual = 0;
-          
       }
       break;
     }
@@ -479,10 +479,12 @@ void loop() {
     }
   }
 
+  flancoNegRecibeProgra = 0;
   // Reseteo de la señal de recibeProgra
-  if (millis() > recibePrograTiempo0 + duracionIndicadorRecibeProgra) {
+  if (recibeProgra && millis() > recibePrograTiempo0 + duracionIndicadorRecibeProgra) {
     recibePrograTiempo0 = millis();
     recibeProgra = 0;
+    flancoNegRecibeProgra = 1;
   }
   
   ConfigurarEstadoLedRgb(flagBateriaBaja, flagBluetooth, flagEjecucion, flagObstaculo, recibeProgra);
