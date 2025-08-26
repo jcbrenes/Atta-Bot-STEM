@@ -26,6 +26,8 @@ const int lowerDutyCycleLimitSpeed = 60; // Minimum allowed PWM value for speed 
 // Constants for RGB LED configuration
 const int duracionParpadeoLed = 500;
 const int duracionIndicadorRecibeProgra = 2000;
+const int esperaBT = 200;
+unsigned long tiempoPasadaLecturaBT = 0;
 
 // Error accumulation for speed PID control
 float sumErrorVelRight = 0; // Accumulated integral error for the right wheel
@@ -237,6 +239,27 @@ void loop() {
   bool lecturaSensorTrackerDerecho=digitalRead(rightTrackerSensor);
   bool lecturaSensorTrackerIzquierdo=digitalRead(leftTrackerSensor);
   int flagBateriaBaja = digitalRead(pinBateriaBaja);
+
+  // Para hacer una lectura de BT independientemente del estado
+  // con el objetivo de luego agregar que se pueda detener en cualquier momento desde la app
+  if (millis() >= tiempoPasadaLecturaBT + esperaBT) {
+    if (central) {
+
+      if (central.connected()) {//era un while
+        flagBluetooth = 1;
+        if (caracteristico.written()) {
+          recibeProgra = 1;
+          recibePrograTiempo0 = millis();
+          mensajeBLE = string( caracteristico.value().c_str() );
+          Serial.println(mensajeBLE.c_str()); 
+          caracteristico.writeValue("");
+        }
+      } 
+    } else {
+        flagBluetooth = 0;
+    }
+    tiempoPasadaLecturaBT = millis();
+  }
 
 
   //Máquina de estados principal
