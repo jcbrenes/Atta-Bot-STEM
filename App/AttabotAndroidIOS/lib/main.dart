@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
+import 'package:proyecto_tec/pages/bot_control_page.dart';
 import 'package:proyecto_tec/pages/home_page.dart';
 import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
 import 'package:proyecto_tec/shared/features/permissions/services/permission.dart';
@@ -12,9 +13,12 @@ Future<void> main() async {
   final PermissionService permissionService = DependencyManager().getPermissionService();
 await permissionService.requestPermissions();
 
-  runApp(
-    ChangeNotifierProvider(
-      create: (context) => CommandService(),
+   runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => CommandService()),
+        ChangeNotifierProvider(create: (context) => SimplifiedModeProvider()),
+      ],
       child: const AttaBotApp(),
     ),
   );
