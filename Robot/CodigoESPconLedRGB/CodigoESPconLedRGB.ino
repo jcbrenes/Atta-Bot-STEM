@@ -5,7 +5,7 @@ using namespace std;
 
 // Robot constants
 const int samplingTime = 25; // units: miliseconds
-const float pulsesPerRev = 575; // number of pulses from a single encoder output 574
+const float pulsesPerRev = 822; // number of pulses from a single encoder output 574
 const float wheelRadius = 22; // Wheel circumference = 139.5mm
 const float distanceWheelToWheel = 112; // actualizado a chasís v2.4 
 const float distanceCenterToWheel = distanceWheelToWheel / 2 ; // Turning radius of the robot, distance in mm between the center and one wheel
@@ -74,12 +74,12 @@ const int leftEncoderA = 32; // Pin for the left encoder's channel A
 const int leftEncoderB = 35; // Pin for the left encoder's channel B
 
 // Motor control pins
-const int rightMotorM1 = 13;   // Direction control pin 1 for the right motor
-const int rightMotorM2 = 15;   // Direction control pin 2 for the right motor
+const int rightMotorM1 = 14;   // Direction control pin 1 for the right motor
+const int rightMotorM2 = 12;   // Direction control pin 2 for the right motor
 
 
-const int leftMotorM1 = 14;   // Direction control pin 1 for the left motor
-const int leftMotorM2 = 12;   // Direction control pin 1 for the left motor
+const int leftMotorM1 = 13;   // Direction control pin 1 for the left motor
+const int leftMotorM2 = 15;   // Direction control pin 1 for the left motor
 
 // Obstacle sensors setup
 const int rightInfraredSensor = 4; // Pin for the right infrared obstacle sensor
@@ -992,7 +992,7 @@ float calculateLinearDistanceTraveled(long leftPulseCount, long rightPulseCount)
 
   // Distance traveled in mm
   float rightDistance = rightRevolutions * wheelCircumference;
-  float leftDistance = rightRevolutions * wheelCircumference;
+  float leftDistance = leftRevolutions * wheelCircumference;
 
   // Calculate the average linear distance
   float linearDistance = (rightDistance + leftDistance) / 2.0;
@@ -1015,7 +1015,7 @@ float calculateLinearDistanceDesired(int desiredAngle) {
 
   // Calculate the linear distance based on the desired angle, assuming a circular path
   // Formula: (desiredAngle / 360) * π * distanceWheelToWheel
-  float linearDesiredDistance = (desiredAngle / 360.0) * PI * distanceWheelToWheel;
+  float linearDesiredDistance = (desiredAngle / 360.0) * PI * distanceWheelToWheel * correctionFactorLines;
 
   // Return the calculated linear distance
   return linearDesiredDistance;
