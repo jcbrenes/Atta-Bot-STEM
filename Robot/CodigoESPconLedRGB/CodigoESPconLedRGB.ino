@@ -5,7 +5,7 @@ using namespace std;
 
 // Robot constants
 const int samplingTime = 25; // units: miliseconds
-const float pulsesPerRev = 822; // number of pulses from a single encoder output 574
+const float pulsesPerRev = 573; // number of pulses from a single encoder output 574
 const float wheelRadius = 22; // Wheel circumference = 139.5mm
 const float distanceWheelToWheel = 112; // actualizado a chasís v2.4 
 const float distanceCenterToWheel = distanceWheelToWheel / 2 ; // Turning radius of the robot, distance in mm between the center and one wheel
