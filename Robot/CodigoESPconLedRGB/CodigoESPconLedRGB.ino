@@ -29,6 +29,9 @@ const int duracionIndicadorRecibeProgra = 2000;
 const int esperaBT = 200;
 unsigned long tiempoPasadaLecturaBT = 0;
 
+// Constante para evasión de obstáculos
+const int distRetrocesoObstaculo = 50;
+
 // Error accumulation for speed PID control
 float sumErrorVelRight = 0; // Accumulated integral error for the right wheel
 float prevErrorVelRight = 0; // Previous error value for the right wheel (used for derivative calculation)
@@ -287,7 +290,11 @@ void loop() {
           flagEjecucion = 1; 
           Interpreta_mensajeBLE(mensajeBLE);
           delay (1000);
-          estado = LEE_MEMORIA;
+          if (!paro_emergencia) {
+            estado = LEE_MEMORIA;
+          } else {
+            estado = DETENERSE;
+          }
           inst_actual = 0;
       }
       break;
@@ -354,14 +361,18 @@ void loop() {
         paro_emergencia=true;
         estado = DETENERSE;
 
-      }else if ( movimiento_listo ) {
+      } else if ( movimiento_listo ) {
         estado = DETENERSE;
-        Serial.print("listo:");
         
-      }
-      else if (obstaculos_activo) {
-        if (!lecturaInfrarrojoDerecho||!lecturaInfrarrojoIzquierdo||lecturaSensorTrackerDerecho||lecturaSensorTrackerIzquierdo){
+      } else if (lecturaSensorTrackerDerecho||lecturaSensorTrackerIzquierdo) {
+        obstaculo_detectado=true;
+        flagObstaculo = 1;
+        estado=DETENERSE;
+
+      } else if (obstaculos_activo) {
+        if (!lecturaInfrarrojoDerecho||!lecturaInfrarrojoIzquierdo){
           obstaculo_detectado=true;
+          flagObstaculo = 1;
           estado=DETENERSE;
         }
       }
@@ -384,14 +395,20 @@ void loop() {
       }else if ( movimiento_listo ) {
         //movimiento_listo = false;
         estado = DETENERSE;
-      }
-      else if (obstaculos_activo) {
-        if (!lecturaInfrarrojoDerecho||!lecturaInfrarrojoIzquierdo||lecturaSensorTrackerDerecho||lecturaSensorTrackerIzquierdo){
+
+      } else if (lecturaSensorTrackerDerecho||lecturaSensorTrackerIzquierdo) {
+        obstaculo_detectado=true;
+        flagObstaculo = 1;
+        estado=DETENERSE;
+
+      } else if (obstaculos_activo) {
+        if (!lecturaInfrarrojoDerecho||!lecturaInfrarrojoIzquierdo){
           obstaculo_detectado=true;
           flagObstaculo = 1;
           estado=DETENERSE;
         }
       }
+      
       break;
     }
 
@@ -408,8 +425,11 @@ void loop() {
       //Lógica estado siguiente
       if (paro_emergencia){
         paro_emergencia=false;
-        estado= ESPERA;     
+        estado = ESPERA;     
       } else if (obstaculo_detectado){
+        // Se reinician los valores de posición para que no tome en cuenta el movimiento recién interrumpido
+        rightEncoderPos = 0; 
+        leftEncoderPos = 0;
         estado = MOVIMIENTO_OBSTACULO;
       } else {
         estado = LEE_MEMORIA;
@@ -465,7 +485,7 @@ void loop() {
 
     case MOVIMIENTO_OBSTACULO: {
       // *Genera el movimiento despues que un obstaculo se detectó, el cual corresponde a un retroceso
-      retroceso_listo=advanceDesiredDistance(-50);
+      retroceso_listo=advanceDesiredDistance(-1* distRetrocesoObstaculo);
       obstaculo_detectado=false;
       flagObstaculo = 0;
       
@@ -511,8 +531,9 @@ void loop() {
   }
   
   ConfigurarEstadoLedRgb(flagBateriaBaja, flagBluetooth, flagEjecucion, flagObstaculo, recibeProgra);
-  Serial.println(String("pulsosRight: ") + rightEncoderPos + String(", pulsosLeft: ") + leftEncoderPos);
+  //Serial.println(String("pulsosRight: ") + rightEncoderPos + String(", pulsosLeft: ") + leftEncoderPos);
   //Serial.println(String("flagBateriaBaja:") + flagBateriaBaja + String(", flagBluetooth:") + flagBluetooth + String(", flagEjecucion:") +  flagEjecucion + String(", flagObstaculo:") + flagObstaculo + String(", recibeProgra:") + recibeProgra);
+  
   delay(5);
 }
 
@@ -538,65 +559,75 @@ void Interpreta_mensajeBLE (string mensaje) {
         string instruccion = mensaje.substr(i, 2);
         string valor_instruccion =  mensaje.substr(i+2, 3);
 
-        
-        //if (comando.compare("ATINI")==0) {
-        if (comando == "ATINI"){
+        if (comando=="ATCOI") {
           inst_actual = 0;
         
-        }else if (comando == "ATFIN"){
+        } else if (comando == "ATCOF") {
+          inst_final = i/5;
+
+        } else if (comando == "PARAR") {
+          paro_emergencia = true;
+
+        } else if (comando == "EJECU") {
+          inst_actual = 0;
+         
+        } else if (comando == "ATINI") {
+          inst_actual = 0;
+        
+        } else if (comando == "ATFIN") {
           inst_final = i/5;
         
-        }else if (comando == "OBINI"){
+        } else if (comando == "OBINI") {
           lista_instrucciones[inst_actual][0] = inst_ObstaculoInicia;
           lista_instrucciones[inst_actual][1] = 0;
           inst_actual++;
 
-        }else if (comando == "OBFIN"){
+        } else if (comando == "OBFIN") {
           lista_instrucciones[inst_actual][0] = inst_ObstaculoFin;
           lista_instrucciones[inst_actual][1] = 0;
           inst_actual++;
 
-        }else if (comando == "CIFIN"){
+        } else if (comando == "CIFIN"){
           lista_instrucciones[inst_actual][0] = inst_CicloFin;
           lista_instrucciones[inst_actual][1] = 0;
           inst_actual++;  
 
-        }else if (instruccion == "CI" && comando != "CIFIN"){
+        } else if (instruccion == "CI" && comando != "CIFIN") {
           short valor = stoi (valor_instruccion);
           lista_instrucciones[inst_actual][0] = inst_CicloInicia;
           lista_instrucciones[inst_actual][1] = valor;
           inst_actual++;
 
-        }else if (instruccion == "AV"){
+        } else if (instruccion == "AV") {
           short valor = stoi (valor_instruccion);
           lista_instrucciones[inst_actual][0] = inst_Avanzar;
           lista_instrucciones[inst_actual][1] = valor;
           inst_actual++;
 
-        }else if (instruccion == "RE"){
+        } else if (instruccion == "RE") {
           short valor = stoi (valor_instruccion);
           lista_instrucciones[inst_actual][0] = inst_Retroceder;
           lista_instrucciones[inst_actual][1]= valor;
           inst_actual++;
 
-        }else if (instruccion == "GI"){
+        } else if (instruccion == "GI") {
           short valor = stoi (valor_instruccion);
           lista_instrucciones[inst_actual][0] = inst_GiroIzquierdo;
           lista_instrucciones[inst_actual][1] = valor;
           inst_actual++;
 
-        }else if (instruccion == "GD"){
+        } else if (instruccion == "GD") {
           short valor = stoi (valor_instruccion);
           lista_instrucciones[inst_actual][0] = inst_GiroDerecho;
           lista_instrucciones[inst_actual][1] = valor;
           inst_actual++;
         
-        }else if (comando == "HEINI"){
+        } else if (comando == "HEINI") {
           lista_instrucciones[inst_actual][0] = inst_HerramientaInicia;
           lista_instrucciones[inst_actual][1] = 0;
           inst_actual++;
 
-        }else if (comando == "HEFIN"){
+        } else if (comando == "HEFIN") {
           lista_instrucciones[inst_actual][0] = inst_HerramientaFin;
           lista_instrucciones[inst_actual][1] = 0;
           inst_actual++;
