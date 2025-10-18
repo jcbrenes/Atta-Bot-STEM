@@ -26,8 +26,6 @@ class _ActionMenuState extends State<ActionMenu> {
   late StreamSubscription scanSubscription;
   List<BluetoothDevice> devices = [];
 
-  bool isPlaying = false;
-
   BluetoothServiceInterface btService =
       DependencyManager().getBluetoothService();
   NavigationService navService = DependencyManager().getNavigationService();
@@ -63,9 +61,6 @@ class _ActionMenuState extends State<ActionMenu> {
         if (devices.isNotEmpty) {
           selectedValue = devices.first.remoteId.toString();
         }
-        if (!btService.isConnected || devices.isEmpty) {
-          isPlaying = false;
-        }
       });
     });
   }
@@ -84,7 +79,7 @@ class _ActionMenuState extends State<ActionMenu> {
       children: [
         
 
-        const SizedBox(width: 15),
+        SizedBox(width: MediaQuery.of(context).size.width * 0.02),
         DefaultButtonFactory.getButton(
           color: secondaryGreen,
           iconSize: MediaQuery.of(context).size.width * 0.06,
@@ -100,7 +95,7 @@ class _ActionMenuState extends State<ActionMenu> {
           icon: IconType.cycle,
         ),
 
-        const SizedBox(width: 15),
+        SizedBox(width: MediaQuery.of(context).size.width * 0.02),
         DefaultButtonFactory.getButton(
           color: primaryYellow,
           iconSize: MediaQuery.of(context).size.width * 0.06,
@@ -119,8 +114,8 @@ class _ActionMenuState extends State<ActionMenu> {
           icon: IconType.obstacleDetection,
         ),
 
-        // THIS IS THE PLAY/PAUSE BUTTON
-        const SizedBox(width: 15),
+        // THIS IS THE PLAY BUTTON
+        SizedBox(width: MediaQuery.of(context).size.width * 0.02),
         TextButton(
           style: TextButton.styleFrom(
             alignment: Alignment.center,
@@ -133,38 +128,25 @@ class _ActionMenuState extends State<ActionMenu> {
           onPressed: () async {
             if (!btService.isConnected) {
               SimulatorBluetoothDialog.show(context);
-              //navService.goToBluetoothDevicesPage(context);
               return;
             }
+
             if (context.read<CommandService>().commandHistory.isEmpty) {
               showEmptyHistorySnackBar(context);
               return;
             }
-            bool messageSent = false;
 
-            if (!isPlaying){
-              messageSent = await btService.sendStringToDevice("ATCOIEJECUATCOF");
-              if (!messageSent) {
-                showMessageSnackBar("Error al ejecutar comandos");
-                return;
-              }
-              showMessageSnackBar("Comandos ejecutándose");
-            } else {
-              messageSent = await btService.sendStringToDevice("ATCOIPARARATCOF");
-              if (!messageSent) {
-                showMessageSnackBar("Error al detener comandos");
-                return;
-              }
-              showMessageSnackBar("Comandos detenidos");
+            bool messageSent = await btService.sendStringToDevice("ATCOIEJECUATCOF");
+            if (!messageSent) {
+              showMessageSnackBar("Error al ejecutar comandos");
+              return;
             }
-            setState(() {
-              isPlaying = !isPlaying;
-            });
+
+            showMessageSnackBar("Comandos ejecutándose");
+            
           },
           child: Image.asset(
-            isPlaying
-                ? 'assets/button_icons/pause.png'
-                : 'assets/button_icons/newplay.png',
+            'assets/button_icons/newplay.png',
             color: neutralWhite,
             width: MediaQuery.of(context).size.width > 600 ? 60 : 40,
             height: MediaQuery.of(context).size.width > 600 ? 60 : 40,
@@ -172,7 +154,42 @@ class _ActionMenuState extends State<ActionMenu> {
           ),
         ),
 
-        const SizedBox(width: 15),
+        // THIS IS THE PAUSE BUTTON
+        SizedBox(width: MediaQuery.of(context).size.width * 0.02),
+        TextButton(
+          style: TextButton.styleFrom(
+            alignment: Alignment.center,
+            padding: const EdgeInsets.all(10),
+            shape: const CircleBorder(
+              side: BorderSide(color: neutralWhite, width: 3.0),
+            ),
+            iconColor: neutralWhite,
+          ),
+          onPressed: () async {
+            if (!btService.isConnected) {
+              SimulatorBluetoothDialog.show(context);
+              return;
+            }
+
+            bool messageSent = await btService.sendStringToDevice("ATCOIPARARATCOF");
+            if (!messageSent) {
+              showMessageSnackBar("Error al detener comandos");
+              return;
+            }
+
+            showMessageSnackBar("Comandos detenidos");
+          },
+          child: Image.asset(
+            'assets/button_icons/pause.png',
+            color: neutralWhite,
+            width: MediaQuery.of(context).size.width > 600 ? 60 : 40,
+            height: MediaQuery.of(context).size.width > 600 ? 60 : 40,
+            alignment: Alignment.center,
+          ),
+        ),
+
+
+        SizedBox(width: MediaQuery.of(context).size.width * 0.02),
         DefaultButtonFactory.getButton(
           color: secondaryPurple,
           iconSize: MediaQuery.of(context).size.width * 0.06,
@@ -189,7 +206,7 @@ class _ActionMenuState extends State<ActionMenu> {
           icon: IconType.pencil,
         ),
 
-        const SizedBox(width: 15),
+        SizedBox(width: MediaQuery.of(context).size.width * 0.02),
         DefaultButtonFactory.getButton(
           color: secondaryPink,
           iconSize: MediaQuery.of(context).size.width * 0.06,
@@ -219,3 +236,4 @@ class _ActionMenuState extends State<ActionMenu> {
     );
   }
 }
+
