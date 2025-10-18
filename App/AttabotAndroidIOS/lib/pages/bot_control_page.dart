@@ -3,11 +3,14 @@ import 'package:provider/provider.dart';
 import 'package:proyecto_tec/features/bot-control/actions/action_menu.dart';
 import 'package:proyecto_tec/features/bot-control/actions/history_menu.dart';
 import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog.dart';
+import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog_for_simplified.dart';
+import 'package:proyecto_tec/features/commands/components/dropdown_menu_for_simplified.dart';
 import 'package:proyecto_tec/features/bot-control/dialogs/default_movement_dialog.dart';
 import 'package:proyecto_tec/features/bot-control/movement/movement_menu.dart';
 import 'package:proyecto_tec/pages/history_page.dart';
 import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
 import 'package:proyecto_tec/shared/features/navigation/services/navigation.dart';
+import 'package:proyecto_tec/shared/components/ui/buttons/switch_button.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 
 class BotControlPage extends StatefulWidget {
@@ -47,6 +50,7 @@ class _BotControlPageState extends State<BotControlPage> {
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('Atta-Bot Educativo'),
+        centerTitle: true,
         titleTextStyle: const TextStyle(
             color: neutralWhite,
             fontSize: 18.0,
@@ -64,7 +68,11 @@ class _BotControlPageState extends State<BotControlPage> {
             ),
             color: neutralWhite,
             onPressed: () {
-              HelpDialog.show(context);
+              if(simplifiedProvider.simplifiedMode) {
+                HelpDialogForSimplifiedMode.show(context);
+              } else {
+                HelpDialog.show(context);
+              }
             },
           ),
         ],
@@ -77,54 +85,55 @@ class _BotControlPageState extends State<BotControlPage> {
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(height: 70),
-            const Spacer(),
+            SizedBox(height: MediaQuery.of(context).size.height * 0.12),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
-                  'Modo simplificado',
-                  style: TextStyle(
-                    color: neutralWhite,
-                    fontSize: 14,
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-                Switch(
-                  value: simplifiedProvider.simplifiedMode,
-                  inactiveThumbColor: neutralWhite,
-                  activeThumbColor: secondaryIconOrange,
-                  onChanged: (bool value) {
-                    if (value){
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          return DefaultMovementDialog(
-                            initialDistance: simplifiedProvider.defaultDistance,
-                            initialAngle: simplifiedProvider.defaultAngle,
-                            onSetDefaults: (newDistance, newAngle) {
-                              simplifiedProvider.setDefaults(newDistance, newAngle);
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.7,
+                  child: ModeSwitch(
+                    isSimplified: simplifiedProvider.simplifiedMode,
+                    onChanged: (bool value) async{
+                      if (value != simplifiedProvider.simplifiedMode) {
+                        if (value) {
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return DefaultMovementDialog(
+                                initialDistance: simplifiedProvider.defaultDistance,
+                                initialAngle: simplifiedProvider.defaultAngle,
+                                onSetDefaults: (newDistance, newAngle) {
+                                  simplifiedProvider.setDefaults(newDistance, newAngle);
+                                },
+                              );
                             },
                           );
-                        },
-                      );
-                    }else{
-                      HistoryPage.showClearHistoryDialog(context);
-                    }
-                    setState(() {
-                      simplifiedProvider.setSimplifiedMode(value);
-                    });
-                  },
+                        } else {
+                          await HistoryDropdownHelper.showMenuForContext(context);
+                        }
+                        setState(() {
+                          simplifiedProvider.setSimplifiedMode(value);
+                        });
+                      }
+                    },
+                  ),
                 ),
               ],
             ),
+            SizedBox(height: MediaQuery.of(context).size.height * 0.01),
             MovementMenu(simplifiedMode: simplifiedProvider.simplifiedMode, defaultDistance: simplifiedProvider.defaultDistance, defaultAngle: simplifiedProvider.defaultAngle),
-            const Expanded(child: SizedBox(height: 10)),
-            const ActionMenu(),
-            const Expanded(child: SizedBox(height: 10)),
-            const HistoryMenu(),
-            const Spacer(),
+            SizedBox(height: MediaQuery.of(context).size.height * 0.05),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: EdgeInsets.only(right: MediaQuery.of(context).size.width * 0.02), 
+                child: ActionMenu(),
+              ),
+            ),
+            SizedBox(height: MediaQuery.of(context).size.height * 0.05),
+            Expanded(
+              child: HistoryMenu(),
+            ),
           ],
         ),
       ),

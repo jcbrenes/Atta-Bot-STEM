@@ -38,7 +38,8 @@ class _PrimaryIconButtonState extends State<PrimaryIconButton> {
           _isPressed = true;
         });
       },
-      onTapUp: (_) {
+      onTapUp: (_) async {
+        await Future.delayed(const Duration(milliseconds: 120));
         setState(() {
           _isPressed = false;
         });
@@ -49,19 +50,34 @@ class _PrimaryIconButtonState extends State<PrimaryIconButton> {
           _isPressed = false;
         });
       },
-      child: Container(
-        padding: EdgeInsets.symmetric(
-            vertical: widget.verticalPadding,
-            horizontal: widget.horizontalPadding),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.all(3), 
         decoration: BoxDecoration(
-          color: widget.disabled ? widget.color : (_isPressed ? widget.color : Colors.transparent),
-          border: Border.all(
-            color: neutralWhite,
-            width: widget.borderWidth,
-          ),
-          borderRadius: BorderRadius.circular(widget.borderRadius),
+          border: _isPressed
+              ? Border.all(
+                  color: Colors.white, 
+                  width: 2.5,
+                )
+              : null,
+          borderRadius: BorderRadius.circular(widget.borderRadius + 6),
         ),
-        child: widget.child,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: EdgeInsets.symmetric(
+            vertical: widget.verticalPadding,
+            horizontal: widget.horizontalPadding,
+          ),
+          decoration: BoxDecoration(
+            color: widget.color,
+            border: Border.all(
+              color: neutralWhite,
+              width: widget.borderWidth,
+            ),
+            borderRadius: BorderRadius.circular(widget.borderRadius),
+          ),
+          child: widget.child,
+        ),
       ),
     );
   }

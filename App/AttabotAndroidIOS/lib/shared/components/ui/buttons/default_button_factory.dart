@@ -17,6 +17,7 @@ enum IconType {
   cycle,
   pencil,
   claw,
+  cloud,
 }
 
 // Factory class to create buttons
@@ -130,6 +131,8 @@ class DefaultButtonFactory {
         return 'assets/button_icons/pencil.png';
       case IconType.claw:
         return 'assets/button_icons/claw.png';
+      case IconType.cloud:
+        return 'assets/button_icons/cloud.png';
     }
   }
 }

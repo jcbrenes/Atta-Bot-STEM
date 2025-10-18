@@ -16,13 +16,13 @@ class SimpleConfirmDialog extends StatelessWidget {
   String _getTitle() {
     switch (movement) {
       case "forward":
-        return "¿Mover hacia adelante?";
+        return "¿Avanzar ${value} cm?";
       case "backward":
-        return "¿Mover hacia atrás?";
+        return "¿Retroceder ${value} cm?";
       case "left":
-        return "¿Rotar a la izquierda?";
+        return "¿Girar a la izquierda ${value}°?";
       case "right":
-        return "¿Rotar a la derecha?";
+        return "¿Girar a la derecha ${value}°?";
       default:
         return "¿Ejecutar movimiento?";
     }

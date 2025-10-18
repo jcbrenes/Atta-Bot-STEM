@@ -187,7 +187,7 @@ class _LandingPageState extends State<LandingPage> {
               TextStyle(
                 fontSize: 12,
                 fontFamily: 'Poppins',
-                color: neutralWhite, // Customize the color as needed
+                color: neutralWhite, 
               ),
             ),
           ),
@@ -218,7 +218,7 @@ class _LandingPageState extends State<LandingPage> {
           ),
           bottomNavigationBar: Container(
             color: neutralDarkBlue,
-            padding: const EdgeInsets.fromLTRB(0, 0, 0, 40),
+            padding: const EdgeInsets.fromLTRB(0, 0, 0, 10),
             child: NavigationBar(
               backgroundColor: neutralDarkBlue,
               indicatorColor: neutralWhite,

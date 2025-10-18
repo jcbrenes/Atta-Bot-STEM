@@ -27,7 +27,7 @@ class FlutterBluePlusService implements BluetoothServiceInterface {
       .map((event) => event.map((e) => e.device).toList());
 
   @override
-  bool get isConnected => _connectedDevice != null;
+  bool get isConnected => _connectedDevice != null && writableCharacteristic != null;
 
   @override
   BluetoothDevice? get connectedDevice => _connectedDevice!;
@@ -73,6 +73,16 @@ class FlutterBluePlusService implements BluetoothServiceInterface {
       await device.connect();
       print('Connected to device: ${device.platformName}');
       _connectedDevice = device;
+
+      // Listen for connection state changes 
+      device.connectionState.listen((state) {
+        print('Connection state changed: $state');
+        if (state == BluetoothConnectionState.disconnected) {
+          _connectedDevice = null;
+          writableCharacteristic = null;
+          print('Device disconnected unexpectedly');
+        }
+      });
 
       // Discover services and characteristics
       List<BluetoothService> services = await device.discoverServices();

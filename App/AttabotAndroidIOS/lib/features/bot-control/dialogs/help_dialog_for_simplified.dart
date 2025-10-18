@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 import 'package:proyecto_tec/shared/components/ui/buttons/primary_icon_button.dart';
 
-class HelpDialog {
+class HelpDialogForSimplifiedMode {
   static void show(BuildContext context) {
     showDialog(
       context: context,
@@ -14,7 +14,7 @@ class HelpDialog {
             children: [
               Expanded(
                 child: const Text(
-                  '¿Cómo funciono?',
+                  'Definir parámetros',
                   textAlign: TextAlign.left,
                   style: TextStyle(
                       color: neutralWhite,
@@ -69,7 +69,7 @@ class HelpDialog {
                           fontFamily: 'Poppins'),
                       children: <TextSpan>[
                         TextSpan(
-                          text: 'una cantidad de centímetros',
+                          text: 'x centimetros',
                           style: TextStyle(
                               fontWeight: FontWeight.normal,
                               color: neutralWhite,
@@ -105,7 +105,7 @@ class HelpDialog {
                           fontFamily: 'Poppins'),
                       children: <TextSpan>[
                         TextSpan(
-                          text: 'una cantidad de centímetros',
+                          text: 'x centímetros',
                           style: TextStyle(
                               fontWeight: FontWeight.normal,
                               color: neutralWhite,
@@ -135,14 +135,14 @@ class HelpDialog {
                   ),
                   title: RichText(
                     text: const TextSpan(
-                      text: 'Girar a la derecha ',
+                      text: 'Girar ',
                       style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: neutralWhite,
                           fontFamily: 'Poppins'),
                       children: <TextSpan>[
                         TextSpan(
-                          text: 'una cantidad de grados',
+                          text: 'x a la derecha',
                           style: TextStyle(
                               fontWeight: FontWeight.normal,
                               color: neutralWhite,
@@ -171,14 +171,14 @@ class HelpDialog {
                   ),
                   title: RichText(
                     text: const TextSpan(
-                      text: 'Girar a la izquierda ',
+                      text: 'Girar ',
                       style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: neutralWhite,
                           fontFamily: 'Poppins'),
                       children: <TextSpan>[
                         TextSpan(
-                          text: 'una cantidad de grados',
+                          text: 'x a la izquierda',
                           style: TextStyle(
                               fontWeight: FontWeight.normal,
                               color: neutralWhite,
@@ -208,163 +208,14 @@ class HelpDialog {
                   ),
                   title: RichText(
                     text: const TextSpan(
-                      text: 'Iniciar un ciclo, ',
+                      text: 'Iniciar un ciclo, y repetirlo ',
                       style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: neutralWhite,
                           fontFamily: 'Poppins'),
                       children: <TextSpan>[
                         TextSpan(
-                          text: 'una cantidad de veces',
-                          style: TextStyle(
-                              fontWeight: FontWeight.normal,
-                              color: neutralWhite,
-                              fontFamily: 'Poppins'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                ListTile(
-                  contentPadding: const EdgeInsets.fromLTRB(10, 0, 0, 0),
-                  leading: PrimaryIconButton(
-                    borderRadius: 6,
-                    borderWidth: 3,
-                    horizontalPadding: 10,
-                    verticalPadding: 10,
-                    color: primaryYellow,
-                    disabled: true,
-                    onPressed: () {},
-                    child: Image.asset(
-                      'assets/button_icons/obstacle_detection.png',
-                      color: neutralWhite,
-                      height: 20,
-                      width: 20,
-                    ),
-                  ),
-                  title: RichText(
-                    text: const TextSpan(
-                      text: 'Activar ',
-                      style: TextStyle(
-                          fontWeight: FontWeight.normal,
-                          color: neutralWhite,
-                          fontFamily: 'Poppins'),
-                      children: <TextSpan>[
-                        TextSpan(
-                          text: 'detección de obstáculos',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: neutralWhite,
-                              fontFamily: 'Poppins'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                ListTile(
-                  contentPadding: const EdgeInsets.fromLTRB(10, 0, 0, 0),
-                  leading: PrimaryIconButton(
-                    borderRadius: 6,
-                    borderWidth: 3,
-                    horizontalPadding: 10,
-                    verticalPadding: 10,
-                    color: secondaryPurple,
-                    disabled: true,
-                    onPressed: () {},
-                    child: Image.asset(
-                      'assets/button_icons/pencil.png',
-                      color: neutralWhite,
-                      height: 20,
-                      width: 20,
-                    ),
-                  ),
-                  title: RichText(
-                    text: const TextSpan(
-                      text: 'Activar lápiz ',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: neutralWhite,
-                          fontFamily: 'Poppins'),
-                      children: <TextSpan>[
-                        TextSpan(
-                          text: 'que dibuje sobre la superficie',
-                          style: TextStyle(
-                              fontWeight: FontWeight.normal,
-                              color: neutralWhite,
-                              fontFamily: 'Poppins'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                ListTile(
-                  contentPadding: const EdgeInsets.fromLTRB(10, 0, 0, 0),
-                  leading: PrimaryIconButton(
-                    borderRadius: 6,
-                    borderWidth: 3,
-                    horizontalPadding: 10,
-                    verticalPadding: 10,
-                    color: secondaryPink,
-                    disabled: true,
-                    onPressed: () {},
-                    child: Image.asset(
-                      'assets/button_icons/cloud.png',
-                      color: neutralWhite,
-                      height: 20,
-                      width: 20,
-                    ),
-                  ),
-                  title: RichText(
-                    text: const TextSpan(
-                      text: 'Enviar instrucciones ',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: neutralWhite,
-                          fontFamily: 'Poppins'),
-                      children: <TextSpan>[
-                        TextSpan(
-                          text: 'al AttaBot conectado a la aplicación',
-                          style: TextStyle(
-                              fontWeight: FontWeight.normal,
-                              color: neutralWhite,
-                              fontFamily: 'Poppins'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Spacer(),
-                ListTile(
-                  contentPadding: const EdgeInsets.all(0),
-                  leading: TextButton(
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.all(15),
-                      backgroundColor: neutralDarkBlueAD,
-                      alignment: Alignment.center,
-                      shape: const CircleBorder(
-                        side: BorderSide(color: neutralWhite, width: 3.0),
-                      ),
-                      iconColor: neutralWhite,
-                    ),
-                    onPressed: () {},
-                    child: Image.asset(
-                      'assets/button_icons/play.png',
-                      color: neutralWhite,
-                      width: 18,
-                      height: 18,
-                      alignment: const Alignment(0, 3),
-                    ),
-                  ),
-                  title: RichText(
-                    text: const TextSpan(
-                      text: 'Iniciar o detener ',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: neutralWhite,
-                          fontFamily: 'Poppins'),
-                      children: <TextSpan>[
-                        TextSpan(
-                          text: 'el set de instrucciones',
+                          text: 'x cantidad de veces',
                           style: TextStyle(
                               fontWeight: FontWeight.normal,
                               color: neutralWhite,

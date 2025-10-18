@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 import 'package:proyecto_tec/shared/components/ui/buttons/default_button_factory.dart';
+import 'package:proyecto_tec/shared/components/ui/buttons/dropdown_button.dart';
 
 class DefaultMovementDialog extends StatefulWidget {
   final int initialDistance;
   final int initialAngle;
-  final Function(int, int) onSetDefaults;
+  final void Function(int newDistance, int newAngle) onSetDefaults;
 
   const DefaultMovementDialog({
     super.key,
@@ -19,153 +20,255 @@ class DefaultMovementDialog extends StatefulWidget {
 }
 
 class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
-  late int distance;
-  late int angle;
+  late int selectedDistance;
+  late int selectedAngle;
+  int selectedCycles = 1;
+
+  List<int> distanceOptions = List.generate(20, (i) => (i + 1) * 5); 
+  List<int> angleOptions = [45, 90, 180, 270, 360];
+  List<int> cycleOptions = List.generate(10, (i) => i + 1);
 
   @override
   void initState() {
     super.initState();
-    distance = widget.initialDistance;
-    angle = widget.initialAngle;
+    selectedDistance = widget.initialDistance;
+    selectedAngle = widget.initialAngle;
   }
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      buttonPadding: const EdgeInsets.all(20.0),
-      actionsPadding: const EdgeInsets.fromLTRB(20, 20, 30, 10),
-      contentPadding: const EdgeInsets.fromLTRB(0, 40, 0, 20),
-      title: const Text(
-        "Configurar valores por defecto",
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontWeight: FontWeight.w500,
-          fontSize: 24,
-          fontFamily: "Poppins",
-          color: neutralWhite,
+        return AlertDialog(
+        backgroundColor: neutralDarkBlueAD,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.0),
+          side: const BorderSide(color: Colors.white, width: 4.0),
         ),
-      ),
-      backgroundColor: neutralDarkBlueAD,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24.0),
-        side: const BorderSide(color: neutralWhite, width: 4.0),
-      ),
-      content: SizedBox(
-        width: 300,
-        child: Column(
+        contentPadding: const EdgeInsets.all(16),
+        content: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // distance
             const Text(
-              "Centímetros",
+              "Definir parámetros",
               style: TextStyle(
-                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
                 fontFamily: "Poppins",
                 color: neutralWhite,
               ),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            const SizedBox(height: 20),
+
+            
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                DefaultButtonFactory.getButton(
-                  color: secondaryIconBlue,
-                  buttonType: ButtonType.secondaryIcon,
-                  onPressed: () {
-                    setState(() {
-                      if (distance > 1) distance--;
-                    });
-                  },
-                  icon: IconType.remove,
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    "$distance",
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: neutralWhite,
+                Row(
+                  children: [
+                    DefaultButtonFactory.getButton(
+                      color: primaryBlue,
+                      buttonType: ButtonType.primaryIcon,
+                      icon: IconType.forwardArrow,
+                      onPressed: () {},
                     ),
-                  ),
-                ),
-                DefaultButtonFactory.getButton(
-                  color: secondaryIconBlue,
-                  buttonType: ButtonType.secondaryIcon,
-                  onPressed: () {
-                    setState(() {
-                      if (distance < 999) distance++;
-                    });
-                  },
-                  icon: IconType.add,
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            // angle
-            const Text(
-              "Grados",
-              style: TextStyle(
-                fontSize: 18,
-                fontFamily: "Poppins",
-                color: neutralWhite,
-              ),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                DefaultButtonFactory.getButton(
-                  color: secondaryIconOrange,
-                  buttonType: ButtonType.secondaryIcon,
-                  onPressed: () {
-                    setState(() {
-                      if (angle > 1) angle--;
-                    });
-                  },
-                  icon: IconType.remove,
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    "$angle°",
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: neutralWhite,
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Text(
+                              "Avanzar/Retroceder",
+                              style: TextStyle(
+                                color: neutralWhite,
+                                fontFamily: 'Poppins',
+                                fontSize: 12,
+                              ),
+                            ),
+                          const SizedBox(width: 8),
+                          CustomDropdown(
+                            selectedValue: selectedDistance,
+                            options: distanceOptions,
+                            onChanged: (value) {
+                              setState(() {
+                                selectedDistance = value!;
+                        });
+                      },
                     ),
-                  ),
+                  ],
                 ),
-                DefaultButtonFactory.getButton(
-                  color: secondaryIconOrange,
-                  buttonType: ButtonType.secondaryIcon,
-                  onPressed: () {
-                    setState(() {
-                      if (angle < 359) angle++;
-                    });
-                  },
-                  icon: IconType.add,
+                    const SizedBox(height: 4),
+                    const Text(
+                      "centímetros",
+                      style: TextStyle(
+                        color: neutralWhite,
+                        fontFamily: 'Poppins',
+                        fontSize: 12,
+                  ),
                 ),
               ],
             ),
           ],
         ),
-      ),
-      actions: [
-        TextButton(
-          child: const Text("Cancelar",
-              style: TextStyle(
-                  fontSize: 14, fontFamily: "Poppins", color: neutralWhite)),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        TextButton(
-          child: const Text("Aceptar",
-              style: TextStyle(
-                  fontSize: 14, fontFamily: "Poppins", color: neutralWhite)),
-          onPressed: () {
-            widget.onSetDefaults(distance, angle);
-            Navigator.of(context).pop();
-          },
-        ),
       ],
+    ),
+
+            const SizedBox(height: 16),
+
+            
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    DefaultButtonFactory.getButton(
+                      color: secondaryIconOrange,
+                      buttonType: ButtonType.primaryIcon,
+                      icon: IconType.rotateRight,
+                      onPressed: () {},
+                    ),
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Text(
+                              "Girar",
+                              style: TextStyle(
+                                color: neutralWhite,
+                                fontFamily: 'Poppins',
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            CustomDropdown(
+                              selectedValue: selectedAngle,
+                              options: angleOptions,
+                              onChanged: (value) {
+                                setState(() {
+                                  selectedAngle = value!;
+                                });
+                              },
+                              suffix: '°', 
+                         ),
+                      ],
+                    ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          "a la izquierda/derecha",
+                          style: TextStyle(
+                            color: neutralWhite,
+                            fontFamily: 'Poppins',
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+
+            
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    DefaultButtonFactory.getButton(
+                      color: secondaryGreen,
+                      buttonType: ButtonType.primaryIcon,
+                      icon: IconType.cycle,
+                      onPressed: () {},
+                    ),
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Text(
+                              "Iniciar un ciclo, y repetirlo",
+                              style: TextStyle(
+                                color: neutralWhite,
+                                fontFamily: 'Poppins',
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            CustomDropdown(
+                              selectedValue: selectedCycles,
+                              options: cycleOptions,
+                              onChanged: (value) {
+                                setState(() {
+                                  selectedCycles = value!;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          "veces",
+                          style: TextStyle(
+                            color: neutralWhite,
+                            fontFamily: 'Poppins',
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 24),
+
+            
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    widget.onSetDefaults(selectedDistance, selectedAngle);
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text(
+                    "Aplicar cambios",
+                    style: TextStyle(
+                      color: neutralWhite,
+                      fontFamily: 'Poppins',
+                      fontSize: 12,
+                      decoration: TextDecoration.underline,
+                      decorationColor: neutralWhite,
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      selectedDistance = widget.initialDistance;
+                      selectedAngle = widget.initialAngle;
+                      selectedCycles = 1;
+                    });
+                  },
+                  child: const Text(
+                    "Limpiar cambios",
+                    style: TextStyle(
+                      color: neutralWhite,
+                      fontFamily: 'Poppins',
+                      fontSize: 12,
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

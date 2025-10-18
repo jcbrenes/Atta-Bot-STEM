@@ -10,7 +10,6 @@ import 'package:proyecto_tec/shared/components/ui/buttons/default_button_factory
 import 'package:proyecto_tec/features/bot-control/actions/cycle_dialog.dart';
 import 'package:proyecto_tec/features/bot-control/dialogs/info_dialog.dart';
 import 'package:proyecto_tec/features/simulator/dialogs/simulator_bluetooth_dialog.dart';
-// import provider and service commands
 import 'package:provider/provider.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
 
@@ -26,6 +25,8 @@ class _ActionMenuState extends State<ActionMenu> {
   int cycleCount = 1;
   late StreamSubscription scanSubscription;
   List<BluetoothDevice> devices = [];
+
+  bool isPlaying = false;
 
   BluetoothServiceInterface btService =
       DependencyManager().getBluetoothService();
@@ -62,6 +63,9 @@ class _ActionMenuState extends State<ActionMenu> {
         if (devices.isNotEmpty) {
           selectedValue = devices.first.remoteId.toString();
         }
+        if (!btService.isConnected || devices.isEmpty) {
+          isPlaying = false;
+        }
       });
     });
   }
@@ -78,21 +82,24 @@ class _ActionMenuState extends State<ActionMenu> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
+        
+
+        const SizedBox(width: 15),
         DefaultButtonFactory.getButton(
-          color: secondaryPurple,
+          color: secondaryGreen,
           iconSize: MediaQuery.of(context).size.width * 0.06,
           buttonType: ButtonType.primaryIcon,
           onPressed: () {
-            if (!commandService.pencilActive) {
-              showInfoDialog(context, 'Se ha activado \n el lápiz');
-              context.read<CommandService>().activateTool();
+            if (!commandService.cycleActive) {
+              CycleDialog.show(context);
             } else {
-              showInfoDialog(context, 'Se ha desactivado \n el lápiz');
-              context.read<CommandService>().deactivateTool();
+              context.read<CommandService>().endCycle();
+              showInfoDialog(context, 'Se ha cerrado el ciclo');
             }
           },
-          icon: IconType.pencil,
+          icon: IconType.cycle,
         ),
+
         const SizedBox(width: 15),
         DefaultButtonFactory.getButton(
           color: primaryYellow,
@@ -111,32 +118,83 @@ class _ActionMenuState extends State<ActionMenu> {
           },
           icon: IconType.obstacleDetection,
         ),
-        const SizedBox(width: 15),
-        DefaultButtonFactory.getButton(
-          color: secondaryGreen,
-          iconSize: MediaQuery.of(context).size.width * 0.06,
-          buttonType: ButtonType.primaryIcon,
-          onPressed: () {
-            if (!commandService.cycleActive) {
-              CycleDialog.show(context);
-            } else {
-              context.read<CommandService>().endCycle();
-              showInfoDialog(context, 'Se ha cerrado el ciclo');
-            }
-          },
-          icon: IconType.cycle,
-        ),
+
+        // THIS IS THE PLAY/PAUSE BUTTON
         const SizedBox(width: 15),
         TextButton(
           style: TextButton.styleFrom(
             alignment: Alignment.center,
-            padding: const EdgeInsets.all(22),
+            padding: const EdgeInsets.all(10),
             shape: const CircleBorder(
-              side: BorderSide(color: neutralWhite, width: 5.0),
+              side: BorderSide(color: neutralWhite, width: 3.0),
             ),
             iconColor: neutralWhite,
           ),
           onPressed: () async {
+            if (!btService.isConnected) {
+              SimulatorBluetoothDialog.show(context);
+              //navService.goToBluetoothDevicesPage(context);
+              return;
+            }
+            if (context.read<CommandService>().commandHistory.isEmpty) {
+              showEmptyHistorySnackBar(context);
+              return;
+            }
+            bool messageSent = false;
+
+            if (!isPlaying){
+              messageSent = await btService.sendStringToDevice("ATCOIEJECUATCOF");
+              if (!messageSent) {
+                showMessageSnackBar("Error al ejecutar comandos");
+                return;
+              }
+              showMessageSnackBar("Comandos ejecutándose");
+            } else {
+              messageSent = await btService.sendStringToDevice("ATCOIPARARATCOF");
+              if (!messageSent) {
+                showMessageSnackBar("Error al detener comandos");
+                return;
+              }
+              showMessageSnackBar("Comandos detenidos");
+            }
+            setState(() {
+              isPlaying = !isPlaying;
+            });
+          },
+          child: Image.asset(
+            isPlaying
+                ? 'assets/button_icons/pause.png'
+                : 'assets/button_icons/newplay.png',
+            color: neutralWhite,
+            width: MediaQuery.of(context).size.width > 600 ? 60 : 40,
+            height: MediaQuery.of(context).size.width > 600 ? 60 : 40,
+            alignment: Alignment.center,
+          ),
+        ),
+
+        const SizedBox(width: 15),
+        DefaultButtonFactory.getButton(
+          color: secondaryPurple,
+          iconSize: MediaQuery.of(context).size.width * 0.06,
+          buttonType: ButtonType.primaryIcon,
+          onPressed: () {
+            if (!commandService.pencilActive) {
+              showInfoDialog(context, 'Se ha activado \n el lápiz');
+              context.read<CommandService>().activateTool();
+            } else {
+              showInfoDialog(context, 'Se ha desactivado \n el lápiz');
+              context.read<CommandService>().deactivateTool();
+            }
+          },
+          icon: IconType.pencil,
+        ),
+
+        const SizedBox(width: 15),
+        DefaultButtonFactory.getButton(
+          color: secondaryPink,
+          iconSize: MediaQuery.of(context).size.width * 0.06,
+          buttonType: ButtonType.primaryIcon,
+          onPressed: () async{
             if (!btService.isConnected) {
               SimulatorBluetoothDialog.show(context);
               //navService.goToBluetoothDevicesPage(context);
@@ -151,16 +209,11 @@ class _ActionMenuState extends State<ActionMenu> {
             bool messageSent = await btService.sendStringToDevice(message);
             if (!messageSent) {
               showMessageSnackBar("Error al enviar comandos");
+              return;
             }
             showMessageSnackBar("Comandos enviados");
           },
-          child: Image.asset(
-            'assets/button_icons/play.png',
-            color: neutralWhite,
-            width: MediaQuery.of(context).size.width > 600 ? 60 : 40,
-            height: MediaQuery.of(context).size.width > 600 ? 60 : 40,
-            alignment: const Alignment(0, 3),
-          ),
+          icon: IconType.cloud,
         ),
       ],
     );

@@ -78,8 +78,7 @@ class MovementMenu extends StatelessWidget {
                       width: MediaQuery.of(context).size.width * 0.5,
                       height: MediaQuery.of(context).size.width * 0.5,
                       child: Image.asset(
-                        "assets/generic_atta_bot.png",
-                        color: neutralWhite,
+                        "assets/atta_bot.png",
                         fit: BoxFit.scaleDown,
                       ),
                     ),
