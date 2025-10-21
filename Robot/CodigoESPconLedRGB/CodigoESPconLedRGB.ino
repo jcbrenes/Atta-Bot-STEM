@@ -5,7 +5,8 @@ using namespace std;
 
 // Robot constants
 const int samplingTime = 25; // units: miliseconds
-const float pulsesPerRev = 573; // number of pulses from a single encoder output 574
+const float rightPulsesPerRev = 594; // number of pulses from a single encoder output, for the right motor
+const float leftPulsesPerRev = 592; // number of pulses from a single encoder output, for the left motor
 const float wheelRadius = 22; // Wheel circumference = 139.5mm
 const float distanceWheelToWheel = 112; // actualizado a chasís v2.4 
 const float distanceCenterToWheel = distanceWheelToWheel / 2 ; // Turning radius of the robot, distance in mm between the center and one wheel
@@ -729,8 +730,8 @@ bool advanceDesiredDistance(int desiredDistance) {
 
     
     // Calculate the current speeds of both wheels based on the encoder ticks
-    float actualSpeedLeft = calculateSpeed(leftTicksForSpeed, deltaTimeSec); // Speed of the left wheel in mm/s
-    float actualSpeedRight = calculateSpeed(rightTicksForSpeed, deltaTimeSec); // Speed of the right wheel in mm/s
+    float actualSpeedLeft = calculateSpeed(leftTicksForSpeed, deltaTimeSec, 1); // Speed of the left wheel in mm/s
+    float actualSpeedRight = calculateSpeed(rightTicksForSpeed, deltaTimeSec, 0); // Speed of the right wheel in mm/s
 
     // Update the previous encoder tick counts
     rightPrevTicks = rightEncoderPos;
@@ -840,8 +841,8 @@ bool turnDesiredAngle (int desiredAngle) {
 
     
     // Calculate the current speeds of both wheels based on the encoder ticks
-    float actualSpeedLeft = calculateSpeed(leftTicksForSpeed, deltaTimeSec); // Speed of the left wheel in mm/s
-    float actualSpeedRight = calculateSpeed(rightTicksForSpeed, deltaTimeSec); // Speed of the right wheel in mm/s
+    float actualSpeedLeft = calculateSpeed(leftTicksForSpeed, deltaTimeSec, 1); // Speed of the left wheel in mm/s
+    float actualSpeedRight = calculateSpeed(rightTicksForSpeed, deltaTimeSec, 0); // Speed of the right wheel in mm/s
 
     // Update the previous encoder tick counts
     rightPrevTicks = rightEncoderPos;
@@ -911,15 +912,22 @@ bool turnDesiredAngle (int desiredAngle) {
 //
 // @param pulses The number of encoder pulses detected.
 // @param deltaTime The time interval in seconds.
+// @param motorID Whether the calculation is for the right (0) or left (1) motor.
 //
 // @return The calculated speed in mm/s.
 //******************************************************************************************************************
-float calculateSpeed(long pulses, float deltaTime) {
+float calculateSpeed(long pulses, float deltaTime, int motorID) {
     // Wheel circumference in mm
     float wheelCircumference = 2 * 3.1416 * wheelRadius;
 
     // Full revolutions based on the number of pulses
-    float revolutions = pulses / pulsesPerRev;
+    float revolutions = 0;
+    if (motorID == 0) { // for right motor
+      revolutions = pulses / rightPulsesPerRev;
+    } else { // for left motor (id = 1)
+      revolutions = pulses / leftPulsesPerRev;
+    }
+    
 
     // Distance traveled in mm
     float distance = revolutions * wheelCircumference;
@@ -1018,8 +1026,8 @@ float calculateLinearDistanceTraveled(long leftPulseCount, long rightPulseCount)
   float wheelCircumference = 2 * PI * wheelRadius;
 
   // Full revolutions based on the number of pulses
-  float rightRevolutions = (float) rightPulseCount / pulsesPerRev;
-  float leftRevolutions = (float) leftPulseCount / pulsesPerRev;
+  float rightRevolutions = (float) rightPulseCount / rightPulsesPerRev;
+  float leftRevolutions = (float) leftPulseCount / leftPulsesPerRev;
 
   // Distance traveled in mm
   float rightDistance = rightRevolutions * wheelCircumference;
