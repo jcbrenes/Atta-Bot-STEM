@@ -564,7 +564,7 @@ void Interpreta_mensajeBLE (string mensaje) {
           inst_actual = 0;
         
         } else if (comando == "ATCOF") {
-          inst_final = i/5;
+          //inst_final = i/5;
 
         } else if (comando == "PARAR") {
           paro_emergencia = true;
