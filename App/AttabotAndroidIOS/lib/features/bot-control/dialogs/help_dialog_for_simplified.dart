@@ -38,11 +38,13 @@ class HelpDialogForSimplifiedMode {
             borderRadius: BorderRadius.circular(20.0),
             side: const BorderSide(color: Colors.white, width: 4.0),
           ),
-          content: Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                 ListTile(
                   contentPadding: const EdgeInsets.fromLTRB(10, 0, 0, 0),
                   leading: PrimaryIconButton(
@@ -115,7 +117,7 @@ class HelpDialogForSimplifiedMode {
                     ),
                   ),
                 ),
-                Spacer(),
+                const SizedBox(height: 12),
                 ListTile(
                   contentPadding: const EdgeInsets.fromLTRB(10, 0, 0, 0),
                   leading: PrimaryIconButton(
@@ -188,7 +190,7 @@ class HelpDialogForSimplifiedMode {
                     ),
                   ),
                 ),
-                Spacer(),
+                const SizedBox(height: 12),
                 ListTile(
                   contentPadding: const EdgeInsets.fromLTRB(10, 0, 0, 0),
                   leading: PrimaryIconButton(
@@ -225,7 +227,8 @@ class HelpDialogForSimplifiedMode {
                     ),
                   ),
                 ),
-              ],
+                ],
+              ),
             ),
           ),
         );

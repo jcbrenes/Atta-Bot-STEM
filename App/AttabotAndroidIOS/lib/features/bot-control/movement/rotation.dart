@@ -57,10 +57,9 @@ class _RotationState extends State<Rotation> {
       content: SizedBox(
         height: 140,
         width: 500,
-        child: Expanded(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
               DefaultButtonFactory.getButton(
                 color: secondaryIconOrange,
                 buttonType: ButtonType.secondaryIcon,
@@ -156,7 +155,6 @@ class _RotationState extends State<Rotation> {
                 icon: IconType.add,
               ),
             ],
-          ),
         ),
       ),
       actions: [

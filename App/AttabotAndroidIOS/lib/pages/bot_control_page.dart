@@ -7,7 +7,6 @@ import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog_for_simpli
 import 'package:proyecto_tec/features/commands/components/dropdown_menu_for_simplified.dart';
 import 'package:proyecto_tec/features/bot-control/dialogs/default_movement_dialog.dart';
 import 'package:proyecto_tec/features/bot-control/movement/movement_menu.dart';
-import 'package:proyecto_tec/pages/history_page.dart';
 import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
 import 'package:proyecto_tec/shared/features/navigation/services/navigation.dart';
 import 'package:proyecto_tec/shared/components/ui/buttons/switch_button.dart';

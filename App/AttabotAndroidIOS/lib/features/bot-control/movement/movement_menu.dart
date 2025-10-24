@@ -16,8 +16,7 @@ class MovementMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: Expanded(
-        child: Column(
+      child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -134,7 +133,6 @@ class MovementMenu extends StatelessWidget {
                 icon: IconType.backwardArrow,
               ),
             ]),
-      ),
     );
   }
 }
