@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_tec/features/simulator/dialogs/simulator_actions_dialog.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
+import 'package:proyecto_tec/features/commands/models/command.dart';
+import 'package:proyecto_tec/features/commands/enums/command_types.dart';
 import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
 import 'package:proyecto_tec/shared/features/navigation/services/navigation.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 import 'package:proyecto_tec/features/simulator/components/grid_simulator.dart';
 import 'package:proyecto_tec/features/simulator/components/pause_button.dart';
+import 'package:proyecto_tec/pages/bot_control_page.dart'; // to find out if simplified mode is active
 
 class SimulatorPage extends StatefulWidget {
   const SimulatorPage({super.key});
@@ -47,6 +50,9 @@ class _SimulatorPageState extends State<SimulatorPage> {
                     .commandHistory
                     .map((cmd) => cmd.toUiString())
                     .toList();
+                if (context.watch<CommandService>().cycleActive && context.watch<SimplifiedModeProvider>().simplifiedMode) {
+                  instructions.add(Command(CommandType.endCycle, null).toUiString());
+                }
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 import 'package:proyecto_tec/shared/components/ui/buttons/default_button_factory.dart';
 import 'package:proyecto_tec/shared/components/ui/buttons/dropdown_button.dart';
+import 'package:proyecto_tec/features/commands/services/command_service.dart'; // for default cycles
 
 class DefaultMovementDialog extends StatefulWidget {
   final int initialDistance;
   final int initialAngle;
-  final void Function(int newDistance, int newAngle) onSetDefaults;
+  final int initialCycle;
+  final void Function(int newDistance, int newAngle, int newCycle) onSetDefaults;
 
   const DefaultMovementDialog({
     super.key,
     required this.initialDistance,
     required this.initialAngle,
+    required this.initialCycle,
     required this.onSetDefaults,
   });
 
@@ -22,7 +26,7 @@ class DefaultMovementDialog extends StatefulWidget {
 class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
   late int selectedDistance;
   late int selectedAngle;
-  int selectedCycles = 1;
+  late int selectedCycle;
 
   List<int> distanceOptions = List.generate(20, (i) => (i + 1) * 5); 
   List<int> angleOptions = [45, 90, 180, 270, 360];
@@ -33,6 +37,7 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
     super.initState();
     selectedDistance = widget.initialDistance;
     selectedAngle = widget.initialAngle;
+    selectedCycle = widget.initialCycle;
   }
 
   @override
@@ -200,11 +205,11 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
                             ),
                             const SizedBox(width: 8),
                             CustomDropdown(
-                              selectedValue: selectedCycles,
+                              selectedValue: selectedCycle,
                               options: cycleOptions,
                               onChanged: (value) {
                                 setState(() {
-                                  selectedCycles = value!;
+                                  selectedCycle = value!;
                                 });
                               },
                             ),
@@ -234,7 +239,11 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
               children: [
                 GestureDetector(
                   onTap: () {
-                    widget.onSetDefaults(selectedDistance, selectedAngle);
+                    widget.onSetDefaults(selectedDistance, selectedAngle, selectedCycle);
+                    final cmdService = context.read<CommandService>();
+                    if (!cmdService.cycleActive && selectedCycle > 1) {
+                      cmdService.initCycle(selectedCycle);
+                    }
                     Navigator.of(context).pop();
                   },
                   child: const Text(
@@ -253,7 +262,7 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
                     setState(() {
                       selectedDistance = widget.initialDistance;
                       selectedAngle = widget.initialAngle;
-                      selectedCycles = 1;
+                      selectedCycle = widget.initialCycle;
                     });
                   },
                   child: const Text(

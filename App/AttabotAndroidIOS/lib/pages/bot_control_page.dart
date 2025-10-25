@@ -4,7 +4,7 @@ import 'package:proyecto_tec/features/bot-control/actions/action_menu.dart';
 import 'package:proyecto_tec/features/bot-control/actions/history_menu.dart';
 import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog.dart';
 import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog_for_simplified.dart';
-import 'package:proyecto_tec/features/commands/components/dropdown_menu_for_simplified.dart';
+import 'package:proyecto_tec/features/commands/components/save_instructions_dialog.dart';
 import 'package:proyecto_tec/features/bot-control/dialogs/default_movement_dialog.dart';
 import 'package:proyecto_tec/features/bot-control/movement/movement_menu.dart';
 import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
@@ -22,19 +22,22 @@ class SimplifiedModeProvider extends ChangeNotifier {
   bool _simplifiedMode = false;
   int _defaultDistance = 10;
   int _defaultAngle = 90;
+  int _defaultCycle = 1;
 
   bool get simplifiedMode => _simplifiedMode;
   int get defaultDistance => _defaultDistance;
   int get defaultAngle => _defaultAngle;
+  int get defaultCycle => _defaultCycle;
 
   void setSimplifiedMode(bool value) {
     _simplifiedMode = value;
     notifyListeners();
   }
 
-  void setDefaults(int distance, int angle) {
+  void setDefaults(int distance, int angle, int cycle) {
     _defaultDistance = distance;
     _defaultAngle = angle;
+    _defaultCycle = cycle;
     notifyListeners();
   }
 }
@@ -101,18 +104,17 @@ class _BotControlPageState extends State<BotControlPage> {
                               return DefaultMovementDialog(
                                 initialDistance: simplifiedProvider.defaultDistance,
                                 initialAngle: simplifiedProvider.defaultAngle,
-                                onSetDefaults: (newDistance, newAngle) {
-                                  simplifiedProvider.setDefaults(newDistance, newAngle);
+                                initialCycle: simplifiedProvider.defaultCycle,
+                                onSetDefaults: (newDistance, newAngle, newCycle) {
+                                  simplifiedProvider.setDefaults(newDistance, newAngle, newCycle);
                                 },
                               );
                             },
                           );
                         } else {
-                          await HistoryDropdownHelper.showMenuForContext(context);
-                        }
-                        setState(() {
-                          simplifiedProvider.setSimplifiedMode(value);
-                        });
+                          await SaveInstructionsDialog.showMenuForContext(context);
+                        }        
+                        simplifiedProvider.setSimplifiedMode(value);                       
                       }
                     },
                   ),

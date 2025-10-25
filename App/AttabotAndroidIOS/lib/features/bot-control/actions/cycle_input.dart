@@ -54,11 +54,10 @@ class _CycleInputState extends State<CycleInput> {
     return SizedBox(
       height: 100,
       width: 500,
-      child: Expanded(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
             DefaultButtonFactory.getButton(
               color: secondaryIconGreen,
               buttonType: ButtonType.secondaryIcon,
@@ -113,8 +112,7 @@ class _CycleInputState extends State<CycleInput> {
               },
               icon: IconType.add,
             ),
-          ],
-        ),
+        ],
       ),
     );
   }

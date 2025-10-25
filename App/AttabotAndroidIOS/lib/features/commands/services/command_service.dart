@@ -13,6 +13,7 @@ class CommandService extends ChangeNotifier {
 
   void clearCommands() {
     _commands.clear();
+    cycleActive = false;
     notifyListeners();
   }
 
@@ -168,12 +169,15 @@ class CommandService extends ChangeNotifier {
     return true;
   }
 
-  String getCommandsBotString() {
+  String getCommandsBotString(bool isSimplified) {
     String commandsString = "";
     commandsString += CommandType.commandHeader.botTranslation;
     for (Command command in _commands) {
       commandsString += command.toBotString();
     }
+    if (cycleActive && isSimplified) {
+      commandsString += Command(CommandType.endCycle, null).toBotString();
+    }  
     commandsString += CommandType.commandFooter.botTranslation;
     return commandsString;
   }

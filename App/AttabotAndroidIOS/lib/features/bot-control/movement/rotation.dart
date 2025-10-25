@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 import 'package:proyecto_tec/shared/components/ui/buttons/default_button_factory.dart';
-// import provider and service commands
 import 'package:provider/provider.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
 

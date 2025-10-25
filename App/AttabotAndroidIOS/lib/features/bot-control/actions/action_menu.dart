@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
@@ -12,6 +11,8 @@ import 'package:proyecto_tec/features/bot-control/dialogs/info_dialog.dart';
 import 'package:proyecto_tec/features/simulator/dialogs/simulator_bluetooth_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
+import 'package:proyecto_tec/pages/bot_control_page.dart'; // to find out if simplified mode is active
+
 
 class ActionMenu extends StatefulWidget {
   const ActionMenu({super.key});
@@ -222,7 +223,7 @@ class _ActionMenuState extends State<ActionMenu> {
               return;
             }
             String message =
-                context.read<CommandService>().getCommandsBotString();
+                context.read<CommandService>().getCommandsBotString(context.watch<SimplifiedModeProvider>().simplifiedMode); // pass simplified mode status to know if we need to add endCycle
             bool messageSent = await btService.sendStringToDevice(message);
             if (!messageSent) {
               showMessageSnackBar("Error al enviar comandos");
