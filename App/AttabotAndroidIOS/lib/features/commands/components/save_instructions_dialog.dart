@@ -8,17 +8,26 @@ class SaveInstructionsDialog {
   static Future<void> showMenuForContext(BuildContext context) async {
     final FileManagementService fmService = FileManagementService();
 
-    final TextStyle contentTextStyle = const TextStyle(
+    const TextStyle contentTextStyle = TextStyle(
       fontFamily: 'Poppins',
       color: neutralWhite,
-      fontSize: 14,
-    );
-    final TextStyle titleTextStyle = const TextStyle(
-      fontFamily: 'Poppins',
-      color: neutralWhite,
-      fontSize: 28,
+      fontSize: 12,
       fontWeight: FontWeight.w500,
     );
+    const TextStyle titleTextStyle = TextStyle(
+      fontFamily: 'Poppins',
+      color: neutralWhite,
+      fontSize: 16,
+      fontWeight: FontWeight.w700,
+    );
+    const TextStyle subtitleTextStyle = TextStyle(
+      fontFamily: 'Poppins',
+      color: neutralWhite,
+      fontSize: 8,
+      fontWeight: FontWeight.w500,
+    );
+
+    Future<void> Function()? reopenSaveDialog;
 
     final GlobalKey<FormState> fileNameKey = GlobalKey<FormState>();
     final TextEditingController fileNameController = TextEditingController();
@@ -38,40 +47,20 @@ class SaveInstructionsDialog {
       await showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: Text(
-            'Sobrescribir Instrucciones',
-            style: contentTextStyle,
-          ),
+          title: const Text('Sobrescribir Instrucciones', style: titleTextStyle),
           backgroundColor: neutralDarkBlueAD,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24.0),
             side: const BorderSide(color: neutralWhite, width: 4.0),
           ),
-          content: Text(
-            'El archivo ya existe, ¿deseas sobrescribirlo?',
-            style: contentTextStyle,
-          ),
+          content: const Text('El archivo ya existe, ¿deseas sobrescribirlo?', style: contentTextStyle),
           actions: [
             TextButton(
-              child: const Text(
-                'Cancelar',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontFamily: 'Poppins',
-                  color: neutralWhite,
-                ),
-              ),
+              child: const Text('Cancelar', style: contentTextStyle),
               onPressed: () => Navigator.of(ctx).pop(),
             ),
             TextButton(
-              child: const Text(
-                'Guardar',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontFamily: 'Poppins',
-                  color: neutralWhite,
-                ),
-              ),
+              child: const Text('Guardar', style: contentTextStyle),
               onPressed: () async {
                 final fileData = context
                     .read<CommandService>()
@@ -95,20 +84,72 @@ class SaveInstructionsDialog {
       );
     }
 
+    Future<void> openInvalidFileNameDialog() async {
+      if (!context.mounted) return;
+      await showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Guardar Instrucciones', style: titleTextStyle),
+          backgroundColor: neutralDarkBlueAD,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24.0),
+            side: const BorderSide(color: neutralWhite, width: 4.0),
+          ),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('El nombre de archivo es inválido.', style: contentTextStyle),
+              SizedBox(height: 12),
+              Text('Utilice únicamente letras, números y guión bajo.', style: subtitleTextStyle),
+              SizedBox(height: 4),
+              Text('* No se aceptan caracteres especiales, ni espacios.', style: subtitleTextStyle),
+            ],
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Reintentar', style: contentTextStyle),
+              onPressed: () async {
+                Navigator.of(ctx).pop();
+                if (reopenSaveDialog != null) {
+                  await Future.delayed(const Duration(milliseconds: 50));
+                  await reopenSaveDialog.call();
+                }
+              },
+            ),
+          ],
+        ),
+      );
+    }
+
+    Future<void> openSaveSuccessDialog(String fileName) async {
+      if (!context.mounted) return;
+      await showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Guardar Instrucciones', style: titleTextStyle),
+          backgroundColor: neutralDarkBlueAD,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24.0),
+            side: const BorderSide(color: neutralWhite, width: 4.0),
+          ),
+          content: Text('El archivo “$fileName” ha sido guardado exitosamente.', style: contentTextStyle),
+          actions: [
+            TextButton(
+              child: const Text('Continuar', style: contentTextStyle),
+              onPressed: () => Navigator.of(ctx).pop(),
+            ),
+          ],
+        ),
+      );
+    }
+
     Future<void> openSaveFileDialog() async {
       if (!context.mounted) return;
       await showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text(
-            'Guardar Instrucciones',
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              color: neutralWhite,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          title: const Text('Guardar Instrucciones', style: titleTextStyle),
           backgroundColor: neutralDarkBlueAD,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24.0),
@@ -117,46 +158,55 @@ class SaveInstructionsDialog {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Utilice únicamente letras, números y guión bajo.', style: subtitleTextStyle),
+                    SizedBox(height: 4),
+                    Text('* No se aceptan caracteres especiales, ni espacios.', style: subtitleTextStyle),
+                    SizedBox(height: 16),
+                  ],
+                ),
+              ),
               Form(
                 key: fileNameKey,
                 child: TextFormField(
                   controller: fileNameController,
-                  decoration: InputDecoration(
-                    border: const UnderlineInputBorder(
+                  decoration: const InputDecoration(
+                    border: UnderlineInputBorder(
                       borderSide: BorderSide(color: neutralWhite),
                     ),
-                    label: Text('Nombre del archivo', style: contentTextStyle),
+                    hintText: '*Ingresese el nombre para el archivo',
+                    hintStyle: contentTextStyle,
                   ),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Campo requerido' : null,
+                  validator: (value) {
+                    final v = value?.trim() ?? '';
+                    if (v.isEmpty) return 'Campo requerido';
+                    final reg = RegExp(r'^[A-Za-z0-9_]+$');
+                    if (!reg.hasMatch(v)) return '';
+                    return null;
+                  },
                 ),
               )
             ],
           ),
           actions: [
             TextButton(
-              child: const Text(
-                'Cancelar',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontFamily: 'Poppins',
-                  color: neutralWhite,
-                ),
-              ),
+              child: const Text('Cancelar', style: contentTextStyle),
               onPressed: () => Navigator.of(ctx).pop(),
             ),
             TextButton(
-              child: const Text(
-                'Guardar',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontFamily: 'Poppins',
-                  color: neutralWhite,
-                ),
-              ),
+              child: const Text('Guardar', style: contentTextStyle),
               onPressed: () async {
-                if (!fileNameKey.currentState!.validate()) return;
-                final fileName = fileNameController.text;
+                final fileName = fileNameController.text.trim();
+                final reg = RegExp(r'^[A-Za-z0-9_]+$');
+                if (fileName.isEmpty || !reg.hasMatch(fileName)) {
+                  Navigator.of(ctx).pop();
+                  await openInvalidFileNameDialog();
+                  return;
+                }
                 final fileData = context
                     .read<CommandService>()
                     .commandHistory
@@ -167,13 +217,13 @@ class SaveInstructionsDialog {
                   if (!context.mounted) return;
                   Navigator.of(ctx).pop();
                   fileNameController.clear();
-                  await showSnackBar('Archivo guardado');
+                  await openSaveSuccessDialog(fileName);
                 } catch (error) {
                   if (!context.mounted) return;
                   switch (error) {
                     case FileManagementErrors.fileAlreadyExists:
                       Navigator.of(ctx).pop();
-                      await openOverwriteFileDialog(fileNameController.text);
+                      await openOverwriteFileDialog(fileName);
                       break;
                     case FileManagementErrors.saveDataEmpty:
                       Navigator.of(ctx).pop();
@@ -192,50 +242,27 @@ class SaveInstructionsDialog {
       );
     }
 
+    reopenSaveDialog = openSaveFileDialog;
+
     Future<void> openClearInstructionsDialog() async {
       if (!context.mounted) return;
       await showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text(
-            'Borrar Instrucciones',
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              color: neutralWhite,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          title: const Text('Borrar Instrucciones', style: titleTextStyle),
           backgroundColor: neutralDarkBlueAD,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24.0),
             side: const BorderSide(color: neutralWhite, width: 4.0),
           ),
-          content: Text(
-            '¿Estás seguro de que deseas borrar todas las instrucciones?',
-            style: contentTextStyle,
-          ),
+          content: const Text('¿Estás seguro de que deseas borrar todas las instrucciones?', style: contentTextStyle),
           actions: [
             TextButton(
-              child: const Text(
-                'Cancelar',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontFamily: 'Poppins',
-                  color: neutralWhite,
-                ),
-              ),
+              child: const Text('Cancelar', style: contentTextStyle),
               onPressed: () => Navigator.of(ctx).pop(),
             ),
             TextButton(
-              child: const Text(
-                'Borrar',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontFamily: 'Poppins',
-                  color: neutralWhite,
-                ),
-              ),
+              child: const Text('Borrar', style: contentTextStyle),
               onPressed: () {
                 context.read<CommandService>().clearCommands();
                 Navigator.of(ctx).pop();
@@ -246,7 +273,6 @@ class SaveInstructionsDialog {
       );
     }
 
-    // new confirmation dialog for unsaved changes
     if (!context.mounted) return;
     await showDialog(
       context: context,

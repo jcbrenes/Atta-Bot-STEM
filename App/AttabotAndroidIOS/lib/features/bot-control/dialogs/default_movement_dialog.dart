@@ -24,9 +24,9 @@ class DefaultMovementDialog extends StatefulWidget {
 }
 
 class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
-  late int selectedDistance;
-  late int selectedAngle;
-  late int selectedCycle;
+  late int? selectedDistance;
+  late int? selectedAngle;
+  late int? selectedCycle;
 
   List<int> distanceOptions = List.generate(20, (i) => (i + 1) * 5); 
   List<int> angleOptions = [45, 90, 180, 270, 360];
@@ -38,6 +38,25 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
     selectedDistance = widget.initialDistance;
     selectedAngle = widget.initialAngle;
     selectedCycle = widget.initialCycle;
+  }
+
+  Widget _tinyIconButton({
+    required Color color,
+    required IconType icon,
+    VoidCallback? onPressed,
+  }) {
+    final btn = DefaultButtonFactory.getButton(
+      color: color,
+      buttonType: ButtonType.primaryIcon,
+      icon: icon,
+      onPressed: onPressed ?? () {},
+    );
+
+    return SizedBox(
+      width: 23,
+      height: 23,
+      child: FittedBox(child: btn),
+    );
   }
 
   @override
@@ -56,13 +75,13 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
             const Text(
               "Definir parámetros",
               style: TextStyle(
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
                 fontSize: 16,
                 fontFamily: "Poppins",
                 color: neutralWhite,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 35),
 
             
             Column(
@@ -70,11 +89,14 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
               children: [
                 Row(
                   children: [
-                    DefaultButtonFactory.getButton(
+                    _tinyIconButton(
                       color: primaryBlue,
-                      buttonType: ButtonType.primaryIcon,
                       icon: IconType.forwardArrow,
-                      onPressed: () {},
+                    ),
+                    const SizedBox(width: 6),
+                    _tinyIconButton(
+                      color: primaryBlue,
+                      icon: IconType.backwardArrow,
                     ),
                     const SizedBox(width: 8),
                     Column(
@@ -86,6 +108,7 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
                               "Avanzar/Retroceder",
                               style: TextStyle(
                                 color: neutralWhite,
+                                fontWeight: FontWeight.w600,
                                 fontFamily: 'Poppins',
                                 fontSize: 12,
                               ),
@@ -107,6 +130,7 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
                       "centímetros",
                       style: TextStyle(
                         color: neutralWhite,
+                        fontWeight: FontWeight.w600,
                         fontFamily: 'Poppins',
                         fontSize: 12,
                   ),
@@ -118,7 +142,7 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
       ],
     ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 30),
 
             
             Column(
@@ -126,11 +150,14 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
               children: [
                 Row(
                   children: [
-                    DefaultButtonFactory.getButton(
+                    _tinyIconButton(
                       color: secondaryIconOrange,
-                      buttonType: ButtonType.primaryIcon,
                       icon: IconType.rotateRight,
-                      onPressed: () {},
+                    ),
+                    const SizedBox(width: 6),
+                    _tinyIconButton(
+                      color: secondaryIconOrange,
+                      icon: IconType.rotateLeft,
                     ),
                     const SizedBox(width: 8),
                     Column(
@@ -142,6 +169,7 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
                               "Girar",
                               style: TextStyle(
                                 color: neutralWhite,
+                                fontWeight: FontWeight.w600,
                                 fontFamily: 'Poppins',
                                 fontSize: 12,
                               ),
@@ -164,6 +192,7 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
                           "a la izquierda/derecha",
                           style: TextStyle(
                             color: neutralWhite,
+                            fontWeight: FontWeight.w600,
                             fontFamily: 'Poppins',
                             fontSize: 12,
                           ),
@@ -175,7 +204,7 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
               ],
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 30),
 
             
             Column(
@@ -183,11 +212,9 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
               children: [
                 Row(
                   children: [
-                    DefaultButtonFactory.getButton(
+                    _tinyIconButton(
                       color: secondaryGreen,
-                      buttonType: ButtonType.primaryIcon,
                       icon: IconType.cycle,
-                      onPressed: () {},
                     ),
                     const SizedBox(width: 8),
                     Column(
@@ -199,6 +226,7 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
                               "Iniciar un ciclo, y repetirlo",
                               style: TextStyle(
                                 color: neutralWhite,
+                                fontWeight: FontWeight.w600,
                                 fontFamily: 'Poppins',
                                 fontSize: 12,
                               ),
@@ -220,6 +248,7 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
                           "veces",
                           style: TextStyle(
                             color: neutralWhite,
+                            fontWeight: FontWeight.w600,
                             fontFamily: 'Poppins',
                             fontSize: 12,
                           ),
@@ -231,7 +260,7 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
               ],
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 35),
 
             
             Row(
@@ -239,20 +268,67 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
               children: [
                 GestureDetector(
                   onTap: () {
-                    widget.onSetDefaults(selectedDistance, selectedAngle, selectedCycle);
-                    final cmdService = context.read<CommandService>();
-                    if (!cmdService.cycleActive && selectedCycle > 1) {
-                      cmdService.initCycle(selectedCycle);
+
+                    // if the user has not selected all parameters
+                    if (selectedDistance == null || selectedAngle == null || selectedCycle == null) {
+                      // show a warning snackbar 
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Row(
+                            children: [
+                              Icon(
+                                Icons.warning_amber_rounded,
+                                color: neutralDarkBlueAD,
+                                size: 24,
+                              ),
+                              SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Por favor selecciona todos los parámetros',
+                                  style: TextStyle(
+                                    color: neutralDarkBlueAD,
+                                    fontFamily: 'Poppins',
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          backgroundColor: neutralGray, 
+                          duration: const Duration(seconds: 2),
+                          behavior: SnackBarBehavior.floating,
+                          margin: const EdgeInsets.all(16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: const BorderSide(color: neutralWhite, width: 2),
+                          ),
+                          elevation: 6,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        ),
+                      );
+                      return;
                     }
+
+                    final cmdService = context.read<CommandService>();
+
+                    widget.onSetDefaults(selectedDistance!, selectedAngle!, selectedCycle!);
+
+                    if (!cmdService.cycleActive && selectedCycle! > 1) {
+                      cmdService.initCycle(selectedCycle!);
+                    }
+                    
                     Navigator.of(context).pop();
                   },
                   child: const Text(
                     "Aplicar cambios",
                     style: TextStyle(
                       color: neutralWhite,
+                      fontWeight: FontWeight.w600,
                       fontFamily: 'Poppins',
                       fontSize: 12,
                       decoration: TextDecoration.underline,
+                      decorationThickness: 2,
                       decorationColor: neutralWhite,
                     ),
                   ),
@@ -260,15 +336,16 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
                 GestureDetector(
                   onTap: () {
                     setState(() {
-                      selectedDistance = widget.initialDistance;
-                      selectedAngle = widget.initialAngle;
-                      selectedCycle = widget.initialCycle;
+                      selectedDistance = null;
+                      selectedAngle = null;
+                      selectedCycle = null;
                     });
                   },
                   child: const Text(
                     "Limpiar cambios",
                     style: TextStyle(
                       color: neutralWhite,
+                      fontWeight: FontWeight.w600,
                       fontFamily: 'Poppins',
                       fontSize: 12,
                         ),

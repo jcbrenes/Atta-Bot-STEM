@@ -18,41 +18,20 @@ class ModeSwitch extends StatelessWidget {
       height: 19,
       child: Stack(
         children: [
-          Row(
-            children: [
-              if (!isSimplified)
-                Expanded(
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: neutralDarkBlueAD,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(8),
-                        bottomLeft: Radius.circular(8),
-                      ),
-                    ),
-                  ),
+          AnimatedAlign(
+            alignment: isSimplified ? Alignment.centerRight : Alignment.centerLeft,
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            child: FractionallySizedBox(
+              widthFactor: 0.5,
+              heightFactor: 1.0,
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: neutralDarkBlueAD,
+                  borderRadius: BorderRadius.all(Radius.circular(8)),
                 ),
-              if (isSimplified)
-                Expanded(
-                  child: Container(),
-                ),
-              if (isSimplified)
-                Expanded(
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: neutralDarkBlueAD,
-                      borderRadius: BorderRadius.only(
-                        topRight: Radius.circular(8),
-                        bottomRight: Radius.circular(8),
-                      ),
-                    ),
-                  ),
-                ),
-              if (!isSimplified)
-                Expanded(
-                  child: Container(),
-                ),
-            ],
+              ),
+            ),
           ),
           Container(
             width: 295,
@@ -70,10 +49,10 @@ class ModeSwitch extends StatelessWidget {
                 Expanded(
                   child: GestureDetector(
                     onTap: () => onChanged(false),
-                    child: Center(
+                    child: const Center(
                       child: Text(
                         "manual",
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Poppins',
                           fontWeight: FontWeight.w700,
                           fontSize: 8,
@@ -88,10 +67,10 @@ class ModeSwitch extends StatelessWidget {
                 Expanded(
                   child: GestureDetector(
                     onTap: () => onChanged(true),
-                    child: Center(
+                    child: const Center(
                       child: Text(
                         "simplificada",
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Poppins',
                           fontWeight: FontWeight.w700,
                           fontSize: 8,

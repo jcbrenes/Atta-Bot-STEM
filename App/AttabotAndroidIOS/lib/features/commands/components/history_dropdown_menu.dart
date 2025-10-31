@@ -22,53 +22,48 @@ class _InstructionHistoryDropdownState
   final GlobalKey<FormState> _fileNameKey = GlobalKey<FormState>();
   final TextEditingController fileNameController = TextEditingController();
 
-  final List<PopupMenuEntry> menuItems = const [
-    PopupMenuItem(
-      value: 1,
-      child: Text('Guardar Instrucciones',
-          style: TextStyle(
-              fontFamily: 'Poppins',
-              fontWeight: FontWeight.bold,
-              color: neutralWhite)),
-    ),
-    PopupMenuItem(
-      value: 2,
-      child: Text('Cargar Instrucciones',
-          style: TextStyle(
-              fontFamily: 'Poppins',
-              fontWeight: FontWeight.bold,
-              color: neutralWhite)),
-    ),
-    PopupMenuItem(
-      value: 3,
-      child: Text('Borrar Instrucciones',
-          style: TextStyle(
-              color: neutralWhite,
-              fontFamily: 'Poppins',
-              fontWeight: FontWeight.bold)),
-    )
-  ];
+  List<PopupMenuEntry> get menuItems => [
+        PopupMenuItem(
+          value: 1,
+          child: Text('Guardar Instrucciones', style: titleTextStyle),
+        ),
+        PopupMenuItem(
+          value: 2,
+          child: Text('Cargar Instrucciones', style: titleTextStyle),
+        ),
+        PopupMenuItem(
+          value: 3,
+          child: Text('Borrar Instrucciones', style: titleTextStyle),
+        )
+      ];
 
   TextStyle get contentTextStyle => const TextStyle(
         fontFamily: 'Poppins',
         color: neutralWhite,
-        fontSize: 14,
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
       );
   TextStyle get titleTextStyle => const TextStyle(
         fontFamily: 'Poppins',
         color: neutralWhite,
         fontSize: 16,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.w700,
       );
+
+  TextStyle get subtitleTextStyle => const TextStyle(
+        fontFamily: 'Poppins',
+        color: neutralWhite,
+        fontSize: 8,
+        fontWeight: FontWeight.w500,
+      );
+
+  
 
   Future<void> openSaveFileDialog() async {
     await showDialog(
         context: context,
         builder: (context) => AlertDialog(
-              title: Text(
-                'Guardar Instrucciones',
-                style: titleTextStyle,
-              ),
+              title: Text('Guardar Instrucciones', style: titleTextStyle),
               backgroundColor: neutralDarkBlueAD,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24.0),
@@ -77,6 +72,24 @@ class _InstructionHistoryDropdownState
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Utilice únicamente letras, números y guión bajo.',
+                          style: subtitleTextStyle,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '* No se aceptan caracteres especiales, ni espacios.',
+                          style: subtitleTextStyle,
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
                   Form(
                     key: _fileNameKey,
                     child: TextFormField(
@@ -87,50 +100,131 @@ class _InstructionHistoryDropdownState
                               color: neutralWhite,
                             ),
                           ),
-                          label: Text(
-                            "Nombre del archivo",
-                            style: contentTextStyle,
-                          )),
-                      validator: (value) =>
-                          value!.isEmpty ? 'Campo requerido' : null,
+                          hintText: '*Ingresese el nombre para el archivo',
+                          hintStyle: contentTextStyle,
+                          ),
+                      validator: (value) {
+                        final v = value?.trim() ?? '';
+                        if (v.isEmpty) return 'Campo requerido';
+                        final reg = RegExp(r'^[A-Za-z0-9_]+$');
+                        if (!reg.hasMatch(v)) return '';
+                        return null;
+                      },
                     ),
                   )
                 ],
               ),
               actions: [
                 TextButton(
-                  child: const Text("Cancelar",
-                      style: TextStyle(
-                          fontSize: 14,
-                          fontFamily: "Poppins",
-                          color: neutralWhite)),
+                  child: Text("Cancelar", style: contentTextStyle),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
                 ),
                 TextButton(
-                  child: const Text("Guardar",
-                      style: TextStyle(
-                          fontSize: 14,
-                          fontFamily: "Poppins",
-                          color: neutralWhite)),
-                  onPressed: () {
-                    onSaveFile();
-                    Navigator.of(context).pop();
+                  child: Text("Guardar", style: contentTextStyle),
+                  onPressed: () async {
+                    final name = fileNameController.text.trim();
+                    final reg = RegExp(r'^[A-Za-z0-9_]+$');
+                    if (name.isEmpty || !reg.hasMatch(name)) {
+                      Navigator.of(context).pop();
+                      await openInvalidFileNameDialog();
+                      return;
+                    }
+
+                    final fileData = context
+                        .read<CommandService>()
+                        .commandHistory
+                        .map((Command e) => e.toBotString())
+                        .toList();
+                    try {
+                      await fmService.saveNewFile(name, fileData);
+                      Navigator.of(context).pop();
+                      await openSaveSuccessDialog(name);
+                      fileNameController.clear();
+                    } catch (error) {
+                      if (!mounted) return;
+                      switch (error) {
+                        case FileManagementErrors.fileAlreadyExists:
+                          Navigator.of(context).pop();
+                          await openOverwiteFileDialog();
+                          break;
+                        case FileManagementErrors.saveDataEmpty:
+                          showSnackBar('No hay instrucciones para guardar');
+                          break;
+                        default:
+                          showSnackBar('Error al guardar archivo');
+                          break;
+                      }
+                    }
                   },
                 ),
               ],
             ));
   }
 
+  Future<void> openInvalidFileNameDialog() async {
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Guardar Instrucciones', style: titleTextStyle),
+        backgroundColor: neutralDarkBlueAD,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24.0),
+          side: const BorderSide(color: neutralWhite, width: 4.0),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('El nombre de archivo es inválido.', style: contentTextStyle),
+            const SizedBox(height: 12),
+            Text('Utilice únicamente letras, números y guión bajo.', style: subtitleTextStyle),
+            const SizedBox(height: 4),
+            Text('* No se aceptan caracteres especiales, ni espacios.', style: subtitleTextStyle),
+          ],
+        ),
+        actions: [
+          TextButton(
+            child: Text('Reintentar', style: contentTextStyle),
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await openSaveFileDialog();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> openSaveSuccessDialog(String fileName) async {
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Guardar Instrucciones', style: titleTextStyle),
+        backgroundColor: neutralDarkBlueAD,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24.0),
+          side: const BorderSide(color: neutralWhite, width: 4.0),
+        ),
+        content: Text('El archivo “$fileName” ha sido guardado exitosamente.', style: contentTextStyle),
+        actions: [
+          TextButton(
+            child: Text('Continuar', style: contentTextStyle),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          )
+        ],
+      ),
+    );
+  }
+
   Future<void> openOverwiteFileDialog() async {
     await showDialog(
         context: context,
         builder: (context) => AlertDialog(
-              title: Text(
-                'Sobrescribir Instrucciones',
-                style: contentTextStyle,
-              ),
+              title: Text('Sobrescribir Instrucciones', style: titleTextStyle),
               backgroundColor: neutralDarkBlueAD,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24.0),
@@ -142,21 +236,13 @@ class _InstructionHistoryDropdownState
               ),
               actions: [
                 TextButton(
-                  child: const Text("Cancelar",
-                      style: TextStyle(
-                          fontSize: 14,
-                          fontFamily: "Poppins",
-                          color: neutralWhite)),
+                  child: Text("Cancelar", style: contentTextStyle),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
                 ),
                 TextButton(
-                  child: const Text("Guardar",
-                      style: TextStyle(
-                          fontSize: 14,
-                          fontFamily: "Poppins",
-                          color: neutralWhite)),
+                  child: Text("Guardar", style: contentTextStyle),
                   onPressed: () {
                     onOverwriteFile();
                     Navigator.of(context).pop();
@@ -177,10 +263,7 @@ class _InstructionHistoryDropdownState
     showDialog(
         context: context,
         builder: (context) => AlertDialog(
-            title: Text(
-              'Cargar Instrucciones',
-              style: titleTextStyle,
-            ),
+            title: Text('Cargar Instrucciones', style: titleTextStyle),
             backgroundColor: neutralDarkBlueAD,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24.0),
@@ -210,10 +293,7 @@ class _InstructionHistoryDropdownState
         context: context,
         builder: (context) {
           return AlertDialog(
-            title: Text(
-              'Borrar Instrucciones',
-              style: titleTextStyle,
-            ),
+            title: Text('Borrar Instrucciones', style: titleTextStyle),
             backgroundColor: neutralDarkBlueAD,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24.0),
@@ -225,21 +305,13 @@ class _InstructionHistoryDropdownState
             ),
             actions: [
               TextButton(
-                child: const Text("Cancelar",
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontFamily: "Poppins",
-                        color: neutralWhite)),
+                child: Text("Cancelar", style: contentTextStyle),
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
               ),
               TextButton(
-                child: const Text("Borrar",
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontFamily: "Poppins",
-                        color: neutralWhite)),
+                child: Text("Borrar", style: contentTextStyle),
                 onPressed: () {
                   onClearInstructions();
                   Navigator.of(context).pop();
