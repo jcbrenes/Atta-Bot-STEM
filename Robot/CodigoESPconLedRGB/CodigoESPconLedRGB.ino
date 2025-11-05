@@ -5,8 +5,8 @@ using namespace std;
 
 // Robot constants
 const int samplingTime = 25; // units: miliseconds
-const float rightPulsesPerRev = 870; // number of pulses from a single encoder output, for the right motor
-const float leftPulsesPerRev = 870; // number of pulses from a single encoder output, for the left motor
+const float rightPulsesPerRev = 594; // number of pulses from a single encoder output, for the right motor
+const float leftPulsesPerRev = 592; // number of pulses from a single encoder output, for the left motor
 const float wheelRadius = 22; // Wheel circumference = 139.5mm
 const float distanceWheelToWheel = 112; // actualizado a chasís v2.4 
 const float distanceCenterToWheel = distanceWheelToWheel / 2 ; // Turning radius of the robot, distance in mm between the center and one wheel
@@ -140,6 +140,7 @@ short cantidad_ciclos = 0;
 bool flagBluetooth = 0;
 bool flagEjecucion = 0;
 bool flagObstaculo = 0;
+bool flagParar = 0;
 bool recibeProgra = 0;
 bool flancoNegRecibeProgra = 0;
 unsigned long recibePrograTiempo0 = 0;
@@ -245,18 +246,21 @@ void loop() {
   int flagBateriaBaja = digitalRead(pinBateriaBaja);
 
   // Para hacer una lectura de BT independientemente del estado
-  // con el objetivo de luego agregar que se pueda detener en cualquier momento desde la app
+  // con el objetivo de que se pueda detener en cualquier momento desde la app
   if (millis() >= tiempoPasadaLecturaBT + esperaBT) {
     if (central) {
 
       if (central.connected()) {//era un while
         flagBluetooth = 1;
         if (caracteristico.written()) {
-          recibeProgra = 1;
-          recibePrograTiempo0 = millis();
           mensajeBLE = string( caracteristico.value().c_str() );
           Serial.println(mensajeBLE.c_str()); 
           caracteristico.writeValue("");
+          Interpreta_mensajeBLE(mensajeBLE);
+          if (!flagParar) { // si no se trata de un comando de detener, se parpadea el LED RGB
+            recibeProgra = 1;
+            recibePrograTiempo0 = millis();
+          }
         }
       } 
     } else {
@@ -271,21 +275,21 @@ void loop() {
 
     case ESPERA:  { 
       //Leer comunicación por BLE
-      if (central) {
+      // if (central) {
 
-        if (central.connected()) {//era un while
-          flagBluetooth = 1;
-          if (caracteristico.written()) {
-            recibeProgra = 1;
-            recibePrograTiempo0 = millis();
-            mensajeBLE = string( caracteristico.value().c_str() );
-            Serial.println(mensajeBLE.c_str()); 
-            caracteristico.writeValue("");
-          }
-        } 
-      } else {
-          flagBluetooth = 0;
-      }
+      //   if (central.connected()) {//era un while
+      //     flagBluetooth = 1;
+      //     if (caracteristico.written()) {
+      //       recibeProgra = 1;
+      //       recibePrograTiempo0 = millis();
+      //       mensajeBLE = string( caracteristico.value().c_str() );
+      //       Serial.println(mensajeBLE.c_str()); 
+      //       caracteristico.writeValue("");
+      //     }
+      //   } 
+      // } else {
+      //     flagBluetooth = 0;
+      // }
       //Lógica de estado siguiente
       if (!lecturaBotonStart || flancoNegRecibeProgra) {
           flagEjecucion = 1; 
@@ -297,6 +301,9 @@ void loop() {
             estado = DETENERSE;
           }
           inst_actual = 0;
+      } else if (paro_emergencia) { // si se recibe un comando de detener mientras está en ESPERA, se ignora
+        flagParar = 0; 
+        paro_emergencia = 0;
       }
       break;
     }
@@ -358,7 +365,7 @@ void loop() {
       movimiento_listo= advanceDesiredDistance(valor_instruccion*10);
 
       //Lógica estado siguiente
-      if (!lecturaBotonStop) { 
+      if (!lecturaBotonStop || paro_emergencia) { 
         paro_emergencia=true;
         estado = DETENERSE;
 
@@ -389,7 +396,7 @@ void loop() {
       movimiento_listo= turnDesiredAngle(valor_instruccion);
 
       //Lógica estado siguiente
-      if (!lecturaBotonStop) {
+      if (!lecturaBotonStop || paro_emergencia) {
         paro_emergencia=true; 
         estado = DETENERSE;
 
@@ -422,6 +429,7 @@ void loop() {
       } // Ojo que la funcion avanzar y girar ya detiene el robot al final
         //configureHBridgeTurn(false, 3, 0, 0);
       delay(500);
+      flagParar = 0;
             
       //Lógica estado siguiente
       if (paro_emergencia){
@@ -531,7 +539,8 @@ void loop() {
     flancoNegRecibeProgra = 1;
   }
   
-  ConfigurarEstadoLedRgb(flagBateriaBaja, flagBluetooth, flagEjecucion, flagObstaculo, recibeProgra);
+  // Se asigna el color del LED RGB
+  ConfigurarEstadoLedRgb(flagBateriaBaja, flagBluetooth, flagEjecucion, flagObstaculo, recibeProgra, flagParar);
   //Serial.println(String("pulsosRight: ") + rightEncoderPos + String(", pulsosLeft: ") + leftEncoderPos);
   //Serial.println(String("flagBateriaBaja:") + flagBateriaBaja + String(", flagBluetooth:") + flagBluetooth + String(", flagEjecucion:") +  flagEjecucion + String(", flagObstaculo:") + flagObstaculo + String(", recibeProgra:") + recibeProgra);
   
@@ -561,13 +570,14 @@ void Interpreta_mensajeBLE (string mensaje) {
         string valor_instruccion =  mensaje.substr(i+2, 3);
 
         if (comando=="ATCOI") {
-          inst_actual = 0;
+          //inst_actual = 0;
         
         } else if (comando == "ATCOF") {
           //inst_final = i/5;
 
         } else if (comando == "PARAR") {
           paro_emergencia = true;
+          flagParar = 1;
 
         } else if (comando == "EJECU") {
           inst_actual = 0;
@@ -655,6 +665,7 @@ bool controlServo(bool set) {
   } else { //Deactivate the tool by setting it to 180 degrees
     myServo.write(deactivateAngle);
   }
+  delay(500); // so that the next action does not start before the servo stops moving
   return true;  // Action completed
 }
 
@@ -1073,7 +1084,7 @@ float calculateLinearDistanceDesired(int desiredAngle) {
 //@param flagObstaculo Variable asociada a los sensores infrarrojos, informa cuando hay un obstáculo frente al robot
 //@param recibeProgra Variable que es un pulso que se recibe cuando se está recibiendo/recibió una progra desde la App
 //******************************************************************************************************************
-void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEjecucion, bool flagObstaculo, bool recibeProgra) {
+void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEjecucion, bool flagObstaculo, bool recibeProgra, bool flagParar) {
   unsigned long tiempoActual = millis();
 
   //Bateria baja -> rojo parpadeante
@@ -1095,7 +1106,7 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
       analogWrite(pinLedRgbAzul, 0);
     }
    
-  } else if (flagObstaculo == 1) { //Obstaculo -> rojo fijo
+  } else if (flagObstaculo == 1 || flagParar == 1) { //Obstaculo -> rojo fijo
     // Serial.println("Obstaculo"); 
     analogWrite(pinLedRgbRojo, 255);
     analogWrite(pinLedRgbVerde, 0);
