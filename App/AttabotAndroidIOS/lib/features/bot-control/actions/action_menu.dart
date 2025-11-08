@@ -75,165 +75,148 @@ class _ActionMenuState extends State<ActionMenu> {
   @override
   Widget build(BuildContext context) {
     final commandService = context.read<CommandService>();
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double maxW = constraints.maxWidth;
+        final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+        final double baseFactor = isLandscape ? 0.055 : 0.065; 
+        final double iconSize = (maxW * baseFactor).clamp(28, 50);
+        final double gap = (maxW * 0.010).clamp(6, 12);
 
-        SizedBox(width: MediaQuery.of(context).size.width * 0.02),
-        DefaultButtonFactory.getButton(
-          color: secondaryGreen,
-          iconSize: MediaQuery.of(context).size.width * 0.06,
-          buttonType: ButtonType.primaryIcon,
-          onPressed: () {
-            if (!commandService.cycleActive) {
-              CycleDialog.show(context);
-            } else {
-              context.read<CommandService>().endCycle();
-              showInfoDialog(context, 'Se ha cerrado el ciclo');
-            }
-          },
-          icon: IconType.cycle,
-        ),
-
-        SizedBox(width: MediaQuery.of(context).size.width * 0.02),
-        DefaultButtonFactory.getButton(
-          color: primaryYellow,
-          iconSize: MediaQuery.of(context).size.width * 0.06,
-          buttonType: ButtonType.primaryIcon,
-          onPressed: () {
-            if (!commandService.obstacleDetection) {
-              showInfoDialog(
-                  context, 'Se ha activado \nla detección \nde obstáculos');
-              context.read<CommandService>().activateObjectDetection();
-            } else {
-              showInfoDialog(
-                  context, 'Se ha desactivado \nla detección \nde obstáculos');
-              context.read<CommandService>().deactivateObjectDetection();
-            }
-          },
-          icon: IconType.obstacleDetection,
-        ),
-
-        // THIS IS THE PLAY BUTTON
-        SizedBox(width: MediaQuery.of(context).size.width * 0.02),
-        TextButton(
-          style: TextButton.styleFrom(
-            alignment: Alignment.center,
-            padding: const EdgeInsets.all(10),
-            shape: const CircleBorder(
-              side: BorderSide(color: neutralWhite, width: 3.0),
+        Widget playButton(String asset, VoidCallback onPressed) {
+          return SizedBox(
+            width: iconSize + 20,
+            height: iconSize + 20,
+            child: TextButton(
+              style: TextButton.styleFrom(
+                alignment: Alignment.center,
+                padding: const EdgeInsets.all(6),
+                shape: const CircleBorder(
+                  side: BorderSide(color: neutralWhite, width: 2.0),
+                ),
+                iconColor: neutralWhite,
+              ),
+              onPressed: onPressed,
+              child: Image.asset(
+                asset,
+                color: neutralWhite,
+                width: iconSize * 0.9,
+                height: iconSize * 0.9,
+              ),
             ),
-            iconColor: neutralWhite,
+          );
+        }
+        return FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.center,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              DefaultButtonFactory.getButton(
+                color: secondaryGreen,
+                iconSize: iconSize,
+                buttonType: ButtonType.primaryIcon,
+                onPressed: () {
+                  if (!commandService.cycleActive) {
+                    CycleDialog.show(context);
+                  } else {
+                    context.read<CommandService>().endCycle();
+                    showInfoDialog(context, 'Se ha cerrado el ciclo');
+                  }
+                },
+                icon: IconType.cycle,
+              ),
+              SizedBox(width: gap),
+              DefaultButtonFactory.getButton(
+                color: primaryYellow,
+                iconSize: iconSize,
+                buttonType: ButtonType.primaryIcon,
+                onPressed: () {
+                  if (!commandService.obstacleDetection) {
+                    showInfoDialog(context, 'Se ha activado \nla detección \nde obstáculos');
+                    context.read<CommandService>().activateObjectDetection();
+                  } else {
+                    showInfoDialog(context, 'Se ha desactivado \nla detección \nde obstáculos');
+                    context.read<CommandService>().deactivateObjectDetection();
+                  }
+                },
+                icon: IconType.obstacleDetection,
+              ),
+              SizedBox(width: gap),
+              playButton('assets/button_icons/newplay.png', () async {
+                if (!btService.isConnected) {
+                  SimulatorBluetoothDialog.show(context);
+                  return;
+                }
+                if (context.read<CommandService>().commandHistory.isEmpty) {
+                  showEmptyHistorySnackBar(context);
+                  return;
+                }
+                bool messageSent = await btService.sendStringToDevice("ATCOIEJECUATCOF");
+                if (!messageSent) {
+                  showMessageSnackBar("Error al ejecutar comandos");
+                  return;
+                }
+                showMessageSnackBar("Comandos ejecutándose");
+              }),
+              SizedBox(width: gap),
+              playButton('assets/button_icons/pause.png', () async {
+                if (!btService.isConnected) {
+                  SimulatorBluetoothDialog.show(context);
+                  return;
+                }
+                bool messageSent = await btService.sendStringToDevice("ATCOIPARARATCOF");
+                if (!messageSent) {
+                  showMessageSnackBar("Error al detener comandos");
+                  return;
+                }
+                showMessageSnackBar("Comandos detenidos");
+              }),
+              SizedBox(width: gap),
+              DefaultButtonFactory.getButton(
+                color: secondaryPurple,
+                iconSize: iconSize,
+                buttonType: ButtonType.primaryIcon,
+                onPressed: () {
+                  if (!commandService.pencilActive) {
+                    showInfoDialog(context, 'Se ha activado \n el lápiz');
+                    context.read<CommandService>().activateTool();
+                  } else {
+                    showInfoDialog(context, 'Se ha desactivado \n el lápiz');
+                    context.read<CommandService>().deactivateTool();
+                  }
+                },
+                icon: IconType.pencil,
+              ),
+              SizedBox(width: gap),
+              DefaultButtonFactory.getButton(
+                color: secondaryPink,
+                iconSize: iconSize,
+                buttonType: ButtonType.primaryIcon,
+                onPressed: () async {
+                  if (!btService.isConnected) {
+                    SimulatorBluetoothDialog.show(context);
+                    return;
+                  }
+                  if (context.read<CommandService>().commandHistory.isEmpty) {
+                    showEmptyHistorySnackBar(context);
+                    return;
+                  }
+                  String message = context.read<CommandService>().getCommandsBotString(context.watch<SimplifiedModeProvider>().simplifiedMode);
+                  bool messageSent = await btService.sendStringToDevice(message);
+                  if (!messageSent) {
+                    showMessageSnackBar("Error al enviar comandos");
+                    return;
+                  }
+                  showMessageSnackBar("Comandos enviados");
+                },
+                icon: IconType.cloud,
+              ),
+            ],
           ),
-          onPressed: () async {
-            if (!btService.isConnected) {
-              SimulatorBluetoothDialog.show(context);
-              return;
-            }
-
-            if (context.read<CommandService>().commandHistory.isEmpty) {
-              showEmptyHistorySnackBar(context);
-              return;
-            }
-
-            bool messageSent = await btService.sendStringToDevice("ATCOIEJECUATCOF");
-            if (!messageSent) {
-              showMessageSnackBar("Error al ejecutar comandos");
-              return;
-            }
-
-            showMessageSnackBar("Comandos ejecutándose");
-            
-          },
-          child: Image.asset(
-            'assets/button_icons/newplay.png',
-            color: neutralWhite,
-            width: MediaQuery.of(context).size.width > 600 ? 60 : 40,
-            height: MediaQuery.of(context).size.width > 600 ? 60 : 40,
-            alignment: Alignment.center,
-          ),
-        ),
-
-        // THIS IS THE PAUSE BUTTON
-        SizedBox(width: MediaQuery.of(context).size.width * 0.02),
-        TextButton(
-          style: TextButton.styleFrom(
-            alignment: Alignment.center,
-            padding: const EdgeInsets.all(10),
-            shape: const CircleBorder(
-              side: BorderSide(color: neutralWhite, width: 3.0),
-            ),
-            iconColor: neutralWhite,
-          ),
-          onPressed: () async {
-            if (!btService.isConnected) {
-              SimulatorBluetoothDialog.show(context);
-              return;
-            }
-
-            bool messageSent = await btService.sendStringToDevice("ATCOIPARARATCOF");
-            if (!messageSent) {
-              showMessageSnackBar("Error al detener comandos");
-              return;
-            }
-
-            showMessageSnackBar("Comandos detenidos");
-          },
-          child: Image.asset(
-            'assets/button_icons/pause.png',
-            color: neutralWhite,
-            width: MediaQuery.of(context).size.width > 600 ? 60 : 40,
-            height: MediaQuery.of(context).size.width > 600 ? 60 : 40,
-            alignment: Alignment.center,
-          ),
-        ),
-
-
-        SizedBox(width: MediaQuery.of(context).size.width * 0.02),
-        DefaultButtonFactory.getButton(
-          color: secondaryPurple,
-          iconSize: MediaQuery.of(context).size.width * 0.06,
-          buttonType: ButtonType.primaryIcon,
-          onPressed: () {
-            if (!commandService.pencilActive) {
-              showInfoDialog(context, 'Se ha activado \n el lápiz');
-              context.read<CommandService>().activateTool();
-            } else {
-              showInfoDialog(context, 'Se ha desactivado \n el lápiz');
-              context.read<CommandService>().deactivateTool();
-            }
-          },
-          icon: IconType.pencil,
-        ),
-
-        SizedBox(width: MediaQuery.of(context).size.width * 0.02),
-        DefaultButtonFactory.getButton(
-          color: secondaryPink,
-          iconSize: MediaQuery.of(context).size.width * 0.06,
-          buttonType: ButtonType.primaryIcon,
-          onPressed: () async{
-            if (!btService.isConnected) {
-              SimulatorBluetoothDialog.show(context);
-              //navService.goToBluetoothDevicesPage(context);
-              return;
-            }
-            if (context.read<CommandService>().commandHistory.isEmpty) {
-              showEmptyHistorySnackBar(context);
-              return;
-            }
-            String message =
-                context.read<CommandService>().getCommandsBotString(context.watch<SimplifiedModeProvider>().simplifiedMode); // pass simplified mode status to know if we need to add endCycle
-            bool messageSent = await btService.sendStringToDevice(message);
-            if (!messageSent) {
-              showMessageSnackBar("Error al enviar comandos");
-              return;
-            }
-            showMessageSnackBar("Comandos enviados");
-          },
-          icon: IconType.cloud,
-        ),
-      ],
+        );
+      },
     );
   }
 }

@@ -11,63 +11,6 @@ class HistoryPage extends StatefulWidget {
 
   @override
   State<HistoryPage> createState() => _HistoryPageState();
-
-  static void showClearHistoryDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          buttonPadding: const EdgeInsets.all(20.0),
-          actionsPadding: const EdgeInsets.fromLTRB(20, 20, 30, 10),
-          contentPadding: const EdgeInsets.fromLTRB(0, 40, 0, 20),
-          title: const Text(
-            'Desactivar modo simplificado',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontWeight: FontWeight.w500,
-              fontSize: 24,
-              fontFamily: "Poppins",
-              color: neutralWhite,
-            ),
-          ),
-          backgroundColor: neutralDarkBlueAD,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24.0),
-            side: const BorderSide(color: neutralWhite, width: 4.0),
-          ),
-          content: const SizedBox(
-            width: 300,
-            child: Text(
-              '¿Quieres eliminar todo el historial antes de volver al modo normal?',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18,
-                fontFamily: "Poppins",
-                color: neutralWhite,
-              ),
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text("Guardar",
-                  style: TextStyle(
-                      fontSize: 14, fontFamily: "Poppins", color: neutralWhite)),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            TextButton(
-              child: const Text("Borrar Historial",
-                  style: TextStyle(
-                      fontSize: 14, fontFamily: "Poppins", color: neutralWhite)),
-              onPressed: () {
-                context.read<CommandService>().clearCommands();
-                Navigator.of(context).pop();
-              },
-            )
-          ],
-        );
-      },
-    );
-  }
 }
 
 class _HistoryPageState extends State<HistoryPage> {

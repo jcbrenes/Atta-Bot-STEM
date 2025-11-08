@@ -54,7 +54,7 @@ class _HistoryMenuState extends State<HistoryMenu> {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(width: 50), 
+              const SizedBox(width: 50), 
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -105,7 +105,7 @@ class _HistoryMenuState extends State<HistoryMenu> {
                       GestureDetector(
                         onTap: () {
                         },
-                        child: Icon(
+                        child: const Icon(
                           Icons.link, 
                           size: 18,
                           color: neutralWhite,
@@ -115,7 +115,7 @@ class _HistoryMenuState extends State<HistoryMenu> {
                   ),
                 ],
               ),
-              Spacer(),
+              const Spacer(),
               Padding(
                 padding: const EdgeInsets.only(left: 30), 
                 child: Baseline(
@@ -154,7 +154,7 @@ class _HistoryMenuState extends State<HistoryMenu> {
                           }
                           showMessageSnackBar("Comandos enviados");
                         },
-                        child: Icon(
+                        child: const Icon(
                           Icons.arrow_drop_down,
                           size: 30,
                           color: neutralWhite,
@@ -164,7 +164,7 @@ class _HistoryMenuState extends State<HistoryMenu> {
                   ),
                 ),
               ),
-              Spacer(),
+              const Spacer(),
             ],
           );
         },

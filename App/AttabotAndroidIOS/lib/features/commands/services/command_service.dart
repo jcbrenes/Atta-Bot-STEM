@@ -126,7 +126,7 @@ class CommandService extends ChangeNotifier {
     if (_commands.isNotEmpty) {
       return _commands.last.toUiString();
     }
-    return "No hay acciones recientes";
+    return "última acción";
   }
 
   void loadCommands(List<String> commandList) {

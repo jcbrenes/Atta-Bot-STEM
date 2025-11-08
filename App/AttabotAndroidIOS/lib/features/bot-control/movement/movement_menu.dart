@@ -14,25 +14,33 @@ class MovementMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Column(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double w = constraints.maxWidth;
+        final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+        final double iconSize = isLandscape ? (w * 0.09).clamp(24, 36) : (w * 0.11).clamp(28, 40);
+        final double imageSide = isLandscape ? (w * 0.36).clamp(96, 190) : (w * 0.40).clamp(110, 220);
+        const double vGap = 15;
+        const double hGap = 15;
+
+        return Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               DefaultButtonFactory.getButton(
                 color: primaryBlue,
-                iconSize: MediaQuery.of(context).size.width * 0.06,
+                iconSize: iconSize,
                 buttonType: ButtonType.primaryIcon,
                 onPressed: () {
-                  if(simplifiedMode) {
+                  if (simplifiedMode) {
                     showDialog(
                       context: context,
                       builder: (BuildContext context) {
                         return SimpleConfirmDialog(movement: "forward", value: defaultDistance);
                       },
                     );
-                    
                   } else {
                     showDialog(
                       context: context,
@@ -44,19 +52,22 @@ class MovementMenu extends StatelessWidget {
                 },
                 icon: IconType.forwardArrow,
               ),
-              const SizedBox(height: 15),
-              Row(
+              const SizedBox(height: vGap),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.center,
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     DefaultButtonFactory.getButton(
                       color: primaryOrange,
-                      iconSize: MediaQuery.of(context).size.width * 0.06,
+                      iconSize: iconSize,
                       buttonType: ButtonType.primaryIcon,
                       onPressed: () {
-                        if(simplifiedMode) {
+                        if (simplifiedMode) {
                           showDialog(
-                            context: context, 
+                            context: context,
                             builder: (BuildContext context) {
                               return SimpleConfirmDialog(movement: "left", value: defaultAngle);
                             },
@@ -72,29 +83,28 @@ class MovementMenu extends StatelessWidget {
                       },
                       icon: IconType.rotateLeft,
                     ),
-                    SizedBox(width: 15),
-                    Container(
-                      width: MediaQuery.of(context).size.width * 0.5,
-                      height: MediaQuery.of(context).size.width * 0.5,
+                    const SizedBox(width: hGap),
+                    SizedBox(
+                      width: imageSide,
+                      height: imageSide,
                       child: Image.asset(
                         "assets/atta_bot.png",
-                        fit: BoxFit.scaleDown,
+                        fit: BoxFit.contain,
                       ),
                     ),
-                    SizedBox(width: 15),
+                    const SizedBox(width: hGap),
                     DefaultButtonFactory.getButton(
                       color: primaryOrange,
-                      iconSize: MediaQuery.of(context).size.width * 0.06,
+                      iconSize: iconSize,
                       buttonType: ButtonType.primaryIcon,
                       onPressed: () {
-                        if(simplifiedMode) {
+                        if (simplifiedMode) {
                           showDialog(
-                            context: context, 
+                            context: context,
                             builder: (BuildContext context) {
                               return SimpleConfirmDialog(movement: "right", value: defaultAngle);
                             },
                           );
-                          
                         } else {
                           showDialog(
                             context: context,
@@ -106,21 +116,22 @@ class MovementMenu extends StatelessWidget {
                       },
                       icon: IconType.rotateRight,
                     ),
-                  ]),
-              const SizedBox(height: 15),
+                  ],
+                ),
+              ),
+              const SizedBox(height: vGap),
               DefaultButtonFactory.getButton(
                 color: primaryBlue,
-                iconSize: MediaQuery.of(context).size.width * 0.06,
+                iconSize: iconSize,
                 buttonType: ButtonType.primaryIcon,
                 onPressed: () {
-                  if(simplifiedMode) {
+                  if (simplifiedMode) {
                     showDialog(
                       context: context,
                       builder: (BuildContext context) {
                         return SimpleConfirmDialog(movement: "backward", value: defaultDistance);
                       },
                     );
-                    
                   } else {
                     showDialog(
                       context: context,
@@ -132,7 +143,10 @@ class MovementMenu extends StatelessWidget {
                 },
                 icon: IconType.backwardArrow,
               ),
-            ]),
+            ],
+          ),
+        );
+      },
     );
   }
 }

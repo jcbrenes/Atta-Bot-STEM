@@ -13,7 +13,8 @@ import 'package:proyecto_tec/shared/components/ui/buttons/switch_button.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 
 class BotControlPage extends StatefulWidget {
-  const BotControlPage({super.key});
+  final bool embedded; // when true, render without own Scaffold/AppBar
+  const BotControlPage({super.key, this.embedded = false});
   @override
   State<BotControlPage> createState() => _BotControlPageState();
 }
@@ -48,8 +49,238 @@ class _BotControlPageState extends State<BotControlPage> {
   @override
   Widget build(BuildContext context) {
     final simplifiedProvider = Provider.of<SimplifiedModeProvider>(context);
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+
+    Widget buildContent(double w, double h) {
+      if (!isLandscape) {
+        // For very tall portrait screens (e.g., tablets) 
+        final bool isTallPortrait = h >= 820; 
+        // Responsive sizing helpers
+        double computeUiScale(double w, double h) {
+          double widthFactor = w / 400.0; 
+          double heightFactor = h / 900.0; 
+          double raw = (widthFactor * 0.65) + (heightFactor * 0.35);
+          return raw.clamp(1.0, 1.35).toDouble();
+        }
+
+        double computeSidePadding(double w) {
+          return (w * 0.05).clamp(20.0, 48.0).toDouble();
+        }
+
+        double uiScale = computeUiScale(w, h);
+        double sidePadding = computeSidePadding(w);
+        double historyHeight = (h * 0.28).clamp(260.0, 360.0).toDouble(); 
+
+        if (isTallPortrait) {
+          return Padding(
+            padding: EdgeInsets.symmetric(horizontal: sidePadding),
+            child: SizedBox(
+              height: h,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Spacer(flex: 1), 
+                  Transform.scale(
+                    scale: uiScale,
+                    alignment: Alignment.center,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: w * 0.60, minWidth: 240),
+                      child: ModeSwitch(
+                        isSimplified: simplifiedProvider.simplifiedMode,
+                        onChanged: (bool value) async {
+                          if (value != simplifiedProvider.simplifiedMode) {
+                            if (value) {
+                              showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return DefaultMovementDialog(
+                                    initialDistance: simplifiedProvider.defaultDistance,
+                                    initialAngle: simplifiedProvider.defaultAngle,
+                                    initialCycle: simplifiedProvider.defaultCycle,
+                                    onSetDefaults: (newDistance, newAngle, newCycle) {
+                                      simplifiedProvider.setDefaults(newDistance, newAngle, newCycle);
+                                    },
+                                  );
+                                },
+                              );
+                            } else {
+                              await SaveInstructionsDialog.showMenuForContext(context);
+                            }
+                            simplifiedProvider.setSimplifiedMode(value);
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                  const Spacer(flex: 1),
+                  Transform.scale(
+                    scale: uiScale,
+                    alignment: Alignment.topCenter,
+                    child: MovementMenu(
+                      simplifiedMode: simplifiedProvider.simplifiedMode,
+                      defaultDistance: simplifiedProvider.defaultDistance,
+                      defaultAngle: simplifiedProvider.defaultAngle,
+                    ),
+                  ),
+                  const Spacer(flex: 6),
+    
+                  Transform.scale(
+                    scale: uiScale,
+                    alignment: Alignment.center,
+                    child: const ActionMenu(),
+                  ),
+                  const Spacer(flex: 2),
+
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: w * 0.9,
+                        minWidth: 300,
+                        maxHeight: historyHeight,
+                        minHeight: historyHeight,
+                      ),
+                      child: const HistoryMenu(),
+                    ),
+                  ),
+                  const Spacer(flex: 1), 
+                ],
+              ),
+            ),
+          );
+        }
+
+        // Default (phones or shorter portrait) keeps scroll behavior to avoid overflow on small heights.
+        return SingleChildScrollView(
+          padding: EdgeInsets.symmetric(vertical: h * 0.045, horizontal: w * 0.05),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: w * 0.55, minWidth: 220),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: ModeSwitch(
+                    isSimplified: simplifiedProvider.simplifiedMode,
+                    onChanged: (bool value) async {
+                      if (value != simplifiedProvider.simplifiedMode) {
+                        if (value) {
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return DefaultMovementDialog(
+                                initialDistance: simplifiedProvider.defaultDistance,
+                                initialAngle: simplifiedProvider.defaultAngle,
+                                initialCycle: simplifiedProvider.defaultCycle,
+                                onSetDefaults: (newDistance, newAngle, newCycle) {
+                                  simplifiedProvider.setDefaults(newDistance, newAngle, newCycle);
+                                },
+                              );
+                            },
+                          );
+                        } else {
+                          await SaveInstructionsDialog.showMenuForContext(context);
+                        }
+                        simplifiedProvider.setSimplifiedMode(value);
+                      }
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              MovementMenu(
+                simplifiedMode: simplifiedProvider.simplifiedMode,
+                defaultDistance: simplifiedProvider.defaultDistance,
+                defaultAngle: simplifiedProvider.defaultAngle,
+              ),
+              const SizedBox(height: 28),
+              const ActionMenu(),
+              const SizedBox(height: 28),
+              Align(
+                alignment: Alignment.center,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: w * 0.9,
+                    minWidth: 280,
+                  ),
+                  child: const SizedBox(
+                    height: 320,
+                    child: HistoryMenu(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+      // Landscape (embedded)
+      return SingleChildScrollView(
+        padding: EdgeInsets.symmetric(vertical: h * 0.025, horizontal: w * 0.025),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: w * 0.7, minWidth: 200),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: ModeSwitch(
+                  isSimplified: simplifiedProvider.simplifiedMode,
+                  onChanged: (bool value) async {
+                    if (value != simplifiedProvider.simplifiedMode) {
+                      if (value) {
+                        showDialog(
+                          context: context,
+                          builder: (context) {
+                            return DefaultMovementDialog(
+                              initialDistance: simplifiedProvider.defaultDistance,
+                              initialAngle: simplifiedProvider.defaultAngle,
+                              initialCycle: simplifiedProvider.defaultCycle,
+                              onSetDefaults: (newDistance, newAngle, newCycle) {
+                                simplifiedProvider.setDefaults(newDistance, newAngle, newCycle);
+                              },
+                            );
+                          },
+                        );
+                      } else {
+                        await SaveInstructionsDialog.showMenuForContext(context);
+                      }
+                      simplifiedProvider.setSimplifiedMode(value);
+                    }
+                  },
+                ),
+              ),
+            ),
+            SizedBox(height: h * 0.02),
+            MovementMenu(
+              simplifiedMode: simplifiedProvider.simplifiedMode,
+              defaultDistance: simplifiedProvider.defaultDistance,
+              defaultAngle: simplifiedProvider.defaultAngle,
+            ),
+            SizedBox(height: h * 0.03),
+            const ActionMenu(),
+            SizedBox(height: h * 0.05),
+            SizedBox(
+              height: (h * 0.32).clamp(180, 360),
+              child: const HistoryMenu(),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (widget.embedded) {
+      return LayoutBuilder(
+        builder: (context, constraints) => Container(
+          color: neutralDarkBlue,
+          child: buildContent(constraints.maxWidth, constraints.maxHeight),
+        ),
+      );
+    }
+
     return Scaffold(
-      extendBodyBehindAppBar: true,
+      extendBodyBehindAppBar: false,
+      backgroundColor: neutralDarkBlue,
       appBar: AppBar(
         title: const Text('Atta-Bot Educativo'),
         centerTitle: true,
@@ -70,7 +301,7 @@ class _BotControlPageState extends State<BotControlPage> {
             ),
             color: neutralWhite,
             onPressed: () {
-              if(simplifiedProvider.simplifiedMode) {
+              if (simplifiedProvider.simplifiedMode) {
                 HelpDialogForSimplifiedMode.show(context);
               } else {
                 HelpDialog.show(context);
@@ -79,63 +310,10 @@ class _BotControlPageState extends State<BotControlPage> {
           ),
         ],
       ),
-      body: Container(
-        color: neutralDarkBlue,
-        alignment: Alignment.center,
-        padding: const EdgeInsets.all(0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SizedBox(height: MediaQuery.of(context).size.height * 0.12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.7,
-                  child: ModeSwitch(
-                    isSimplified: simplifiedProvider.simplifiedMode,
-                    onChanged: (bool value) async{
-                      if (value != simplifiedProvider.simplifiedMode) {
-                        if (value) {
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return DefaultMovementDialog(
-                                initialDistance: simplifiedProvider.defaultDistance,
-                                initialAngle: simplifiedProvider.defaultAngle,
-                                initialCycle: simplifiedProvider.defaultCycle,
-                                onSetDefaults: (newDistance, newAngle, newCycle) {
-                                  simplifiedProvider.setDefaults(newDistance, newAngle, newCycle);
-                                },
-                              );
-                            },
-                          );
-                        } else {
-                          await SaveInstructionsDialog.showMenuForContext(context);
-                        }        
-                        simplifiedProvider.setSimplifiedMode(value);                       
-                      }
-                    },
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: MediaQuery.of(context).size.height * 0.01),
-            MovementMenu(simplifiedMode: simplifiedProvider.simplifiedMode, defaultDistance: simplifiedProvider.defaultDistance, defaultAngle: simplifiedProvider.defaultAngle),
-            SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: EdgeInsets.only(right: MediaQuery.of(context).size.width * 0.02), 
-                child: ActionMenu(),
-              ),
-            ),
-            SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-            Expanded(
-              child: HistoryMenu(),
-            ),
-          ],
+      body: LayoutBuilder(
+        builder: (context, constraints) => Container(
+          color: neutralDarkBlue,
+            child: buildContent(constraints.maxWidth, constraints.maxHeight),
         ),
       ),
     );

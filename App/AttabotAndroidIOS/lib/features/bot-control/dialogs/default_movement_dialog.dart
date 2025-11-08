@@ -68,7 +68,8 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
           side: const BorderSide(color: Colors.white, width: 4.0),
         ),
         contentPadding: const EdgeInsets.all(16),
-        content: Column(
+        content: SingleChildScrollView(
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -355,6 +356,7 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
           ),
         ],
       ),
+    ),
     );
   }
 }

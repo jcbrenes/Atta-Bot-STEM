@@ -180,11 +180,13 @@ class _LandingPageState extends State<LandingPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+
     return Theme(
         data: Theme.of(context).copyWith(
           navigationBarTheme: NavigationBarThemeData(
-            labelTextStyle: MaterialStateProperty.all(
-              TextStyle(
+            labelTextStyle: WidgetStateProperty.all(
+              const TextStyle(
                 fontSize: 12,
                 fontFamily: 'Poppins',
                 color: neutralWhite, 
@@ -193,46 +195,81 @@ class _LandingPageState extends State<LandingPage> {
           ),
         ),
         child: Scaffold(
-          body: GestureDetector(
-            onHorizontalDragEnd: (DragEndDetails details) {
-              if (details.primaryVelocity! > 0) {
-                // Swiped right
-                if (_selectedIndex == 8) {
-                  setState(() {
-                    _selectedIndex--;
-                  });
-                }
-              } else if (details.primaryVelocity! < 0) {
-                // Swiped left
-                if (_selectedIndex == 7) {
-                  setState(() {
-                    _selectedIndex++;
-                  });
-                }
-              }
-            },
-            child: <Widget>[
-              const BotControlPage(),
-              const HistoryPage(),
-            ][_selectedIndex - 7],
-          ),
-          bottomNavigationBar: Container(
-            color: neutralDarkBlue,
-            padding: const EdgeInsets.fromLTRB(0, 0, 0, 10),
-            child: NavigationBar(
-              backgroundColor: neutralDarkBlue,
-              indicatorColor: neutralWhite,
-              indicatorShape: const CircleBorder(),
-              destinations: destinations,
-              selectedIndex: _selectedIndex,
-              height: 10,
-              onDestinationSelected: (index) {
-                setState(() {
-                  _selectedIndex = index;
-                });
-              },
-            ),
-          ),
+          appBar: isLandscape
+              ? AppBar(
+                  title: const Text('Atta-Bot Educativo'),
+                  centerTitle: true,
+                  titleTextStyle: const TextStyle(
+                      color: neutralWhite,
+                      fontSize: 18.0,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w700),
+                  backgroundColor: Colors.transparent,
+                )
+              : null,
+          body: isLandscape ? _buildLandscapeLayout() : _buildPortraitLayout(),
+          bottomNavigationBar: isLandscape ? null : _buildNavigationBar(),
+          backgroundColor: neutralDarkBlue,
         ));
+  }
+
+  Widget _buildPortraitLayout() {
+    return GestureDetector(
+      onHorizontalDragEnd: (DragEndDetails details) {
+        if (details.primaryVelocity! > 0) {
+          // Swiped right
+          if (_selectedIndex == 8) {
+            setState(() {
+              _selectedIndex--;
+            });
+          }
+        } else if (details.primaryVelocity! < 0) {
+          // Swiped left
+          if (_selectedIndex == 7) {
+            setState(() {
+              _selectedIndex++;
+            });
+          }
+        }
+      },
+      child: <Widget>[
+        const BotControlPage(),
+        const HistoryPage(),
+      ][_selectedIndex - 7],
+    );
+  }
+
+  Widget _buildLandscapeLayout() {
+    return const Row(
+      children: [
+        Expanded(
+          child: BotControlPage(embedded: true),
+        ),
+        SizedBox.shrink(), 
+        Expanded(
+          child: HistoryPage(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNavigationBar() {
+    return Container(
+      color: neutralDarkBlue,
+      padding: const EdgeInsets.fromLTRB(0, 0, 0, 10),
+      child: NavigationBar(
+        backgroundColor: neutralDarkBlue,
+        indicatorColor: neutralWhite,
+        indicatorShape: const CircleBorder(),
+        destinations: destinations,
+        selectedIndex: _selectedIndex,
+        height: 10,
+        onDestinationSelected: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+      ),
+    );
   }
 }
