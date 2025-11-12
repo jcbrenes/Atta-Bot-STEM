@@ -41,7 +41,7 @@ int seleccionMotor = 1; // 1 para motor derecho y 2 para izquierdo
 
 const int pwmMinimo = 55; //pwm mínimo para mantener cualquier motor en movimiento
 const int velArranqueInicial = 40; // pwm mínimo que podría arrancar algún motor
-const int numMedicionesPorRealizar = 15;
+const int numMedicionesPorRealizar = 10;
 int numMedicion = 0;
 int mediciones[numMedicionesPorRealizar];
 
@@ -83,7 +83,7 @@ void IRAM_ATTR leftEncoderAEvent() {
   int estado = digitalRead(leftEncoderA);
   if (estado == HIGH) {
     // Evento RISING
-    dirMotorIzquierdo = digitalRead(rightEncoderB);
+    dirMotorIzquierdo = digitalRead(leftEncoderB);
   } 
   leftCount++;
   tUltimaLecturaIzquierda = millis();
@@ -220,8 +220,14 @@ void loop() {
       if (arranque(1)) {
         analogWrite(motorM1, pwmMotores); 
         analogWrite(motorM2, 0);
-        ultimaDirMotorDerecho = dirMotorDerecho;
-        cambioDir = dirMotorDerecho == dirMotorEnArranque;
+        // ultimaDirMotorDerecho = dirMotorDerecho;
+        if (seleccionMotor == 1){
+          cambioDir = dirMotorDerecho == dirMotorEnArranque;
+        }
+        else if (seleccionMotor == 2){
+          cambioDir = dirMotorIzquierdo == dirMotorEnArranque;
+        }
+
       }
       
       
