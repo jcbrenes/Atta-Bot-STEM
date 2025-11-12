@@ -39,7 +39,7 @@ int estado = 0;
 
 int seleccionMotor = 1; // 1 para motor derecho y 2 para izquierdo
 
-const int pwmMinimo = 55; //pwm mínimo para mantener cualquier motor en movimiento
+const int pwmMinimo = 55; //pwm mínimo para mantener cualquier motor en movimiento 55
 const int velArranqueInicial = 40; // pwm mínimo que podría arrancar algún motor
 const int numMedicionesPorRealizar = 10;
 int numMedicion = 0;
@@ -51,6 +51,7 @@ unsigned long waitTime = 1000; //1000
 unsigned long tUltimaLecturaDerecha;
 unsigned long tUltimaLecturaIzquierda;
 unsigned long tUltimaLectura;
+unsigned long tUltimoAumentoVel;
 
 volatile bool dirMotorDerecho = 1;
 volatile bool dirMotorIzquierdo = 1;
@@ -213,6 +214,7 @@ void loop() {
         pulsosAntesArranque = 0; // era rightCount
         tUltimaLecturaDerecha = millis();
         tUltimaLecturaIzquierda = millis();
+        flagArranque = 0;
       }
       break;
     case 2: 
@@ -241,7 +243,6 @@ void loop() {
         Serial.print(numMedicion+1);
         Serial.print(" de PPR: ");
         Serial.println(PPR);
-        //Serial.println(cambioDir);
       
         rightCount = 0;
         leftCount = 0;
@@ -262,7 +263,7 @@ void loop() {
           Serial.println(promedio);
           estado = 0;
         }
-        
+        flagArranque = 0;
       }
       break;
     default:
@@ -270,9 +271,9 @@ void loop() {
       break;
   }
   // Serial.print("Right Count: ");
-  //Serial.println(dirMotorDerecho);
+  // Serial.println(pulsesCount);
   // Serial.println();
-  delay(50);
+  delay(1);
 }
 
 bool arranque(int direccion) {
@@ -284,7 +285,7 @@ bool arranque(int direccion) {
     analogWrite(motorM2, velArranque);
   }
 
-  if (pulsesCount > 10) { //pulsosAntesArranque
+  if (pulsesCount > 5 && !flagArranque) { //pulsosAntesArranque
     if (estado == 1) {
       pwmMotores = velArranque *0.7; //0.7}
       // No se permite un valor menor al necesario para mantener en movimiento cualquier motor
@@ -302,7 +303,11 @@ bool arranque(int direccion) {
     flagArranque = 1;
     return 1;
   }
-  velArranque++;
-  flagArranque = 0;
+  if (millis() > tUltimoAumentoVel + 50) {
+    velArranque++;
+    tUltimoAumentoVel = millis();
+  }
+  
+  //flagArranque = 0;
   return 0;
 }
