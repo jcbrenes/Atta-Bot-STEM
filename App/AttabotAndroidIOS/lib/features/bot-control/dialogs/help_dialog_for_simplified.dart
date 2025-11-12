@@ -4,9 +4,10 @@ import 'package:proyecto_tec/shared/components/ui/buttons/default_button_factory
 import 'package:proyecto_tec/shared/components/ui/buttons/dropdown_button.dart';
 
 class HelpDialogForSimplifiedMode {
-  static void show(BuildContext context) {
+  static void show(BuildContext context, {bool? useRootNavigator}) {
     showDialog(
       context: context,
+      useRootNavigator: useRootNavigator ?? true,
       builder: (BuildContext context) {
 
         Widget tinyIconButton({
@@ -29,10 +30,11 @@ class HelpDialogForSimplifiedMode {
             side: const BorderSide(color: Colors.white, width: 4.0),
           ),
           contentPadding: const EdgeInsets.all(16),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               const Text(
                 'Definir parámetros',
                 style: TextStyle(
@@ -229,6 +231,7 @@ class HelpDialogForSimplifiedMode {
                 ],
               ),
             ],
+            ),
           ),
         );
       },

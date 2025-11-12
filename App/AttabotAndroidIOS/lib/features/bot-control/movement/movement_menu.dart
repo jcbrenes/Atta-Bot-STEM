@@ -37,6 +37,7 @@ class MovementMenu extends StatelessWidget {
                   if (simplifiedMode) {
                     showDialog(
                       context: context,
+                      useRootNavigator: !isLandscape,
                       builder: (BuildContext context) {
                         return SimpleConfirmDialog(movement: "forward", value: defaultDistance);
                       },
@@ -44,6 +45,7 @@ class MovementMenu extends StatelessWidget {
                   } else {
                     showDialog(
                       context: context,
+                      useRootNavigator: !isLandscape,
                       builder: (BuildContext context) {
                         return const Movement(direction: "forward");
                       },
@@ -68,6 +70,7 @@ class MovementMenu extends StatelessWidget {
                         if (simplifiedMode) {
                           showDialog(
                             context: context,
+                            useRootNavigator: !isLandscape,
                             builder: (BuildContext context) {
                               return SimpleConfirmDialog(movement: "left", value: defaultAngle);
                             },
@@ -75,6 +78,7 @@ class MovementMenu extends StatelessWidget {
                         } else {
                           showDialog(
                             context: context,
+                            useRootNavigator: !isLandscape,
                             builder: (BuildContext context) {
                               return const Rotation(direction: "left");
                             },
@@ -101,6 +105,7 @@ class MovementMenu extends StatelessWidget {
                         if (simplifiedMode) {
                           showDialog(
                             context: context,
+                            useRootNavigator: !isLandscape,
                             builder: (BuildContext context) {
                               return SimpleConfirmDialog(movement: "right", value: defaultAngle);
                             },
@@ -108,6 +113,7 @@ class MovementMenu extends StatelessWidget {
                         } else {
                           showDialog(
                             context: context,
+                            useRootNavigator: !isLandscape,
                             builder: (BuildContext context) {
                               return const Rotation(direction: "right");
                             },

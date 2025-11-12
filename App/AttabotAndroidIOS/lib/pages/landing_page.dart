@@ -15,6 +15,10 @@ class LandingPage extends StatefulWidget {
 class _LandingPageState extends State<LandingPage> {
   NavigationService navService = DependencyManager().getNavigationService();
   int _selectedIndex = 7;
+  // Navigator key for the left pane (BotControlPage) in landscape
+  final GlobalKey<NavigatorState> _leftPaneNavKey = GlobalKey<NavigatorState>();
+  // Navigator key for the right pane (HistoryPage) in landscape
+  final GlobalKey<NavigatorState> _rightPaneNavKey = GlobalKey<NavigatorState>();
   final List<NavigationDestination> destinations = [
     const NavigationDestination(
       icon: Icon(
@@ -240,14 +244,24 @@ class _LandingPageState extends State<LandingPage> {
   }
 
   Widget _buildLandscapeLayout() {
-    return const Row(
+    return Row(
       children: [
         Expanded(
-          child: BotControlPage(embedded: true),
+          child: Navigator(
+            key: _leftPaneNavKey,
+            onGenerateRoute: (settings) => MaterialPageRoute(
+              builder: (_) => const BotControlPage(embedded: true),
+            ),
+          ),
         ),
-        SizedBox.shrink(), 
+        const SizedBox.shrink(),
         Expanded(
-          child: HistoryPage(),
+          child: Navigator(
+            key: _rightPaneNavKey,
+            onGenerateRoute: (settings) => MaterialPageRoute(
+              builder: (_) => const HistoryPage(),
+            ),
+          ),
         ),
       ],
     );

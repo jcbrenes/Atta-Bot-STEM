@@ -4,18 +4,24 @@ import 'package:proyecto_tec/shared/styles/colors.dart';
 class ModeSwitch extends StatelessWidget {
   final bool isSimplified;
   final ValueChanged<bool> onChanged;
+  final double width;
+  final double height;
+  final double borderRadius;
 
   const ModeSwitch({
     super.key,
     required this.isSimplified,
     required this.onChanged,
+    this.width = 360,
+    this.height = 32,
+    this.borderRadius = 15,
   });
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 295,
-      height: 19,
+      width: width,
+      height: height,
       child: Stack(
         children: [
           AnimatedAlign(
@@ -26,22 +32,22 @@ class ModeSwitch extends StatelessWidget {
               widthFactor: 0.5,
               heightFactor: 1.0,
               child: Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: neutralDarkBlueAD,
-                  borderRadius: BorderRadius.all(Radius.circular(8)),
+                  borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
                 ),
               ),
             ),
           ),
           Container(
-            width: 295,
-            height: 19,
+            width: width,
+            height: height,
             decoration: BoxDecoration(
               color: Colors.transparent,
-              borderRadius: const BorderRadius.all(Radius.circular(8)),
+              borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
               border: Border.all(
                 color: neutralDarkBlueAD,
-                width: 2,
+                width: height * 0.11,
               ),
             ),
             child: Row(
@@ -49,13 +55,13 @@ class ModeSwitch extends StatelessWidget {
                 Expanded(
                   child: GestureDetector(
                     onTap: () => onChanged(false),
-                    child: const Center(
+                    child: Center(
                       child: Text(
                         "manual",
                         style: TextStyle(
                           fontFamily: 'Poppins',
                           fontWeight: FontWeight.w700,
-                          fontSize: 8,
+                          fontSize: height * 0.42,
                           height: 1.07,
                           letterSpacing: 0,
                           color: neutralWhite,
@@ -67,13 +73,13 @@ class ModeSwitch extends StatelessWidget {
                 Expanded(
                   child: GestureDetector(
                     onTap: () => onChanged(true),
-                    child: const Center(
+                    child: Center(
                       child: Text(
                         "simplificada",
                         style: TextStyle(
                           fontFamily: 'Poppins',
                           fontWeight: FontWeight.w700,
-                          fontSize: 8,
+                          fontSize: height * 0.42,
                           height: 1.07,
                           letterSpacing: 0,
                           color: neutralWhite,
