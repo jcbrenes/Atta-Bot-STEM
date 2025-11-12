@@ -41,7 +41,7 @@ int seleccionMotor = 1; // 1 para motor derecho y 2 para izquierdo
 
 const int pwmMinimo = 55; //pwm mínimo para mantener cualquier motor en movimiento
 const int velArranqueInicial = 40; // pwm mínimo que podría arrancar algún motor
-const int numMedicionesPorRealizar = 30;
+const int numMedicionesPorRealizar = 15;
 int numMedicion = 0;
 int mediciones[numMedicionesPorRealizar];
 
@@ -54,6 +54,7 @@ unsigned long tUltimaLectura;
 
 volatile bool dirMotorDerecho = 1;
 volatile bool dirMotorIzquierdo = 1;
+bool dirMotorEnArranque = 1;
 bool ultimaDirMotorDerecho = 1;
 bool ultimaDirMotorIzquierdo = 1;
 bool cambioDir = 0;
@@ -206,6 +207,7 @@ void loop() {
         delay(500); // se espera a que todo movimiento se detenga
         rightCount = 0;
         leftCount = 0;
+        
         estado = 2;
         velArranque = velArranqueInicial;
         pulsosAntesArranque = 0; // era rightCount
@@ -219,8 +221,9 @@ void loop() {
         analogWrite(motorM1, pwmMotores); 
         analogWrite(motorM2, 0);
         ultimaDirMotorDerecho = dirMotorDerecho;
+        cambioDir = dirMotorDerecho == dirMotorEnArranque;
       }
-      cambioDir = dirMotorDerecho != 0;
+      
       
       if ((millis() > tUltimaLectura + waitTime || cambioDir) && flagArranque) {
         
@@ -232,6 +235,7 @@ void loop() {
         Serial.print(numMedicion+1);
         Serial.print(" de PPR: ");
         Serial.println(PPR);
+        //Serial.println(cambioDir);
       
         rightCount = 0;
         leftCount = 0;
@@ -260,7 +264,7 @@ void loop() {
       break;
   }
   // Serial.print("Right Count: ");
-  // Serial.println(estado);
+  //Serial.println(dirMotorDerecho);
   // Serial.println();
   delay(50);
 }
@@ -274,12 +278,17 @@ bool arranque(int direccion) {
     analogWrite(motorM2, velArranque);
   }
 
-  if (pulsesCount > pulsosAntesArranque + 5) {
+  if (pulsesCount > 10) { //pulsosAntesArranque
     if (estado == 1) {
       pwmMotores = velArranque *0.7; //0.7}
       // No se permite un valor menor al necesario para mantener en movimiento cualquier motor
       if (pwmMotores < pwmMinimo) {
         pwmMotores = pwmMinimo;
+      }
+      if (seleccionMotor == 1){
+        dirMotorEnArranque = dirMotorDerecho;
+      } else{
+        dirMotorEnArranque = dirMotorIzquierdo;
       }
     }
     // Serial.print("vel arranque");
