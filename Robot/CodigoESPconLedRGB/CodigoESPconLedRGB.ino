@@ -5,15 +5,15 @@ using namespace std;
 
 // Robot constants
 const int samplingTime = 25; // units: miliseconds
-const float rightPulsesPerRev = 868; // number of pulses from a single encoder output, for the right motor
-const float leftPulsesPerRev = 870; // number of pulses from a single encoder output, for the left motor
+const float rightPulsesPerRev = 836; // number of pulses from a single encoder output, for the right motor
+const float leftPulsesPerRev = 830; // number of pulses from a single encoder output, for the left motor
 const float wheelRadius = 22; // Wheel circumference = 139.5mm
 const float distanceWheelToWheel = 112; // actualizado a chasís v2.4 
 const float distanceCenterToWheel = distanceWheelToWheel / 2 ; // Turning radius of the robot, distance in mm between the center and one wheel
 
 // Constants for PID control with samplingTime = 25ms
 const float targetSpeed = 120.0; // Target speed for the robot in mm/s
-const float kpSpeed = 1; // Proportional constant for speed control 0.75
+const float kpSpeed = 1.1; // Proportional constant for speed control 0.75
 const float kiSpeed = 2; // Integral constant for speed control
 const float kdSpeed = 0.0; // Derivative constant for speed control (set to zero for no derivative action)
 

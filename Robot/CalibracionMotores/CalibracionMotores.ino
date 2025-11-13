@@ -39,13 +39,13 @@ int estado = 0;
 
 int seleccionMotor = 1; // 1 para motor derecho y 2 para izquierdo
 
-const int pwmMinimo = 55; //pwm mínimo para mantener cualquier motor en movimiento 55
-const int velArranqueInicial = 40; // pwm mínimo que podría arrancar algún motor
+const int pwmMinimo = 40; //pwm mínimo para mantener cualquier motor en movimiento 55
+const int velArranqueInicial = 35; // pwm mínimo que podría arrancar algún motor
 const int numMedicionesPorRealizar = 10;
 int numMedicion = 0;
 int mediciones[numMedicionesPorRealizar];
 
-int pwmMotores = 40;
+int pwmMotores = 30;
 unsigned long waitTime = 1000; //1000
 
 unsigned long tUltimaLecturaDerecha;
@@ -61,39 +61,50 @@ bool ultimaDirMotorIzquierdo = 1;
 bool cambioDir = 0;
 float PPR = 0;
 
-int velArranque = 40;
+int velArranque = velArranqueInicial;
 bool flagArranque = 0;
 
 // encoder event for the interrupt call
+// void IRAM_ATTR rightEncoderAEvent() {
+//   int estado = digitalRead(rightEncoderA);
+//   if (estado == HIGH) {
+//     // Evento RISING
+//     dirMotorDerecho = digitalRead(rightEncoderB);
+//   } 
+//   rightCount++;
+//   tUltimaLecturaDerecha = millis();
+// }
+
+#include "driver/gpio.h"
+
+
 void IRAM_ATTR rightEncoderAEvent() {
-  int estado = digitalRead(rightEncoderA);
-  if (estado == HIGH) {
-    // Evento RISING
-    dirMotorDerecho = digitalRead(rightEncoderB);
-  } 
+  if (gpio_get_level((gpio_num_t) rightEncoderA)) {
+    dirMotorDerecho = gpio_get_level((gpio_num_t) rightEncoderB);
+    
+  }
   rightCount++;
-  tUltimaLecturaDerecha = millis();
+  tUltimaLecturaDerecha = micros();
 }
 
 void IRAM_ATTR rightEncoderBEvent() {
   rightCount++;
-  tUltimaLecturaDerecha = millis();
+  tUltimaLecturaDerecha = micros();
 }
 
 void IRAM_ATTR leftEncoderAEvent() {
-  int estado = digitalRead(leftEncoderA);
-  if (estado == HIGH) {
-    // Evento RISING
-    dirMotorIzquierdo = digitalRead(leftEncoderB);
-  } 
+  if (gpio_get_level((gpio_num_t) leftEncoderA)) {
+    dirMotorIzquierdo = gpio_get_level((gpio_num_t) leftEncoderB);
+    
+  }
   leftCount++;
-  tUltimaLecturaIzquierda = millis();
+  tUltimaLecturaIzquierda = micros();
 }
 
 // encoder event for the interrupt call
 void IRAM_ATTR leftEncoderBEvent() {
   leftCount++;
-  tUltimaLecturaIzquierda = millis();
+  tUltimaLecturaIzquierda = micros();
 }
 
 // // encoder event for the interrupt call
@@ -154,7 +165,7 @@ void loop() {
       seleccionMotor = 1;
       motorM1 = rightMotorM1;
       motorM2 = rightMotorM2;
-      tUltimaLecturaDerecha = millis();
+      tUltimaLecturaDerecha = micros();
       pulsosAntesArranque = rightCount;
       velArranque = velArranqueInicial;
       numMedicion = 0;
@@ -164,7 +175,7 @@ void loop() {
       seleccionMotor = 2;
       motorM1 = leftMotorM1;
       motorM2 = leftMotorM2;
-      tUltimaLecturaIzquierda = millis();
+      tUltimaLecturaIzquierda = micros();
       pulsosAntesArranque = leftCount;
       velArranque = velArranqueInicial;
       numMedicion = 0;
@@ -201,7 +212,7 @@ void loop() {
         
       }
       
-      if (millis() > tUltimaLectura + waitTime && flagArranque) {
+      if (millis() > tUltimaLectura/1000 + waitTime && flagArranque) {
         
         analogWrite(motorM1, 0);
         analogWrite(motorM2, 0);
@@ -212,28 +223,29 @@ void loop() {
         estado = 2;
         velArranque = velArranqueInicial;
         pulsosAntesArranque = 0; // era rightCount
-        tUltimaLecturaDerecha = millis();
-        tUltimaLecturaIzquierda = millis();
+        tUltimaLecturaDerecha = micros();
+        tUltimaLecturaIzquierda = micros();
         flagArranque = 0;
       }
       break;
     case 2: 
       // Medición de PPR
-      if (arranque(1)) {
+      if (!flagArranque) {
+        arranque(1);
+      } else {
         analogWrite(motorM1, pwmMotores); 
         analogWrite(motorM2, 0);
         // ultimaDirMotorDerecho = dirMotorDerecho;
-        if (seleccionMotor == 1){
-          cambioDir = dirMotorDerecho == dirMotorEnArranque;
-        }
-        else if (seleccionMotor == 2){
-          cambioDir = dirMotorIzquierdo == dirMotorEnArranque;
-        }
-
+        
+      }
+      if (seleccionMotor == 1){
+        cambioDir = dirMotorDerecho == dirMotorEnArranque;
+      }
+      else if (seleccionMotor == 2){
+        cambioDir = dirMotorIzquierdo == dirMotorEnArranque;
       }
       
-      
-      if ((millis() > tUltimaLectura + waitTime || cambioDir) && flagArranque) {
+      if ((millis() > tUltimaLectura/1000 + waitTime || cambioDir) && flagArranque) {
         
         analogWrite(motorM1, 0);
         analogWrite(motorM2, 0);
@@ -243,6 +255,7 @@ void loop() {
         Serial.print(numMedicion+1);
         Serial.print(" de PPR: ");
         Serial.println(PPR);
+        Serial.println(cambioDir);
       
         rightCount = 0;
         leftCount = 0;
@@ -250,8 +263,9 @@ void loop() {
           estado = 1;
           pulsosAntesArranque = pulsesCount;
           velArranque = velArranqueInicial;
-          tUltimaLecturaDerecha = millis();
-          pwmMotores = 40;
+          tUltimaLecturaDerecha = micros();
+          tUltimaLecturaIzquierda = micros();
+          // pwmMotores = velArranqueInicial;
           numMedicion++;
         } else {
           int suma = 0;
@@ -271,42 +285,45 @@ void loop() {
       break;
   }
   // Serial.print("Right Count: ");
-  // Serial.println(pulsesCount);
+  // Serial.println(dirMotorEnArranque);
   // Serial.println();
   delay(1);
 }
 
 bool arranque(int direccion) {
-  if (direccion == 1) {
-    analogWrite(motorM1, velArranque); 
-    analogWrite(motorM2, 0);
-  } else {
-    analogWrite(motorM1, 0); 
-    analogWrite(motorM2, velArranque);
-  }
-
-  if (pulsesCount > 5 && !flagArranque) { //pulsosAntesArranque
-    if (estado == 1) {
-      pwmMotores = velArranque *0.7; //0.7}
-      // No se permite un valor menor al necesario para mantener en movimiento cualquier motor
-      if (pwmMotores < pwmMinimo) {
-        pwmMotores = pwmMinimo;
-      }
-      if (seleccionMotor == 1){
-        dirMotorEnArranque = dirMotorDerecho;
-      } else{
-        dirMotorEnArranque = dirMotorIzquierdo;
-      }
+  if (!flagArranque) {
+    if (direccion == 1) {
+      analogWrite(motorM1, velArranque); 
+      analogWrite(motorM2, 0);
+    } else {
+      analogWrite(motorM1, 0); 
+      analogWrite(motorM2, velArranque);
     }
-    // Serial.print("vel arranque");
-    // Serial.println(velArranque);
-    flagArranque = 1;
-    return 1;
+
+    if (pulsesCount > 10 && !flagArranque) { //pulsosAntesArranque
+      if (estado == 1 && numMedicion == 0) {
+        pwmMotores = velArranque *0.7; //0.7}
+        // No se permite un valor menor al necesario para mantener en movimiento cualquier motor
+        if (pwmMotores < pwmMinimo) {
+          pwmMotores = pwmMinimo;
+        }
+        if (seleccionMotor == 1){
+          dirMotorEnArranque = dirMotorDerecho;
+        } else{
+          dirMotorEnArranque = dirMotorIzquierdo;
+        }
+      }
+      Serial.print("vel arranque");
+      Serial.println(pwmMotores);
+      flagArranque = 1;
+      return 1;
+    }
+    if (millis() > tUltimoAumentoVel + 1000) {
+      velArranque = velArranque + 5;
+      tUltimoAumentoVel = millis();
+    }
   }
-  if (millis() > tUltimoAumentoVel + 50) {
-    velArranque++;
-    tUltimoAumentoVel = millis();
-  }
+  
   
   //flagArranque = 0;
   return 0;
