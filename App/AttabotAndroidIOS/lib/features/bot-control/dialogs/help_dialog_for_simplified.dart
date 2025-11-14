@@ -29,22 +29,38 @@ class HelpDialogForSimplifiedMode {
             borderRadius: BorderRadius.circular(20.0),
             side: const BorderSide(color: Colors.white, width: 4.0),
           ),
-          contentPadding: const EdgeInsets.all(16),
+          titlePadding: const EdgeInsets.fromLTRB(30, 10, 10, 0),
+          contentPadding: const EdgeInsets.fromLTRB(30, 10, 30, 20),
+          title: Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Definir parámetros',
+                  textAlign: TextAlign.left,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    fontFamily: 'Poppins',
+                    color: neutralWhite,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                icon: const Icon(
+                  Icons.close,
+                  color: neutralWhite,
+                ),
+              ),
+            ],
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-              const Text(
-                'Definir parámetros',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                  fontFamily: 'Poppins',
-                  color: neutralWhite,
-                ),
-              ),
-              const SizedBox(height: 35),
 
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

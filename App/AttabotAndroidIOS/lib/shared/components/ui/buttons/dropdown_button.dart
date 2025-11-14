@@ -79,12 +79,15 @@ class _CustomDropdownState extends State<CustomDropdown> {
   void _showOverlay() {
     if (!mounted || _isOpen || widget.options.isEmpty) return;
     final overlay = Overlay.of(context);
+    final RenderBox? overlayBox = overlay.context.findRenderObject() as RenderBox?;
 
     final RenderBox? box = _buttonKey.currentContext?.findRenderObject() as RenderBox?;
     if (box == null) return;
 
     final Size size = box.size;
-    final Offset offset = box.localToGlobal(Offset.zero);
+    final Offset offset = overlayBox != null
+        ? box.localToGlobal(Offset.zero, ancestor: overlayBox)
+        : box.localToGlobal(Offset.zero);
 
 
       _backdropEntry = OverlayEntry(

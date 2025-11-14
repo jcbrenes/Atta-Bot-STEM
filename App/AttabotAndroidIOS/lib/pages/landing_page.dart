@@ -4,6 +4,7 @@ import 'package:proyecto_tec/pages/history_page.dart';
 import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
 import 'package:proyecto_tec/shared/features/navigation/services/navigation.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
+import 'package:proyecto_tec/shared/features/navigation/services/split_nav.dart';
 
 class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
@@ -215,6 +216,21 @@ class _LandingPageState extends State<LandingPage> {
           bottomNavigationBar: isLandscape ? null : _buildNavigationBar(),
           backgroundColor: neutralDarkBlue,
         ));
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Expose the right pane navigator key globally for dialogs from the left pane
+    SplitNav.rightPaneNavKey = _rightPaneNavKey;
+  }
+
+  @override
+  void dispose() {
+    if (SplitNav.rightPaneNavKey == _rightPaneNavKey) {
+      SplitNav.rightPaneNavKey = null;
+    }
+    super.dispose();
   }
 
   Widget _buildPortraitLayout() {

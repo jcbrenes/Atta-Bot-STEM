@@ -72,9 +72,11 @@ class _InstructionHistoryDropdownState
   
 
   Future<void> openSaveFileDialog() async {
+    final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
     await showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
+      context: context,
+      useRootNavigator: !isLandscape,
+      builder: (context) => AlertDialog(
               title: Text('Guardar Instrucciones', style: titleTextStyle),
               backgroundColor: neutralDarkBlueAD,
               shape: RoundedRectangleBorder(
@@ -176,8 +178,10 @@ class _InstructionHistoryDropdownState
   }
 
   Future<void> openInvalidFileNameDialog() async {
+    final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
     await showDialog(
       context: context,
+      useRootNavigator: !isLandscape,
       builder: (context) => AlertDialog(
         title: Text('Guardar Instrucciones', style: titleTextStyle),
         backgroundColor: neutralDarkBlueAD,
@@ -210,8 +214,10 @@ class _InstructionHistoryDropdownState
   }
 
   Future<void> openSaveSuccessDialog(String fileName) async {
+    final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
     await showDialog(
       context: context,
+      useRootNavigator: !isLandscape,
       builder: (context) => AlertDialog(
         title: Text('Guardar Instrucciones', style: titleTextStyle),
         backgroundColor: neutralDarkBlueAD,
@@ -233,9 +239,11 @@ class _InstructionHistoryDropdownState
   }
 
   Future<void> openOverwiteFileDialog() async {
+    final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
     await showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
+      context: context,
+      useRootNavigator: !isLandscape,
+      builder: (context) => AlertDialog(
               title: Text('Sobrescribir Instrucciones', style: titleTextStyle),
               backgroundColor: neutralDarkBlueAD,
               shape: RoundedRectangleBorder(
@@ -272,9 +280,11 @@ class _InstructionHistoryDropdownState
       fileNames = [];
     }
     if (!mounted) return;
+    final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
     showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
+      context: context,
+      useRootNavigator: !isLandscape,
+      builder: (context) => AlertDialog(
             title: Text('Cargar Instrucciones', style: titleTextStyle),
             backgroundColor: neutralDarkBlueAD,
             shape: RoundedRectangleBorder(
@@ -301,9 +311,11 @@ class _InstructionHistoryDropdownState
   }
 
   Future<void> openClearInstructionsDialog() async {
+    final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
     await showDialog(
-        context: context,
-        builder: (context) {
+      context: context,
+      useRootNavigator: !isLandscape,
+      builder: (context) {
           return AlertDialog(
             title: Text('Borrar Instrucciones', style: titleTextStyle),
             backgroundColor: neutralDarkBlueAD,
@@ -492,8 +504,10 @@ class _InstructionHistoryDropdownState
             final int initAngle = sp.defaultAngle;
             final int initCycle = sp.defaultCycle;
 
+            final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
             showDialog(
               context: context,
+              useRootNavigator: !isLandscape,
               builder: (ctx) => DefaultMovementDialog(
                 initialDistance: initDistance,
                 initialAngle: initAngle,

@@ -11,6 +11,7 @@ import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manag
 import 'package:proyecto_tec/shared/features/navigation/services/navigation.dart';
 import 'package:proyecto_tec/shared/components/ui/buttons/switch_button.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
+import 'package:proyecto_tec/shared/features/navigation/services/split_nav.dart';
 
 class BotControlPage extends StatefulWidget {
   final bool embedded; // when true, render without own Scaffold/AppBar
@@ -90,8 +91,12 @@ class _BotControlPageState extends State<BotControlPage> {
                         onChanged: (bool value) async {
                           if (value != simplifiedProvider.simplifiedMode) {
                             if (value) {
+                              final targetCtx = (isLandscape && SplitNav.rightContext != null)
+                                  ? SplitNav.rightContext!
+                                  : context;
                               showDialog(
-                                context: context,
+                                context: targetCtx,
+                                useRootNavigator: isLandscape ? false : true,
                                 builder: (context) {
                                   return DefaultMovementDialog(
                                     initialDistance: simplifiedProvider.defaultDistance,
@@ -104,7 +109,13 @@ class _BotControlPageState extends State<BotControlPage> {
                                 },
                               );
                             } else {
-                              await SaveInstructionsDialog.showMenuForContext(context);
+                              final targetCtx = (isLandscape && SplitNav.rightContext != null)
+                                  ? SplitNav.rightContext!
+                                  : context;
+                              await SaveInstructionsDialog.showMenuForContext(
+                                targetCtx,
+                                useRootNavigator: isLandscape ? false : true,
+                              );
                             }
                             simplifiedProvider.setSimplifiedMode(value);
                           }
@@ -165,8 +176,12 @@ class _BotControlPageState extends State<BotControlPage> {
                     onChanged: (bool value) async {
                       if (value != simplifiedProvider.simplifiedMode) {
                         if (value) {
+                          final targetCtx = (isLandscape && SplitNav.rightContext != null)
+                              ? SplitNav.rightContext!
+                              : context;
                           showDialog(
-                            context: context,
+                            context: targetCtx,
+                            useRootNavigator: isLandscape ? false : true,
                             builder: (context) {
                               return DefaultMovementDialog(
                                 initialDistance: simplifiedProvider.defaultDistance,
@@ -179,7 +194,13 @@ class _BotControlPageState extends State<BotControlPage> {
                             },
                           );
                         } else {
-                          await SaveInstructionsDialog.showMenuForContext(context);
+                          final targetCtx = (isLandscape && SplitNav.rightContext != null)
+                              ? SplitNav.rightContext!
+                              : context;
+                          await SaveInstructionsDialog.showMenuForContext(
+                            targetCtx,
+                            useRootNavigator: isLandscape ? false : true,
+                          );
                         }
                         simplifiedProvider.setSimplifiedMode(value);
                       }
@@ -229,8 +250,12 @@ class _BotControlPageState extends State<BotControlPage> {
                   onChanged: (bool value) async {
                     if (value != simplifiedProvider.simplifiedMode) {
                       if (value) {
+                        final targetCtx = (isLandscape && SplitNav.rightContext != null)
+                            ? SplitNav.rightContext!
+                            : context;
                         showDialog(
-                          context: context,
+                          context: targetCtx,
+                          useRootNavigator: isLandscape ? false : true,
                           builder: (context) {
                             return DefaultMovementDialog(
                               initialDistance: simplifiedProvider.defaultDistance,
@@ -243,7 +268,13 @@ class _BotControlPageState extends State<BotControlPage> {
                           },
                         );
                       } else {
-                        await SaveInstructionsDialog.showMenuForContext(context);
+                        final targetCtx = (isLandscape && SplitNav.rightContext != null)
+                            ? SplitNav.rightContext!
+                            : context;
+                        await SaveInstructionsDialog.showMenuForContext(
+                          targetCtx,
+                          useRootNavigator: isLandscape ? false : true,
+                        );
                       }
                       simplifiedProvider.setSimplifiedMode(value);
                     }

@@ -5,7 +5,7 @@ import 'package:proyecto_tec/features/file-management/services/file_management_s
 import 'package:proyecto_tec/shared/styles/colors.dart';
 
 class SaveInstructionsDialog {
-  static Future<void> showMenuForContext(BuildContext context) async {
+  static Future<void> showMenuForContext(BuildContext context, {bool useRootNavigator = true}) async {
     final FileManagementService fmService = FileManagementService();
 
     const TextStyle contentTextStyle = TextStyle(
@@ -46,6 +46,7 @@ class SaveInstructionsDialog {
       if (!context.mounted) return;
       await showDialog(
         context: context,
+        useRootNavigator: useRootNavigator,
         builder: (ctx) => AlertDialog(
           title: const Text('Sobrescribir Instrucciones', style: titleTextStyle),
           backgroundColor: neutralDarkBlueAD,
@@ -53,7 +54,9 @@ class SaveInstructionsDialog {
             borderRadius: BorderRadius.circular(24.0),
             side: const BorderSide(color: neutralWhite, width: 4.0),
           ),
-          content: const Text('El archivo ya existe, ¿deseas sobrescribirlo?', style: contentTextStyle),
+          content: const SingleChildScrollView(
+            child: Text('El archivo ya existe, ¿deseas sobrescribirlo?', style: contentTextStyle),
+          ),
           actions: [
             TextButton(
               child: const Text('Cancelar', style: contentTextStyle),
@@ -88,6 +91,7 @@ class SaveInstructionsDialog {
       if (!context.mounted) return;
       await showDialog(
         context: context,
+        useRootNavigator: useRootNavigator,
         builder: (ctx) => AlertDialog(
           title: const Text('Guardar Instrucciones', style: titleTextStyle),
           backgroundColor: neutralDarkBlueAD,
@@ -95,16 +99,18 @@ class SaveInstructionsDialog {
             borderRadius: BorderRadius.circular(24.0),
             side: const BorderSide(color: neutralWhite, width: 4.0),
           ),
-          content: const Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('El nombre de archivo es inválido.', style: contentTextStyle),
-              SizedBox(height: 12),
-              Text('Utilice únicamente letras, números y guión bajo.', style: subtitleTextStyle),
-              SizedBox(height: 4),
-              Text('* No se aceptan caracteres especiales, ni espacios.', style: subtitleTextStyle),
-            ],
+          content: const SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('El nombre de archivo es inválido.', style: contentTextStyle),
+                SizedBox(height: 12),
+                Text('Utilice únicamente letras, números y guión bajo.', style: subtitleTextStyle),
+                SizedBox(height: 4),
+                Text('* No se aceptan caracteres especiales, ni espacios.', style: subtitleTextStyle),
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -126,6 +132,7 @@ class SaveInstructionsDialog {
       if (!context.mounted) return;
       await showDialog(
         context: context,
+        useRootNavigator: useRootNavigator,
         builder: (ctx) => AlertDialog(
           title: const Text('Guardar Instrucciones', style: titleTextStyle),
           backgroundColor: neutralDarkBlueAD,
@@ -133,7 +140,9 @@ class SaveInstructionsDialog {
             borderRadius: BorderRadius.circular(24.0),
             side: const BorderSide(color: neutralWhite, width: 4.0),
           ),
-          content: Text('El archivo “$fileName” ha sido guardado exitosamente.', style: contentTextStyle),
+          content: SingleChildScrollView(
+            child: Text('El archivo “$fileName” ha sido guardado exitosamente.', style: contentTextStyle),
+          ),
           actions: [
             TextButton(
               child: const Text('Continuar', style: contentTextStyle),
@@ -148,6 +157,7 @@ class SaveInstructionsDialog {
       if (!context.mounted) return;
       await showDialog(
         context: context,
+        useRootNavigator: useRootNavigator,
         builder: (ctx) => AlertDialog(
           title: const Text('Guardar Instrucciones', style: titleTextStyle),
           backgroundColor: neutralDarkBlueAD,
@@ -155,42 +165,44 @@ class SaveInstructionsDialog {
             borderRadius: BorderRadius.circular(24.0),
             side: const BorderSide(color: neutralWhite, width: 4.0),
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Utilice únicamente letras, números y guión bajo.', style: subtitleTextStyle),
-                    SizedBox(height: 4),
-                    Text('* No se aceptan caracteres especiales, ni espacios.', style: subtitleTextStyle),
-                    SizedBox(height: 16),
-                  ],
-                ),
-              ),
-              Form(
-                key: fileNameKey,
-                child: TextFormField(
-                  controller: fileNameController,
-                  decoration: const InputDecoration(
-                    border: UnderlineInputBorder(
-                      borderSide: BorderSide(color: neutralWhite),
-                    ),
-                    hintText: '*Ingresese el nombre para el archivo',
-                    hintStyle: contentTextStyle,
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Utilice únicamente letras, números y guión bajo.', style: subtitleTextStyle),
+                      SizedBox(height: 4),
+                      Text('* No se aceptan caracteres especiales, ni espacios.', style: subtitleTextStyle),
+                      SizedBox(height: 16),
+                    ],
                   ),
-                  validator: (value) {
-                    final v = value?.trim() ?? '';
-                    if (v.isEmpty) return 'Campo requerido';
-                    final reg = RegExp(r'^[A-Za-z0-9_]+$');
-                    if (!reg.hasMatch(v)) return '';
-                    return null;
-                  },
                 ),
-              )
-            ],
+                Form(
+                  key: fileNameKey,
+                  child: TextFormField(
+                    controller: fileNameController,
+                    decoration: const InputDecoration(
+                      border: UnderlineInputBorder(
+                        borderSide: BorderSide(color: neutralWhite),
+                      ),
+                      hintText: '*Ingresese el nombre para el archivo',
+                      hintStyle: contentTextStyle,
+                    ),
+                    validator: (value) {
+                      final v = value?.trim() ?? '';
+                      if (v.isEmpty) return 'Campo requerido';
+                      final reg = RegExp(r'^[A-Za-z0-9_]+$');
+                      if (!reg.hasMatch(v)) return '';
+                      return null;
+                    },
+                  ),
+                )
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -248,6 +260,7 @@ class SaveInstructionsDialog {
       if (!context.mounted) return;
       await showDialog(
         context: context,
+        useRootNavigator: useRootNavigator,
         builder: (ctx) => AlertDialog(
           title: const Text('Borrar Instrucciones', style: titleTextStyle),
           backgroundColor: neutralDarkBlueAD,
@@ -255,7 +268,9 @@ class SaveInstructionsDialog {
             borderRadius: BorderRadius.circular(24.0),
             side: const BorderSide(color: neutralWhite, width: 4.0),
           ),
-          content: const Text('¿Estás seguro de que deseas borrar todas las instrucciones?', style: contentTextStyle),
+          content: const SingleChildScrollView(
+            child: Text('¿Estás seguro de que deseas borrar todas las instrucciones?', style: contentTextStyle),
+          ),
           actions: [
             TextButton(
               child: const Text('Cancelar', style: contentTextStyle),
@@ -276,6 +291,7 @@ class SaveInstructionsDialog {
     if (!context.mounted) return;
     await showDialog(
       context: context,
+      useRootNavigator: useRootNavigator,
       builder: (ctx) => AlertDialog(
         buttonPadding: const EdgeInsets.all(20.0),
         actionsPadding: const EdgeInsets.fromLTRB(20, 20, 30, 10),
@@ -285,30 +301,32 @@ class SaveInstructionsDialog {
           borderRadius: BorderRadius.circular(24.0),
           side: const BorderSide(color: neutralWhite, width: 4.0),
         ),
-        content: SizedBox(
-          width: 500,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset(
-                'assets/surprised face.png',
-                width: 96,
-                height: 96,
-                fit: BoxFit.contain,
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Las instrucciones no han sido guardadas,\n¿desea borrarlas?',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 20,
-                  fontFamily: "Poppins",
-                  color: neutralWhite,
+        content: SingleChildScrollView(
+          child: SizedBox(
+            width: 500,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(
+                  'assets/surprised face.png',
+                  width: 96,
+                  height: 96,
+                  fit: BoxFit.contain,
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                const Text(
+                  'Las instrucciones no han sido guardadas,\n¿desea borrarlas?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 20,
+                    fontFamily: "Poppins",
+                    color: neutralWhite,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         actions: [
