@@ -5,14 +5,15 @@ using namespace std;
 
 // Robot constants
 const int samplingTime = 25; // units: miliseconds
-const float pulsesPerRev = 575; // number of pulses from a single encoder output 574
+const float rightPulsesPerRev = 836; // number of pulses from a single encoder output, for the right motor
+const float leftPulsesPerRev = 830; // number of pulses from a single encoder output, for the left motor
 const float wheelRadius = 22; // Wheel circumference = 139.5mm
 const float distanceWheelToWheel = 112; // actualizado a chasís v2.4 
 const float distanceCenterToWheel = distanceWheelToWheel / 2 ; // Turning radius of the robot, distance in mm between the center and one wheel
 
 // Constants for PID control with samplingTime = 25ms
 const float targetSpeed = 120.0; // Target speed for the robot in mm/s
-const float kpSpeed = 0.75; // Proportional constant for speed control
+const float kpSpeed = 1.1; // Proportional constant for speed control 0.75
 const float kiSpeed = 2; // Integral constant for speed control
 const float kdSpeed = 0.0; // Derivative constant for speed control (set to zero for no derivative action)
 
@@ -26,6 +27,11 @@ const int lowerDutyCycleLimitSpeed = 60; // Minimum allowed PWM value for speed 
 // Constants for RGB LED configuration
 const int duracionParpadeoLed = 500;
 const int duracionIndicadorRecibeProgra = 2000;
+const int esperaBT = 500;
+unsigned long tiempoPasadaLecturaBT = 0;
+
+// Constante para evasión de obstáculos
+const int distRetrocesoObstaculo = 50;
 
 // Error accumulation for speed PID control
 float sumErrorVelRight = 0; // Accumulated integral error for the right wheel
@@ -72,12 +78,12 @@ const int leftEncoderA = 32; // Pin for the left encoder's channel A
 const int leftEncoderB = 35; // Pin for the left encoder's channel B
 
 // Motor control pins
-const int rightMotorM1 = 13;   // Direction control pin 1 for the right motor
-const int rightMotorM2 = 15;   // Direction control pin 2 for the right motor
+const int rightMotorM1 = 14;   // Direction control pin 1 for the right motor
+const int rightMotorM2 = 12;   // Direction control pin 2 for the right motor
 
 
-const int leftMotorM1 = 14;   // Direction control pin 1 for the left motor
-const int leftMotorM2 = 12;   // Direction control pin 1 for the left motor
+const int leftMotorM1 = 13;   // Direction control pin 1 for the left motor
+const int leftMotorM2 = 15;   // Direction control pin 1 for the left motor
 
 // Obstacle sensors setup
 const int rightInfraredSensor = 4; // Pin for the right infrared obstacle sensor
@@ -86,10 +92,6 @@ const int leftInfraredSensor = 34;  // Pin for the right infrared obstacle senso
 // Tracker sensors setup
 const int rightTrackerSensor = 36;  // Pin for the right tracker sensor
 const int leftTrackerSensor = 39;   // Pin for the left tracker sensor
-
-// Buttons setup
-const int startButtonPin = 25;      // Pin for the start button
-const int stopButtonPin = 23;       // Pin for the stop button
 
 // LED RGB setup
 const int pinLedRgbRojo = 5; 
@@ -134,7 +136,9 @@ short cantidad_ciclos = 0;
 bool flagBluetooth = 0;
 bool flagEjecucion = 0;
 bool flagObstaculo = 0;
+bool flagParar = 0;
 bool recibeProgra = 0;
+bool flancoNegRecibeProgra = 0;
 unsigned long recibePrograTiempo0 = 0;
 
 //******************************************************************************************************************
@@ -187,12 +191,8 @@ void setup() {
   pinMode(leftInfraredSensor, INPUT);
 
   // Tracker sensors set up
-  pinMode(rightTrackerSensor, INPUT);
-  pinMode(leftTrackerSensor, INPUT);
-
-  //Buttons set up
-  pinMode(startButtonPin, INPUT_PULLUP);
-  pinMode(stopButtonPin, INPUT_PULLUP);
+  pinMode(rightTrackerSensor, INPUT_PULLDOWN);
+  pinMode(leftTrackerSensor, INPUT_PULLDOWN);
 
   // LED RGB set up
   pinMode(pinLedRgbRojo, OUTPUT);
@@ -229,43 +229,56 @@ void loop() {
  
   BLEDevice central = BLE.central();
 
-  bool lecturaBotonStart=digitalRead( startButtonPin );
-  bool lecturaBotonStop=digitalRead( stopButtonPin );
   bool lecturaInfrarrojoDerecho=digitalRead(rightInfraredSensor);
   bool lecturaInfrarrojoIzquierdo=digitalRead(leftInfraredSensor);
   bool lecturaSensorTrackerDerecho=digitalRead(rightTrackerSensor);
   bool lecturaSensorTrackerIzquierdo=digitalRead(leftTrackerSensor);
   int flagBateriaBaja = digitalRead(pinBateriaBaja);
 
+  // Para hacer una lectura de BT independientemente del estado
+  // con el objetivo de que se pueda detener en cualquier momento desde la app
+  if (millis() >= tiempoPasadaLecturaBT + esperaBT) {
+    if (central) {
+
+      if (central.connected()) {//era un while
+        flagBluetooth = 1;
+        if (caracteristico.written()) {
+          mensajeBLE = string( caracteristico.value().c_str() );
+          Serial.println(mensajeBLE.c_str()); 
+          caracteristico.writeValue("");
+          Interpreta_mensajeBLE(mensajeBLE);
+          if (!flagParar) { // si no se trata de un comando de detener, se parpadea el LED RGB
+            recibeProgra = 1;
+            recibePrograTiempo0 = millis();
+          }
+        }
+      } 
+    } else {
+        flagBluetooth = 0;
+    }
+    tiempoPasadaLecturaBT = millis();
+  }
+
 
   //Máquina de estados principal
   switch (estado) {
 
     case ESPERA:  { 
-      //Leer comunicación por BLE
-      if (central) {
 
-        if (central.connected()) {//era un while
-          flagBluetooth = 1;
-          if (caracteristico.written()) {
-            recibeProgra = 1;
-            recibePrograTiempo0 = millis();
-            mensajeBLE = string( caracteristico.value().c_str() );
-            Serial.println(mensajeBLE.c_str()); 
-            caracteristico.writeValue("");
-          }
-        } 
-      } else {
-          flagBluetooth = 0;
-      }
       //Lógica de estado siguiente
-      if (!lecturaBotonStart ) {
+      if (flancoNegRecibeProgra) {
           flagEjecucion = 1; 
           Interpreta_mensajeBLE(mensajeBLE);
           delay (1000);
-          estado = LEE_MEMORIA;
+          if (!paro_emergencia) {
+            estado = LEE_MEMORIA;
+          } else {
+            estado = DETENERSE;
+          }
           inst_actual = 0;
-          
+      } else if (paro_emergencia) { // si se recibe un comando de detener mientras está en ESPERA, se ignora
+        flagParar = 0; 
+        paro_emergencia = 0;
       }
       break;
     }
@@ -281,7 +294,7 @@ void loop() {
         }
       }
       //Lógica estado siguiente
-      if (!lecturaBotonStop  ||  inst_actual == inst_final) { 
+      if (inst_actual == inst_final) { 
         estado = ESPERA;
         flagEjecucion = 0;
 
@@ -327,18 +340,21 @@ void loop() {
       movimiento_listo= advanceDesiredDistance(valor_instruccion*10);
 
       //Lógica estado siguiente
-      if (!lecturaBotonStop) { 
-        paro_emergencia=true;
+      if (paro_emergencia) { 
         estado = DETENERSE;
 
-      }else if ( movimiento_listo ) {
+      } else if ( movimiento_listo ) {
         estado = DETENERSE;
-        Serial.print("listo:");
         
-      }
-      else if (obstaculos_activo) {
-        if (!lecturaInfrarrojoDerecho||!lecturaInfrarrojoIzquierdo||lecturaSensorTrackerDerecho||lecturaSensorTrackerIzquierdo){
+      } else if (lecturaSensorTrackerDerecho||lecturaSensorTrackerIzquierdo) {
+        obstaculo_detectado=true;
+        flagObstaculo = 1;
+        estado=DETENERSE;
+
+      } else if (obstaculos_activo) {
+        if (!lecturaInfrarrojoDerecho||!lecturaInfrarrojoIzquierdo){
           obstaculo_detectado=true;
+          flagObstaculo = 1;
           estado=DETENERSE;
         }
       }
@@ -354,39 +370,48 @@ void loop() {
       movimiento_listo= turnDesiredAngle(valor_instruccion);
 
       //Lógica estado siguiente
-      if (!lecturaBotonStop) {
-        paro_emergencia=true; 
+      if (paro_emergencia) {
         estado = DETENERSE;
 
       }else if ( movimiento_listo ) {
         //movimiento_listo = false;
         estado = DETENERSE;
-      }
-      else if (obstaculos_activo) {
-        if (!lecturaInfrarrojoDerecho||!lecturaInfrarrojoIzquierdo||lecturaSensorTrackerDerecho||lecturaSensorTrackerIzquierdo){
+
+      } else if (lecturaSensorTrackerDerecho||lecturaSensorTrackerIzquierdo) {
+        obstaculo_detectado=true;
+        flagObstaculo = 1;
+        estado=DETENERSE;
+
+      } else if (obstaculos_activo) {
+        if (!lecturaInfrarrojoDerecho||!lecturaInfrarrojoIzquierdo){
           obstaculo_detectado=true;
           flagObstaculo = 1;
           estado=DETENERSE;
         }
       }
+      
       break;
     }
 
     case DETENERSE: {
       
 
-      if (!lecturaBotonStop || paro_emergencia || obstaculo_detectado) { //en caso de apretar STOP o detectar obstaculo
+      if (paro_emergencia || obstaculo_detectado) { //en caso de apretar STOP o detectar obstaculo
         flagEjecucion = 0;
         configureHBridge(false, 3, 0, 0); //Detiene el robot 
       } // Ojo que la funcion avanzar y girar ya detiene el robot al final
         //configureHBridgeTurn(false, 3, 0, 0);
       delay(500);
+      flagParar = 0;
             
       //Lógica estado siguiente
       if (paro_emergencia){
         paro_emergencia=false;
-        estado= ESPERA;     
+        estado = ESPERA;     
       } else if (obstaculo_detectado){
+        // Se reinician los valores de posición para que no tome en cuenta el movimiento recién interrumpido
+        rightEncoderPos = 0; 
+        leftEncoderPos = 0;
         estado = MOVIMIENTO_OBSTACULO;
       } else {
         estado = LEE_MEMORIA;
@@ -414,11 +439,7 @@ void loop() {
 
 
       //Lógica estado siguiente
-      if (!lecturaBotonStop) { 
-        estado = ESPERA;
-      } else {
-        estado = LEE_MEMORIA;
-      } 
+      estado = LEE_MEMORIA;
       break;
     }
 
@@ -432,25 +453,18 @@ void loop() {
       }
 
       //Lógica estado siguiente
-      if (!lecturaBotonStop) { 
-        estado = ESPERA;
-      } else {
-        estado = LEE_MEMORIA;
-      } 
+      estado = LEE_MEMORIA;
       break;
     }
 
     case MOVIMIENTO_OBSTACULO: {
       // *Genera el movimiento despues que un obstaculo se detectó, el cual corresponde a un retroceso
-      retroceso_listo=advanceDesiredDistance(-50);
+      retroceso_listo=advanceDesiredDistance(-1* distRetrocesoObstaculo);
       obstaculo_detectado=false;
       flagObstaculo = 0;
       
       // Lógica estado siguiente
-      if (!lecturaBotonStop) { 
-        paro_emergencia=true;
-        estado = DETENERSE;
-      } else if (retroceso_listo){
+      if (retroceso_listo) {
         estado = ESPERA;
       } 
       break;
@@ -466,11 +480,7 @@ void loop() {
       }
 
       //Lógica estado siguiente
-      if (!lecturaBotonStop) { 
-        estado = ESPERA;
-      } else {
-        estado = LEE_MEMORIA;
-      } 
+      estado = LEE_MEMORIA;
       break;
     }
 
@@ -479,15 +489,17 @@ void loop() {
     }
   }
 
+  flancoNegRecibeProgra = 0;
   // Reseteo de la señal de recibeProgra
-  if (millis() > recibePrograTiempo0 + duracionIndicadorRecibeProgra) {
+  if (recibeProgra && millis() > recibePrograTiempo0 + duracionIndicadorRecibeProgra) {
     recibePrograTiempo0 = millis();
     recibeProgra = 0;
+    flancoNegRecibeProgra = 1;
   }
   
-  ConfigurarEstadoLedRgb(flagBateriaBaja, flagBluetooth, flagEjecucion, flagObstaculo, recibeProgra);
-  Serial.println(String("pulsosRight: ") + rightEncoderPos + String(", pulsosLeft: ") + leftEncoderPos);
-  //Serial.println(String("flagBateriaBaja:") + flagBateriaBaja + String(", flagBluetooth:") + flagBluetooth + String(", flagEjecucion:") +  flagEjecucion + String(", flagObstaculo:") + flagObstaculo + String(", recibeProgra:") + recibeProgra);
+  // Se asigna el color del LED RGB
+  ConfigurarEstadoLedRgb(flagBateriaBaja, flagBluetooth, flagEjecucion, flagObstaculo, recibeProgra, flagParar);
+  
   delay(5);
 }
 
@@ -513,65 +525,76 @@ void Interpreta_mensajeBLE (string mensaje) {
         string instruccion = mensaje.substr(i, 2);
         string valor_instruccion =  mensaje.substr(i+2, 3);
 
+        if (comando=="ATCOI") {
+          //inst_actual = 0;
         
-        //if (comando.compare("ATINI")==0) {
-        if (comando == "ATINI"){
+        } else if (comando == "ATCOF") {
+          //inst_final = i/5;
+
+        } else if (comando == "PARAR") {
+          paro_emergencia = true;
+          flagParar = 1;
+
+        } else if (comando == "EJECU") {
+          inst_actual = 0;
+         
+        } else if (comando == "ATINI") {
           inst_actual = 0;
         
-        }else if (comando == "ATFIN"){
+        } else if (comando == "ATFIN") {
           inst_final = i/5;
         
-        }else if (comando == "OBINI"){
+        } else if (comando == "OBINI") {
           lista_instrucciones[inst_actual][0] = inst_ObstaculoInicia;
           lista_instrucciones[inst_actual][1] = 0;
           inst_actual++;
 
-        }else if (comando == "OBFIN"){
+        } else if (comando == "OBFIN") {
           lista_instrucciones[inst_actual][0] = inst_ObstaculoFin;
           lista_instrucciones[inst_actual][1] = 0;
           inst_actual++;
 
-        }else if (comando == "CIFIN"){
+        } else if (comando == "CIFIN"){
           lista_instrucciones[inst_actual][0] = inst_CicloFin;
           lista_instrucciones[inst_actual][1] = 0;
           inst_actual++;  
 
-        }else if (instruccion == "CI" && comando != "CIFIN"){
+        } else if (instruccion == "CI" && comando != "CIFIN") {
           short valor = stoi (valor_instruccion);
           lista_instrucciones[inst_actual][0] = inst_CicloInicia;
           lista_instrucciones[inst_actual][1] = valor;
           inst_actual++;
 
-        }else if (instruccion == "AV"){
+        } else if (instruccion == "AV") {
           short valor = stoi (valor_instruccion);
           lista_instrucciones[inst_actual][0] = inst_Avanzar;
           lista_instrucciones[inst_actual][1] = valor;
           inst_actual++;
 
-        }else if (instruccion == "RE"){
+        } else if (instruccion == "RE") {
           short valor = stoi (valor_instruccion);
           lista_instrucciones[inst_actual][0] = inst_Retroceder;
           lista_instrucciones[inst_actual][1]= valor;
           inst_actual++;
 
-        }else if (instruccion == "GI"){
+        } else if (instruccion == "GI") {
           short valor = stoi (valor_instruccion);
           lista_instrucciones[inst_actual][0] = inst_GiroIzquierdo;
           lista_instrucciones[inst_actual][1] = valor;
           inst_actual++;
 
-        }else if (instruccion == "GD"){
+        } else if (instruccion == "GD") {
           short valor = stoi (valor_instruccion);
           lista_instrucciones[inst_actual][0] = inst_GiroDerecho;
           lista_instrucciones[inst_actual][1] = valor;
           inst_actual++;
         
-        }else if (comando == "HEINI"){
+        } else if (comando == "HEINI") {
           lista_instrucciones[inst_actual][0] = inst_HerramientaInicia;
           lista_instrucciones[inst_actual][1] = 0;
           inst_actual++;
 
-        }else if (comando == "HEFIN"){
+        } else if (comando == "HEFIN") {
           lista_instrucciones[inst_actual][0] = inst_HerramientaFin;
           lista_instrucciones[inst_actual][1] = 0;
           inst_actual++;
@@ -598,6 +621,7 @@ bool controlServo(bool set) {
   } else { //Deactivate the tool by setting it to 180 degrees
     myServo.write(deactivateAngle);
   }
+  delay(500); // so that the next action does not start before the servo stops moving
   return true;  // Action completed
 }
 
@@ -673,8 +697,8 @@ bool advanceDesiredDistance(int desiredDistance) {
 
     
     // Calculate the current speeds of both wheels based on the encoder ticks
-    float actualSpeedLeft = calculateSpeed(leftTicksForSpeed, deltaTimeSec); // Speed of the left wheel in mm/s
-    float actualSpeedRight = calculateSpeed(rightTicksForSpeed, deltaTimeSec); // Speed of the right wheel in mm/s
+    float actualSpeedLeft = calculateSpeed(leftTicksForSpeed, deltaTimeSec, 1); // Speed of the left wheel in mm/s
+    float actualSpeedRight = calculateSpeed(rightTicksForSpeed, deltaTimeSec, 0); // Speed of the right wheel in mm/s
 
     // Update the previous encoder tick counts
     rightPrevTicks = rightEncoderPos;
@@ -784,8 +808,8 @@ bool turnDesiredAngle (int desiredAngle) {
 
     
     // Calculate the current speeds of both wheels based on the encoder ticks
-    float actualSpeedLeft = calculateSpeed(leftTicksForSpeed, deltaTimeSec); // Speed of the left wheel in mm/s
-    float actualSpeedRight = calculateSpeed(rightTicksForSpeed, deltaTimeSec); // Speed of the right wheel in mm/s
+    float actualSpeedLeft = calculateSpeed(leftTicksForSpeed, deltaTimeSec, 1); // Speed of the left wheel in mm/s
+    float actualSpeedRight = calculateSpeed(rightTicksForSpeed, deltaTimeSec, 0); // Speed of the right wheel in mm/s
 
     // Update the previous encoder tick counts
     rightPrevTicks = rightEncoderPos;
@@ -855,15 +879,22 @@ bool turnDesiredAngle (int desiredAngle) {
 //
 // @param pulses The number of encoder pulses detected.
 // @param deltaTime The time interval in seconds.
+// @param motorID Whether the calculation is for the right (0) or left (1) motor.
 //
 // @return The calculated speed in mm/s.
 //******************************************************************************************************************
-float calculateSpeed(long pulses, float deltaTime) {
+float calculateSpeed(long pulses, float deltaTime, int motorID) {
     // Wheel circumference in mm
     float wheelCircumference = 2 * 3.1416 * wheelRadius;
 
     // Full revolutions based on the number of pulses
-    float revolutions = pulses / pulsesPerRev;
+    float revolutions = 0;
+    if (motorID == 0) { // for right motor
+      revolutions = pulses / rightPulsesPerRev;
+    } else { // for left motor (id = 1)
+      revolutions = pulses / leftPulsesPerRev;
+    }
+    
 
     // Distance traveled in mm
     float distance = revolutions * wheelCircumference;
@@ -962,12 +993,12 @@ float calculateLinearDistanceTraveled(long leftPulseCount, long rightPulseCount)
   float wheelCircumference = 2 * PI * wheelRadius;
 
   // Full revolutions based on the number of pulses
-  float rightRevolutions = (float) rightPulseCount / pulsesPerRev;
-  float leftRevolutions = (float) leftPulseCount / pulsesPerRev;
+  float rightRevolutions = (float) rightPulseCount / rightPulsesPerRev;
+  float leftRevolutions = (float) leftPulseCount / leftPulsesPerRev;
 
   // Distance traveled in mm
   float rightDistance = rightRevolutions * wheelCircumference;
-  float leftDistance = rightRevolutions * wheelCircumference;
+  float leftDistance = leftRevolutions * wheelCircumference;
 
   // Calculate the average linear distance
   float linearDistance = (rightDistance + leftDistance) / 2.0;
@@ -990,7 +1021,7 @@ float calculateLinearDistanceDesired(int desiredAngle) {
 
   // Calculate the linear distance based on the desired angle, assuming a circular path
   // Formula: (desiredAngle / 360) * π * distanceWheelToWheel
-  float linearDesiredDistance = (desiredAngle / 360.0) * PI * distanceWheelToWheel;
+  float linearDesiredDistance = (desiredAngle / 360.0) * PI * distanceWheelToWheel * correctionFactorLines;
 
   // Return the calculated linear distance
   return linearDesiredDistance;
@@ -1009,12 +1040,11 @@ float calculateLinearDistanceDesired(int desiredAngle) {
 //@param flagObstaculo Variable asociada a los sensores infrarrojos, informa cuando hay un obstáculo frente al robot
 //@param recibeProgra Variable que es un pulso que se recibe cuando se está recibiendo/recibió una progra desde la App
 //******************************************************************************************************************
-void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEjecucion, bool flagObstaculo, bool recibeProgra) {
+void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEjecucion, bool flagObstaculo, bool recibeProgra, bool flagParar) {
   unsigned long tiempoActual = millis();
 
   //Bateria baja -> rojo parpadeante
   if (flagBateriaBaja == LOW) {
-    // Serial.println("Bateria baja"); 
     // setear el tiempo de Encendido de LED en el momento de activar la flag
     if (tiempoActual <= tiempoDeEncendidoDeLed + duracionParpadeoLed && tiempoActual > tiempoDeEncendidoDeLed) {
       analogWrite(pinLedRgbRojo, 255);
@@ -1031,14 +1061,12 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
       analogWrite(pinLedRgbAzul, 0);
     }
    
-  } else if (flagObstaculo == 1) { //Obstaculo -> rojo fijo
-    // Serial.println("Obstaculo"); 
+  } else if (flagObstaculo == 1 || flagParar == 1) { //Obstaculo o paro de emergencia -> rojo fijo
     analogWrite(pinLedRgbRojo, 255);
     analogWrite(pinLedRgbVerde, 0);
     analogWrite(pinLedRgbAzul, 0);
 
   } else if (flagBluetooth == 0) { //Bluetooth no conectado -> azul y verde intercalados
-    // Serial.println("Bluetooth no conectado"); 
     // setear el tiempo de Encendido de LED en el momento de activar la flag
     if (tiempoActual <= tiempoDeEncendidoDeLed + duracionParpadeoLed && tiempoActual > tiempoDeEncendidoDeLed) {
       analogWrite(pinLedRgbRojo, 0);
@@ -1056,7 +1084,6 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
     } 
 
   } else if (recibeProgra == 1) { //Recibe progra de la App -> azul parpadeante
-    // Serial.println("Recibe progra"); 
     // setear el tiempo de Encendido de LED en el momento de activar la flag
     if (tiempoActual <= tiempoDeEncendidoDeLed + duracionParpadeoLed && tiempoActual > tiempoDeEncendidoDeLed) {
       analogWrite(pinLedRgbRojo, 0);
@@ -1074,13 +1101,11 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
     }
 
   } else if (flagEjecucion == 1) { //Robot ejecutando progra -> verde fijo
-    // Serial.println("Ejecucion progra"); 
     analogWrite(pinLedRgbRojo, 0);
     analogWrite(pinLedRgbVerde, 255);
     analogWrite(pinLedRgbAzul, 0);
     
   } else if (flagBluetooth == 1) { //Bluetooth conectado -> azul fijo
-    // Serial.println("Bluetooth conectado");
     analogWrite(pinLedRgbRojo, 0);
     analogWrite(pinLedRgbVerde, 0);
     analogWrite(pinLedRgbAzul, 255);
