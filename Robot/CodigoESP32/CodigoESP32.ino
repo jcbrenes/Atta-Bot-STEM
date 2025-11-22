@@ -33,6 +33,9 @@ unsigned long tiempoPasadaLecturaBT = 0;
 // Constante para evasión de obstáculos
 const int distRetrocesoObstaculo = 50;
 
+// Constante para tener siempre activos (o no) los sensores inferiores (trackers)
+const bool trackersSiempreActivos = true;
+
 // Error accumulation for speed PID control
 float sumErrorVelRight = 0; // Accumulated integral error for the right wheel
 float prevErrorVelRight = 0; // Previous error value for the right wheel (used for derivative calculation)
@@ -235,45 +238,32 @@ void loop() {
   bool lecturaSensorTrackerIzquierdo=digitalRead(leftTrackerSensor);
   int flagBateriaBaja = digitalRead(pinBateriaBaja);
 
-  // Para hacer una lectura de BT independientemente del estado
-  // con el objetivo de que se pueda detener en cualquier momento desde la app
-  if (millis() >= tiempoPasadaLecturaBT + esperaBT) {
-    if (central) {
-
-      if (central.connected()) {//era un while
-        flagBluetooth = 1;
-        if (caracteristico.written()) {
-          mensajeBLE = string( caracteristico.value().c_str() );
-          Serial.println(mensajeBLE.c_str()); 
-          caracteristico.writeValue("");
-          Interpreta_mensajeBLE(mensajeBLE);
-          if (!flagParar) { // si no se trata de un comando de detener, se parpadea el LED RGB
-            recibeProgra = 1;
-            recibePrograTiempo0 = millis();
-          }
-        }
-      } 
-    } else {
-        flagBluetooth = 0;
-    }
-    tiempoPasadaLecturaBT = millis();
-  }
+  // // Leer la conexión BLE periódicamente
+  // if (millis() >= tiempoPasadaLecturaBT + esperaBT) {
+  //   leerBluetooth(central);
+  //   tiempoPasadaLecturaBT = millis();
+  // }
 
 
   //Máquina de estados principal
   switch (estado) {
 
     case ESPERA:  { 
+      // Leer la conexión BLE periódicamente
+      if (millis() >= tiempoPasadaLecturaBT + esperaBT) {
+        leerBluetooth(central);
+        tiempoPasadaLecturaBT = millis();
+      }
 
       //Lógica de estado siguiente
       if (flancoNegRecibeProgra) {
           flagEjecucion = 1; 
-          Interpreta_mensajeBLE(mensajeBLE);
+          Interpreta_mensajeBLE(mensajeBLE); // se debería poder eliminar, PROBAR ESTO
           delay (1000);
           if (!paro_emergencia) {
             estado = LEE_MEMORIA;
           } else {
-            estado = DETENERSE;
+            estado = DETENERSE; // revisar porque creo que esta parte del condicional es innecesaria, REVISAR
           }
           inst_actual = 0;
       } else if (paro_emergencia) { // si se recibe un comando de detener mientras está en ESPERA, se ignora
@@ -339,6 +329,12 @@ void loop() {
       //(es el mismo pero con distancia negativa)
       movimiento_listo= advanceDesiredDistance(valor_instruccion*10);
 
+      // Leer la conexión BLE periódicamente
+      if (millis() >= tiempoPasadaLecturaBT + esperaBT) {
+        leerBluetooth(central);
+        tiempoPasadaLecturaBT = millis();
+      }
+
       //Lógica estado siguiente
       if (paro_emergencia) { 
         estado = DETENERSE;
@@ -346,7 +342,7 @@ void loop() {
       } else if ( movimiento_listo ) {
         estado = DETENERSE;
         
-      } else if (lecturaSensorTrackerDerecho||lecturaSensorTrackerIzquierdo) {
+      } else if ((trackersSiempreActivos || obstaculos_activo) && (lecturaSensorTrackerDerecho||lecturaSensorTrackerIzquierdo)) {
         obstaculo_detectado=true;
         flagObstaculo = 1;
         estado=DETENERSE;
@@ -369,6 +365,12 @@ void loop() {
       //giro
       movimiento_listo= turnDesiredAngle(valor_instruccion);
 
+      // Leer la conexión BLE periódicamente
+      if (millis() >= tiempoPasadaLecturaBT + esperaBT) {
+        leerBluetooth(central);
+        tiempoPasadaLecturaBT = millis();
+      }
+
       //Lógica estado siguiente
       if (paro_emergencia) {
         estado = DETENERSE;
@@ -377,7 +379,7 @@ void loop() {
         //movimiento_listo = false;
         estado = DETENERSE;
 
-      } else if (lecturaSensorTrackerDerecho||lecturaSensorTrackerIzquierdo) {
+      } else if ((trackersSiempreActivos || obstaculos_activo) && (lecturaSensorTrackerDerecho||lecturaSensorTrackerIzquierdo)) {
         obstaculo_detectado=true;
         flagObstaculo = 1;
         estado=DETENERSE;
@@ -395,7 +397,6 @@ void loop() {
 
     case DETENERSE: {
       
-
       if (paro_emergencia || obstaculo_detectado) { //en caso de apretar STOP o detectar obstaculo
         flagEjecucion = 0;
         configureHBridge(false, 3, 0, 0); //Detiene el robot 
@@ -478,6 +479,8 @@ void loop() {
       }else if ( instruccion == inst_HerramientaFin ) {
         controlServo(false);
       }
+
+      delay(500); // para que el servo tenga tiempo de moverse antes de que el robot avance a la siguiente instrucción
 
       //Lógica estado siguiente
       estado = LEE_MEMORIA;
@@ -601,6 +604,37 @@ void Interpreta_mensajeBLE (string mensaje) {
         }
   }
   inst_actual = 0; 
+}
+
+//***************************************************************************************
+//Función que lee la conexión Bluetooth BLE
+//
+//Determina si el robot está conectado a alguna App, y en caso de estarlo verifica
+//si llegó un mensaje nuevo. En tal caso, llama a la interpretación del nuevo mensaje.
+//También determina si se trata de una instrucción para la que se debería parpadear el
+//led en azul.
+//
+//@param central Variable que indica si hay un central conectado con este dispositivo
+//***************************************************************************************
+void leerBluetooth(BLEDevice central) {
+  if (central) {
+
+      if (central.connected()) {//era un while
+        flagBluetooth = 1;
+        if (caracteristico.written()) {
+          mensajeBLE = string( caracteristico.value().c_str() );
+          Serial.println(mensajeBLE.c_str()); 
+          caracteristico.writeValue("");
+          Interpreta_mensajeBLE(mensajeBLE);
+          if (!flagParar) { // si no se trata de un comando de detener, se parpadea el LED RGB
+            recibeProgra = 1;
+            recibePrograTiempo0 = millis();
+          }
+        }
+      } 
+    } else {
+        flagBluetooth = 0;
+    }
 }
 
 
