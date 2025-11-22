@@ -263,7 +263,7 @@ void loop() {
           if (!paro_emergencia) {
             estado = LEE_MEMORIA;
           } else {
-            estado = DETENERSE;
+            estado = DETENERSE; // revisar porque creo que esta parte del condicional es innecesaria, REVISAR
           }
           inst_actual = 0;
       } else if (paro_emergencia) { // si se recibe un comando de detener mientras está en ESPERA, se ignora
