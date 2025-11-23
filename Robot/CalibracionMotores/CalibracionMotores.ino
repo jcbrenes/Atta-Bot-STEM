@@ -1,14 +1,5 @@
-/*
- * Encoder example sketch
- * by Andrew Kramer
- * 1/1/2016
- *
- * Records encoder ticks for each wheel
- * and prints the number of ticks for
- * each encoder every 500ms
- *
- */
- 
+// Proyecto Atta-bot-STEM del Tecnológico de Costa Rica
+// Código para la calibración del PPR de los motores N20
 
 // Define the encoder pins
 const int rightEncoderA = 27; // Pin for the right encoder's channel A
@@ -42,6 +33,7 @@ int seleccionMotor = 1; // 1 para motor derecho y 2 para izquierdo
 const int pwmMinimo = 40; //pwm mínimo para mantener cualquier motor en movimiento 55
 const int velArranqueInicial = 35; // pwm mínimo que podría arrancar algún motor
 const int numMedicionesPorRealizar = 10;
+
 int numMedicion = 0;
 int mediciones[numMedicionesPorRealizar];
 
@@ -77,7 +69,11 @@ bool flagArranque = 0;
 
 #include "driver/gpio.h"
 
-
+//******************************************************************************************************************
+// Función para el registro de un pulso del encoder A del motor derecho y la dirección de movimiento de este motor
+//
+// Se utiliza la lectura de los pines de los encoder para determinar la dirección de movimiento.
+//******************************************************************************************************************
 void IRAM_ATTR rightEncoderAEvent() {
   if (gpio_get_level((gpio_num_t) rightEncoderA)) {
     dirMotorDerecho = gpio_get_level((gpio_num_t) rightEncoderB);
@@ -87,11 +83,21 @@ void IRAM_ATTR rightEncoderAEvent() {
   tUltimaLecturaDerecha = micros();
 }
 
+//******************************************************************************************************************
+// Función para el registro de un pulso del encoder B del motor derecho
+//
+// Esta función solo registra el pulso notado en el encoder.
+//******************************************************************************************************************
 void IRAM_ATTR rightEncoderBEvent() {
   rightCount++;
   tUltimaLecturaDerecha = micros();
 }
 
+//******************************************************************************************************************
+// Función para el registro de un pulso del encoder A del motor izquierdo y la dirección de movimiento de este motor
+//
+// Se utiliza la lectura de los pines de los encoder para determinar la dirección de movimiento.
+//******************************************************************************************************************
 void IRAM_ATTR leftEncoderAEvent() {
   if (gpio_get_level((gpio_num_t) leftEncoderA)) {
     dirMotorIzquierdo = gpio_get_level((gpio_num_t) leftEncoderB);
@@ -101,7 +107,11 @@ void IRAM_ATTR leftEncoderAEvent() {
   tUltimaLecturaIzquierda = micros();
 }
 
-// encoder event for the interrupt call
+//******************************************************************************************************************
+// Función para el registro de un pulso del encoder B del motor izquierdo
+//
+// Esta función solo registra el pulso notado en el encoder.
+//******************************************************************************************************************
 void IRAM_ATTR leftEncoderBEvent() {
   leftCount++;
   tUltimaLecturaIzquierda = micros();
@@ -144,6 +154,7 @@ void setup() {
   pinMode(leftMotorM1, OUTPUT);
   pinMode(leftMotorM2, OUTPUT);
 
+  // Inicialización del arreglo donde se guardará el valor de cada medición de PPR realizada
   for (int i = 0; i < numMedicionesPorRealizar; i++) {
     mediciones[i] = 0;
   }
@@ -152,15 +163,16 @@ void setup() {
 }
 
 void loop() {
+  // La comunicación de inicio de una prueba y el resultado de la medición se reciben por comunicación serial
   if (Serial.available() > 0) {
 
-    // read the incoming byte:
+    String comando = Serial.readString();  //lectura de lo escrito en el monitor serial
 
-    String comando = Serial.readString();  //read until timeout
+    comando.trim(); // se elimina el caracter especial del final del string
 
-    comando.trim();   
+    // Antes de realizar una medición, es necesario que se coloque el acrílico de calibración en el eje del motor por analizar
 
-    if (comando == "medirDerecho") {
+    if (comando == "medirDerecho") { //medición del PPR del motor  derecho
       estado = 1;
       seleccionMotor = 1;
       motorM1 = rightMotorM1;
@@ -170,7 +182,7 @@ void loop() {
       velArranque = velArranqueInicial;
       numMedicion = 0;
 
-    } else if (comando == "medirIzquierdo") {
+    } else if (comando == "medirIzquierdo") { //medición del PPR del motor izquierdo
       estado = 1;
       seleccionMotor = 2;
       motorM1 = leftMotorM1;
@@ -180,7 +192,7 @@ void loop() {
       velArranque = velArranqueInicial;
       numMedicion = 0;
 
-    } else if (comando == "reset") {
+    } else if (comando == "reset") { // detiene el procedimiento y el motor
       rightCount = 0;
       leftCount = 0;
       estado = 0;
@@ -188,6 +200,7 @@ void loop() {
 
   }
 
+  // Permite asignar a una sola variable la cantidad de pulsos que sea relevante según si se mide el motor der o izq
   if (seleccionMotor == 1) {
     pulsesCount = rightCount;
     tUltimaLectura = tUltimaLecturaDerecha;
@@ -196,22 +209,28 @@ void loop() {
     tUltimaLectura = tUltimaLecturaIzquierda;
   }
   
-
+  // Máquina de estados
+  // estado = 0 (reposo): el motor se apaga y las cuentas de PPR se reinician constantemente
+  // estado = 1 (preparación): se mueve el brazo de calibración hasta el tope de uno de los lados, y se determina la velocidad más adecuada para la medición si es la primera vez que se da este estado
+  // estado = 2 (medición): el brazo gira lentamente hasta topar con el límite, se mide durante este tiempo la cantidad de pulsos detectados
   switch (estado) {
-    case 0:
+    case 0: // Reposo
       analogWrite(motorM1, 0); 
       analogWrite(motorM2, 0);
       rightCount = 0;
       leftCount = 0;
       break;
-    case 1:
+    case 1: // Preparación
       // Calibración de final de carrera inicio
+
+      // Si el motor ya arrancó, se mueve a una velocidad reducida
       if (arranque(2)) {
         analogWrite(motorM1, 0); 
         analogWrite(motorM2, pwmMotores);
         
       }
       
+      // Si el motor ya había arrancado y ahora ha permanecido detenido por un tiempo waitTime, se detiene el movimiento y se avanza al estado 2
       if (millis() > tUltimaLectura/1000 + waitTime && flagArranque) {
         
         analogWrite(motorM1, 0);
@@ -222,22 +241,22 @@ void loop() {
         
         estado = 2;
         velArranque = velArranqueInicial;
-        pulsosAntesArranque = 0; // era rightCount
+        pulsosAntesArranque = 0; 
         tUltimaLecturaDerecha = micros();
         tUltimaLecturaIzquierda = micros();
         flagArranque = 0;
       }
       break;
-    case 2: 
-      // Medición de PPR
+    case 2: // Medición de PPR
+      // Si no se ha arrancado se llama a la función, si ya se arrancó se envía un movimiento más lento
       if (!flagArranque) {
         arranque(1);
       } else {
         analogWrite(motorM1, pwmMotores); 
         analogWrite(motorM2, 0);
-        // ultimaDirMotorDerecho = dirMotorDerecho;
         
       }
+      // Se evalúa si el motor cambió de dirección, esto significaría un rebote del brazo de calibración por lo que se desea terminar inmediatamente la medición en ese punto
       if (seleccionMotor == 1){
         cambioDir = dirMotorDerecho == dirMotorEnArranque;
       }
@@ -245,11 +264,12 @@ void loop() {
         cambioDir = dirMotorIzquierdo == dirMotorEnArranque;
       }
       
+      // Si el motor ha estado activo por waitTime sin que haya habido pulso ninguno en los encoder, o si se cambió de dirección, se detiene la medición
       if ((millis() > tUltimaLectura/1000 + waitTime || cambioDir) && flagArranque) {
         
         analogWrite(motorM1, 0);
         analogWrite(motorM2, 0);
-        PPR = pulsesCount * 2; // debido a que solo se está midiendo media revolución
+        PPR = pulsesCount * 2; // debido a que solo se está midiendo media revolución, el PPR será el doble de lo detectado
         mediciones[numMedicion] = PPR;
         Serial.print("Valor de medición ");
         Serial.print(numMedicion+1);
@@ -259,7 +279,9 @@ void loop() {
       
         rightCount = 0;
         leftCount = 0;
-        if (numMedicion < numMedicionesPorRealizar - 1) {
+
+        // Se evalúa si es necesario hacer más mediciones o si esta era la última
+        if (numMedicion < numMedicionesPorRealizar - 1) { // si faltan todavía mediciones, se vuelve al estado 1 (preparación)
           estado = 1;
           pulsosAntesArranque = pulsesCount;
           velArranque = velArranqueInicial;
@@ -267,7 +289,8 @@ void loop() {
           tUltimaLecturaIzquierda = micros();
           // pwmMotores = velArranqueInicial;
           numMedicion++;
-        } else {
+        } else { // si esta era la última medición
+          // Se calcula el promedio de las mediciones de PPR
           int suma = 0;
           for (int i = 0; i < numMedicionesPorRealizar; i++) {
             suma = suma + mediciones[i];
@@ -290,7 +313,17 @@ void loop() {
   delay(1);
 }
 
+//******************************************************************************************************************
+// Función para arranque del motor
+//
+// Esta función envía un PWM cada vez mayor al motor, hasta que se detecte suficiente avance en los encoders.
+//
+// @param direccion La dirección en la que se debe mover el motor: 2 para la preparación y 1 para la medición.
+//
+// @return true si el motor ya arrancó.
+//******************************************************************************************************************
 bool arranque(int direccion) {
+  // Mientras el motor no haya arrancado, se envía un PWM 
   if (!flagArranque) {
     if (direccion == 1) {
       analogWrite(motorM1, velArranque); 
@@ -300,9 +333,11 @@ bool arranque(int direccion) {
       analogWrite(motorM2, velArranque);
     }
 
-    if (pulsesCount > 10 && !flagArranque) { //pulsosAntesArranque
-      if (estado == 1 && numMedicion == 0) {
-        pwmMotores = velArranque *0.7; //0.7}
+    // Si se detectan más de 10 pulsos en el motor, se determina que el motor ya arrancó
+    if (pulsesCount > 10 && !flagArranque) {
+      if (estado == 1 && numMedicion == 0) { // si se está en el estado 1 y es la primera medición
+        // Se define la velocidad (PWM) que se utilizará para las mediciones
+        pwmMotores = velArranque *0.7; 
         // No se permite un valor menor al necesario para mantener en movimiento cualquier motor
         if (pwmMotores < pwmMinimo) {
           pwmMotores = pwmMinimo;
@@ -313,11 +348,12 @@ bool arranque(int direccion) {
           dirMotorEnArranque = dirMotorIzquierdo;
         }
       }
-      Serial.print("vel arranque");
-      Serial.println(pwmMotores);
+      // Serial.print("vel arranque");
+      // Serial.println(pwmMotores);
       flagArranque = 1;
       return 1;
     }
+    // Se aumenta gradualmente el PWM usado para el arranque
     if (millis() > tUltimoAumentoVel + 1000) {
       velArranque = velArranque + 5;
       tUltimoAumentoVel = millis();
