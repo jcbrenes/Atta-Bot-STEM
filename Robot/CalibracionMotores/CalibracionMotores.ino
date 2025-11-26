@@ -15,6 +15,8 @@ const int rightMotorM2 = 12;  //12 // Direction control pin 2 for the right moto
 const int leftMotorM1 = 15;   // Direction control pin 1 for the left motor
 const int leftMotorM2 = 13;   // Direction control pin 1 for the left motor
 
+const int PPRminimo = 100; // una medicion que resulte menor o igual a esto será descartada
+
 int motorM1 = rightMotorM1; // Variable a la que se le envía el PWM, depende del motor que se esté calibrando
 int motorM2 = rightMotorM2; 
 
@@ -30,7 +32,7 @@ int estado = 0;
 
 int seleccionMotor = 1; // 1 para motor derecho y 2 para izquierdo
 
-const int pwmMinimo = 40; //pwm mínimo para mantener cualquier motor en movimiento 55
+int pwmMinimo = 40; //pwm mínimo para mantener cualquier motor en movimiento 40
 const int velArranqueInicial = 35; // pwm mínimo que podría arrancar algún motor
 const int numMedicionesPorRealizar = 10;
 
@@ -55,6 +57,8 @@ float PPR = 0;
 
 int velArranque = velArranqueInicial;
 bool flagArranque = 0;
+
+float factorVel = 0.7;
 
 // encoder event for the interrupt call
 // void IRAM_ATTR rightEncoderAEvent() {
@@ -236,9 +240,16 @@ void loop() {
         analogWrite(motorM1, 0);
         analogWrite(motorM2, 0);
         delay(500); // se espera a que todo movimiento se detenga
+        PPR = pulsesCount * 2;
+        // Para los motores de alrededor de 800 PPR se utilizan estas variables que permiten mejor medicion
+        if (numMedicion == 0 & PPR > 700) {
+          factorVel = 0.5;
+          pwmMinimo = 34;
+          Serial.println("hi");
+        }
         rightCount = 0;
         leftCount = 0;
-        
+
         estado = 2;
         velArranque = velArranqueInicial;
         pulsosAntesArranque = 0; 
@@ -274,28 +285,33 @@ void loop() {
         Serial.print("Valor de medición ");
         Serial.print(numMedicion+1);
         Serial.print(" de PPR: ");
-        Serial.println(PPR);
-        Serial.println(cambioDir);
+        Serial.print(PPR);
       
         rightCount = 0;
         leftCount = 0;
 
         // Se evalúa si es necesario hacer más mediciones o si esta era la última
-        if (numMedicion < numMedicionesPorRealizar - 1) { // si faltan todavía mediciones, se vuelve al estado 1 (preparación)
+        if (numMedicion < numMedicionesPorRealizar - 1 || PPR <= PPRminimo) { // si faltan todavía mediciones, o si una medicion es mala, se vuelve al estado 1 (preparación)
           estado = 1;
           pulsosAntesArranque = pulsesCount;
           velArranque = velArranqueInicial;
           tUltimaLecturaDerecha = micros();
           tUltimaLecturaIzquierda = micros();
           // pwmMotores = velArranqueInicial;
-          numMedicion++;
+          if (PPR > PPRminimo) {
+            numMedicion++;
+            Serial.println();
+          } else {
+            Serial.println(" ---- Medicion descartada");
+          }
         } else { // si esta era la última medición
           // Se calcula el promedio de las mediciones de PPR
-          int suma = 0;
+          float suma = 0;
           for (int i = 0; i < numMedicionesPorRealizar; i++) {
             suma = suma + mediciones[i];
           }
           float promedio = suma / numMedicionesPorRealizar;
+          Serial.println();
           Serial.print("El promedio de PPR es: ");
           Serial.println(promedio);
           estado = 0;
@@ -337,7 +353,7 @@ bool arranque(int direccion) {
     if (pulsesCount > 10 && !flagArranque) {
       if (estado == 1 && numMedicion == 0) { // si se está en el estado 1 y es la primera medición
         // Se define la velocidad (PWM) que se utilizará para las mediciones
-        pwmMotores = velArranque *0.7; 
+        pwmMotores = velArranque *factorVel; //0.7
         // No se permite un valor menor al necesario para mantener en movimiento cualquier motor
         if (pwmMotores < pwmMinimo) {
           pwmMotores = pwmMinimo;

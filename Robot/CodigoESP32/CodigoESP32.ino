@@ -6,14 +6,14 @@ using namespace std;
 // Robot constants
 const int samplingTime = 25; // units: miliseconds
 const float rightPulsesPerRev = 836; // number of pulses from a single encoder output, for the right motor
-const float leftPulsesPerRev = 830; // number of pulses from a single encoder output, for the left motor
+const float leftPulsesPerRev = 834; // number of pulses from a single encoder output, for the left motor
 const float wheelRadius = 22; // Wheel circumference = 139.5mm
 const float distanceWheelToWheel = 112; // actualizado a chasís v2.4 
 const float distanceCenterToWheel = distanceWheelToWheel / 2 ; // Turning radius of the robot, distance in mm between the center and one wheel
 
 // Constants for PID control with samplingTime = 25ms
 const float targetSpeed = 120.0; // Target speed for the robot in mm/s
-const float kpSpeed = 1.1; // Proportional constant for speed control 0.75
+const float kpSpeed = 2; // Proportional constant for speed control 0.75, 1.1
 const float kiSpeed = 2; // Integral constant for speed control
 const float kdSpeed = 0.0; // Derivative constant for speed control (set to zero for no derivative action)
 
@@ -27,8 +27,13 @@ const int lowerDutyCycleLimitSpeed = 60; // Minimum allowed PWM value for speed 
 // Constants for RGB LED configuration
 const int duracionParpadeoLed = 500;
 const int duracionIndicadorRecibeProgra = 2000;
+
+// Constants for Bluetooth connection
 const int esperaBT = 500;
 unsigned long tiempoPasadaLecturaBT = 0;
+
+// Constante para determinar cuánto tiempo esperar a la hora de desactivar/activar el lápiz
+const int esperaMovimientoServo = 100;
 
 // Constante para evasión de obstáculos
 const int distRetrocesoObstaculo = 50;
@@ -48,6 +53,8 @@ const float correctionFactorLines = 0.95; //0.92
 
 int prevPWMRight = 0;
 int prevPWMLeft = 0;
+bool prevReverse = 0;
+
 
 // For speed sampling
 unsigned long previousTime = 0;
@@ -115,7 +122,7 @@ bool giro_listo = false;
 bool movimiento_listo = true; 
 bool obstaculos_activo = false;
 bool primer_ciclo = true;
-bool retroceso_listo = true;
+bool retroceso_listo = false;
 bool obstaculo_detectado=false;
 bool paro_emergencia=false;
 
@@ -238,12 +245,6 @@ void loop() {
   bool lecturaSensorTrackerIzquierdo=digitalRead(leftTrackerSensor);
   int flagBateriaBaja = digitalRead(pinBateriaBaja);
 
-  // // Leer la conexión BLE periódicamente
-  // if (millis() >= tiempoPasadaLecturaBT + esperaBT) {
-  //   leerBluetooth(central);
-  //   tiempoPasadaLecturaBT = millis();
-  // }
-
 
   //Máquina de estados principal
   switch (estado) {
@@ -258,13 +259,7 @@ void loop() {
       //Lógica de estado siguiente
       if (flancoNegRecibeProgra) {
           flagEjecucion = 1; 
-          Interpreta_mensajeBLE(mensajeBLE); // se debería poder eliminar, PROBAR ESTO
-          delay (1000);
-          if (!paro_emergencia) {
-            estado = LEE_MEMORIA;
-          } else {
-            estado = DETENERSE; // revisar porque creo que esta parte del condicional es innecesaria, REVISAR
-          }
+          estado = LEE_MEMORIA;
           inst_actual = 0;
       } else if (paro_emergencia) { // si se recibe un comando de detener mientras está en ESPERA, se ignora
         flagParar = 0; 
@@ -480,7 +475,7 @@ void loop() {
         controlServo(false);
       }
 
-      delay(500); // para que el servo tenga tiempo de moverse antes de que el robot avance a la siguiente instrucción
+      delay(esperaMovimientoServo); // para que el servo tenga tiempo de moverse antes de que el robot avance a la siguiente instrucción
 
       //Lógica estado siguiente
       estado = LEE_MEMORIA;
@@ -502,7 +497,7 @@ void loop() {
   
   // Se asigna el color del LED RGB
   ConfigurarEstadoLedRgb(flagBateriaBaja, flagBluetooth, flagEjecucion, flagObstaculo, recibeProgra, flagParar);
-  
+
   delay(5);
 }
 
@@ -756,6 +751,7 @@ bool advanceDesiredDistance(int desiredDistance) {
     // Determine if the PWM values for the right and left wheels have changed
     bool rightChanged = (prevPWMRight != pwmRightWheel); // Check if right wheel needs to be updated
     bool leftChanged = (prevPWMLeft != pwmLeftWheel); // Check if left wheel needs to be updated
+    bool reverseChanged = (prevReverse != reverse); // Check if both wheels need to be updated
 
     // Update the H-Bridge configuration if there are changes in the PWM values
     if (rightChanged) {
@@ -764,13 +760,14 @@ bool advanceDesiredDistance(int desiredDistance) {
     if (leftChanged) {
       configureHBridge(reverse, 2, pwmRightWheel, pwmLeftWheel);// Update the left motor control
     }
-    if (rightChanged && leftChanged) {
-      configureHBridge(reverse, 3, pwmRightWheel, pwmLeftWheel); // Update both motors if both values changed
+    if ((rightChanged && leftChanged) || reverseChanged) {
+      configureHBridge(reverse, 3, pwmRightWheel, pwmLeftWheel); // Update both motors if both values changed or if direction changed
     }
 
     // Store the current PWM values for comparison in the next iteration
     prevPWMRight = pwmRightWheel;
     prevPWMLeft = pwmLeftWheel;
+    prevReverse = reverse;
 
     
     // Calculate the distance traveled by the robot using encoder data
