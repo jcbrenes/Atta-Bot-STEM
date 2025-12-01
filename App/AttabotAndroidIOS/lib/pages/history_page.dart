@@ -6,6 +6,7 @@ import 'package:proyecto_tec/features/commands/components/instruction_tile.dart'
 import 'package:proyecto_tec/features/commands/components/history_dropdown_menu.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
+import 'package:proyecto_tec/shared/components/ui/buttons/switch_button.dart';
 import 'package:proyecto_tec/pages/bot_control_page.dart';
 import 'package:proyecto_tec/features/bot-control/dialogs/default_movement_dialog.dart';
 import 'package:proyecto_tec/features/commands/components/save_instructions_dialog.dart';
