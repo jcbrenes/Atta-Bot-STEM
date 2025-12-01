@@ -19,23 +19,43 @@ class InstructionTile extends StatelessWidget {
 
   double get tileMargin => 8;
 
-  BoxDecoration get tileDecoration => BoxDecoration(
-      borderRadius: BorderRadius.circular(15), color: neutralWhite);
-
   TextStyle get titleTextStyle => const TextStyle(
         fontWeight: FontWeight.w700,
-        backgroundColor: Colors.transparent,
         color: neutralDarkBlue,
         fontFamily: "Poppins",
         fontSize: 13,
       );
 
+  // Determina el ícono según el texto de la instrucción
+  String getIconPath() {
+    final lower = title.toLowerCase();
+
+    if (lower.contains('detención') || lower.contains('detección')) {
+      return 'assets/button_icons/obstacle_detection.png';
+    } else if (lower.contains('avanzar')) {
+      return 'assets/button_icons/forward_arrow.png';
+    } else if (lower.contains('retroceder')) {
+      return 'assets/button_icons/backward_arrow.png';
+    } else if (lower.contains('girar')) {
+      return 'assets/button_icons/rotate_right.png';
+    } else if (lower.contains('ciclo abierto')) {
+      return 'assets/button_icons/cycle.png';
+    } else if (lower.contains('ciclo cerrado')) {
+      return 'assets/button_icons/cycle.png';
+    } else if (lower.contains('lápiz activado')) {
+      return 'assets/button_icons/pencil.png';
+    } else if (lower.contains('lápiz desactivado')) {
+      return 'assets/button_icons/pencil.png';
+    }
+    // Ícono por defecto
+    return 'assets/button_icons/default.png';
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Construimos el widget principal
     Widget mainContent = Row(
       children: [
-        // Punto indicador (mantenido del original)
+        // Punto indicador
         Padding(
           padding: EdgeInsets.fromLTRB(10, 0, tilePadding, 0),
           child: const Icon(
@@ -44,26 +64,36 @@ class InstructionTile extends StatelessWidget {
             size: 6,
           ),
         ),
-        // Contenido principal del tile
+
+        // Caja completa de la instrucción
         Expanded(
           child: Container(
-            decoration: tileDecoration,
             margin: EdgeInsets.fromLTRB(0, tileMargin, 40, tileMargin),
-            padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+            decoration: BoxDecoration(
+              color: color, // Fondo completo
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  offset: const Offset(0, 2),
+                  blurRadius: 4,
+                ),
+              ],
+            ),
             child: ListTile(
-              contentPadding: EdgeInsets.zero,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               title: Row(
                 children: [
-                  // Contenedor del título con color de fondo
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.only(
-                        topRight: Radius.circular(15),
-                        bottomRight: Radius.circular(15),
-                      ),
-                      color: color.withOpacity(0.5),
-                    ),
-                    padding: const EdgeInsets.fromLTRB(15, 2, 15, 2),
+                  // Ícono a la izquierda
+                  Image.asset(
+                    getIconPath(),
+                    width: 20,
+                    height: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  // Texto de la instrucción
+                  Expanded(
                     child: Text(
                       title,
                       style: titleTextStyle,
@@ -71,7 +101,6 @@ class InstructionTile extends StatelessWidget {
                       maxLines: 1,
                     ),
                   ),
-                  const Spacer(),
                   trailing ?? const SizedBox(),
                 ],
               ),
