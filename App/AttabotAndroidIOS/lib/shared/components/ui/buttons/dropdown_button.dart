@@ -79,12 +79,15 @@ class _CustomDropdownState extends State<CustomDropdown> {
   void _showOverlay() {
     if (!mounted || _isOpen || widget.options.isEmpty) return;
     final overlay = Overlay.of(context);
+    final RenderBox? overlayBox = overlay.context.findRenderObject() as RenderBox?;
 
     final RenderBox? box = _buttonKey.currentContext?.findRenderObject() as RenderBox?;
     if (box == null) return;
 
     final Size size = box.size;
-    final Offset offset = box.localToGlobal(Offset.zero);
+    final Offset offset = overlayBox != null
+        ? box.localToGlobal(Offset.zero, ancestor: overlayBox)
+        : box.localToGlobal(Offset.zero);
 
 
       _backdropEntry = OverlayEntry(
@@ -176,25 +179,34 @@ class _CustomDropdownState extends State<CustomDropdown> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final bool isTablet = size.shortestSide >= 600;
+    final double containerHeight = isTablet ? 40 : 16;
+    final double containerWidth = isTablet ? 110 : 66;
+    final double fontSize = isTablet ? 16 : 12;
+    final double iconSize = isTablet ? 22 : 16;
+    final double borderRadius = isTablet ? 12 : 5;
+    final EdgeInsets padding = EdgeInsets.symmetric(horizontal: isTablet ? 12 : 8, vertical: isTablet ? 4 : 0);
+
     return Container(
       key: _buttonKey,
-      height: 16,
-      width: 66,
+      height: containerHeight,
+      width: containerWidth,
       decoration: BoxDecoration(
         color: _dropdownAccentColor,
-        borderRadius: BorderRadius.circular(5), 
+        borderRadius: BorderRadius.circular(borderRadius),
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(5), 
+        borderRadius: BorderRadius.circular(borderRadius),
         onTap: _toggleDropdown,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
+          padding: padding,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
                 child: Text(
-                  widget.selectedValue != null 
+                  widget.selectedValue != null
                       ? "${widget.selectedValue}${widget.suffix}"
                       : widget.placeholder,
                   maxLines: 1,
@@ -204,16 +216,16 @@ class _CustomDropdownState extends State<CustomDropdown> {
                     color: neutralWhite,
                     fontFamily: 'Poppins',
                     fontWeight: FontWeight.w600,
-                    fontSize: 12,
+                    fontSize: fontSize,
                     fontStyle: widget.selectedValue == null ? FontStyle.italic : FontStyle.normal,
                   ),
                 ),
               ),
-              const SizedBox(width: 6),
-              const Icon(
+              SizedBox(width: isTablet ? 10 : 6),
+              Icon(
                 Icons.expand_more,
                 color: neutralDarkBlueAD,
-                size: 16,
+                size: iconSize,
               ),
             ],
           ),

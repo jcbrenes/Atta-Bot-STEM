@@ -4,6 +4,10 @@ import 'package:proyecto_tec/features/commands/models/command.dart';
 import 'package:proyecto_tec/features/file-management/services/file_management_service.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
+import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog.dart';
+import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog_for_simplified.dart';
+import 'package:proyecto_tec/features/bot-control/dialogs/default_movement_dialog.dart';
+import 'package:proyecto_tec/pages/bot_control_page.dart'; // SimplifiedModeProvider
 
 class InstructionHistoryDropdown extends StatefulWidget {
   const InstructionHistoryDropdown({
@@ -25,7 +29,7 @@ class _InstructionHistoryDropdownState
   List<PopupMenuEntry> get menuItems => [
         PopupMenuItem(
           value: 1,
-          child: Text('Guardar Instrucciones', style: titleTextStyle),
+          child: Text('¿Cómo funciono?', style: titleTextStyle),
         ),
         PopupMenuItem(
           value: 2,
@@ -33,8 +37,16 @@ class _InstructionHistoryDropdownState
         ),
         PopupMenuItem(
           value: 3,
+          child: Text('Guardar Instrucciones', style: titleTextStyle),
+        ),
+        PopupMenuItem(
+          value: 4,
           child: Text('Borrar Instrucciones', style: titleTextStyle),
-        )
+        ),
+        PopupMenuItem(
+          value: 5,
+          child: Text('Definir parámetros', style: titleTextStyle),
+        ),
       ];
 
   TextStyle get contentTextStyle => const TextStyle(
@@ -60,9 +72,11 @@ class _InstructionHistoryDropdownState
   
 
   Future<void> openSaveFileDialog() async {
+    final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
     await showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
+      context: context,
+      useRootNavigator: !isLandscape,
+      builder: (context) => AlertDialog(
               title: Text('Guardar Instrucciones', style: titleTextStyle),
               backgroundColor: neutralDarkBlueAD,
               shape: RoundedRectangleBorder(
@@ -164,8 +178,10 @@ class _InstructionHistoryDropdownState
   }
 
   Future<void> openInvalidFileNameDialog() async {
+    final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
     await showDialog(
       context: context,
+      useRootNavigator: !isLandscape,
       builder: (context) => AlertDialog(
         title: Text('Guardar Instrucciones', style: titleTextStyle),
         backgroundColor: neutralDarkBlueAD,
@@ -198,8 +214,10 @@ class _InstructionHistoryDropdownState
   }
 
   Future<void> openSaveSuccessDialog(String fileName) async {
+    final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
     await showDialog(
       context: context,
+      useRootNavigator: !isLandscape,
       builder: (context) => AlertDialog(
         title: Text('Guardar Instrucciones', style: titleTextStyle),
         backgroundColor: neutralDarkBlueAD,
@@ -221,9 +239,11 @@ class _InstructionHistoryDropdownState
   }
 
   Future<void> openOverwiteFileDialog() async {
+    final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
     await showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
+      context: context,
+      useRootNavigator: !isLandscape,
+      builder: (context) => AlertDialog(
               title: Text('Sobrescribir Instrucciones', style: titleTextStyle),
               backgroundColor: neutralDarkBlueAD,
               shape: RoundedRectangleBorder(
@@ -260,9 +280,11 @@ class _InstructionHistoryDropdownState
       fileNames = [];
     }
     if (!mounted) return;
+    final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
     showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
+      context: context,
+      useRootNavigator: !isLandscape,
+      builder: (context) => AlertDialog(
             title: Text('Cargar Instrucciones', style: titleTextStyle),
             backgroundColor: neutralDarkBlueAD,
             shape: RoundedRectangleBorder(
@@ -289,9 +311,11 @@ class _InstructionHistoryDropdownState
   }
 
   Future<void> openClearInstructionsDialog() async {
+    final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
     await showDialog(
-        context: context,
-        builder: (context) {
+      context: context,
+      useRootNavigator: !isLandscape,
+      builder: (context) {
           return AlertDialog(
             title: Text('Borrar Instrucciones', style: titleTextStyle),
             backgroundColor: neutralDarkBlueAD,
@@ -413,15 +437,86 @@ class _InstructionHistoryDropdownState
           ),
         );
 
+        if (!mounted) return;
+
         switch (value) {
           case 1:
-            openSaveFileDialog();
+            final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+            final simplified = context.read<SimplifiedModeProvider>().simplifiedMode;
+            if (simplified) {
+              HelpDialogForSimplifiedMode.show(context, useRootNavigator: !isLandscape);
+            } else {
+              HelpDialog.show(context, useRootNavigator: !isLandscape);
+            }
             break;
           case 2:
             openLoadFileDialog();
             break;
           case 3:
+            openSaveFileDialog();
+            break;
+          case 4:
             openClearInstructionsDialog();
+            break;
+          case 5:
+            final sp = context.read<SimplifiedModeProvider>();
+            if (!sp.simplifiedMode) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Row(
+                    children: [
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        color: neutralDarkBlueAD,
+                        size: 24,
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Activa el modo simplificado para definir parámetros',
+                          style: TextStyle(
+                            color: neutralDarkBlueAD,
+                            fontFamily: 'Poppins',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  backgroundColor: neutralGray,
+                  duration: const Duration(seconds: 2),
+                  behavior: SnackBarBehavior.floating,
+                  margin: const EdgeInsets.all(16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: const BorderSide(color: neutralWhite, width: 2),
+                  ),
+                  elevation: 6,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                ),
+              );
+              break;
+            }
+
+            final int initDistance = sp.defaultDistance;
+            final int initAngle = sp.defaultAngle;
+            final int initCycle = sp.defaultCycle;
+
+            final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+            showDialog(
+              context: context,
+              useRootNavigator: !isLandscape,
+              builder: (ctx) => DefaultMovementDialog(
+                initialDistance: initDistance,
+                initialAngle: initAngle,
+                initialCycle: initCycle,
+                onSetDefaults: (newDistance, newAngle, newCycle) {
+                  sp.setDefaults(newDistance, newAngle, newCycle);
+                },
+              ),
+            );
             break;
           default:
             break;

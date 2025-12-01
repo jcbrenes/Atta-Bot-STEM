@@ -5,6 +5,7 @@ import 'package:proyecto_tec/pages/simulator_page.dart';
 import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
 import 'package:proyecto_tec/shared/features/navigation/services/navigation.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
+import 'package:proyecto_tec/shared/features/navigation/services/split_nav.dart';
 
 class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
@@ -16,6 +17,11 @@ class LandingPage extends StatefulWidget {
 class _LandingPageState extends State<LandingPage> {
   NavigationService navService = DependencyManager().getNavigationService();
   int _selectedIndex = 7;
+  // Navigator key for the left pane (BotControlPage) in landscape
+  final GlobalKey<NavigatorState> _leftPaneNavKey = GlobalKey<NavigatorState>();
+  // Navigator key for the right pane (HistoryPage) in landscape
+  final GlobalKey<NavigatorState> _rightPaneNavKey =
+      GlobalKey<NavigatorState>();
   final List<NavigationDestination> destinations = [
     const NavigationDestination(
       icon: Icon(
@@ -232,6 +238,21 @@ class _LandingPageState extends State<LandingPage> {
         ));
   }
 
+  @override
+  void initState() {
+    super.initState();
+    // Expose the right pane navigator key globally for dialogs from the left pane
+    SplitNav.rightPaneNavKey = _rightPaneNavKey;
+  }
+
+  @override
+  void dispose() {
+    if (SplitNav.rightPaneNavKey == _rightPaneNavKey) {
+      SplitNav.rightPaneNavKey = null;
+    }
+    super.dispose();
+  }
+
   Widget _buildPortraitLayout() {
     return GestureDetector(
       onHorizontalDragEnd: (DragEndDetails details) {
@@ -260,14 +281,24 @@ class _LandingPageState extends State<LandingPage> {
   }
 
   Widget _buildLandscapeLayout() {
-    return const Row(
+    return Row(
       children: [
         Expanded(
-          child: BotControlPage(embedded: true),
+          child: Navigator(
+            key: _leftPaneNavKey,
+            onGenerateRoute: (settings) => MaterialPageRoute(
+              builder: (_) => const BotControlPage(embedded: true),
+            ),
+          ),
         ),
         SizedBox.shrink(),
         Expanded(
-          child: HistoryPage(),
+          child: Navigator(
+            key: _rightPaneNavKey,
+            onGenerateRoute: (settings) => MaterialPageRoute(
+              builder: (_) => const HistoryPage(),
+            ),
+          ),
         ),
       ],
     );

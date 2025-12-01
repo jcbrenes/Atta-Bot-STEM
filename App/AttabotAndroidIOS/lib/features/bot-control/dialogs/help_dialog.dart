@@ -3,17 +3,18 @@ import 'package:proyecto_tec/shared/styles/colors.dart';
 import 'package:proyecto_tec/shared/components/ui/buttons/primary_icon_button.dart';
 
 class HelpDialog {
-  static void show(BuildContext context) {
+  static void show(BuildContext context, {bool? useRootNavigator}) {
     showDialog(
       context: context,
+      useRootNavigator: useRootNavigator ?? true,
       builder: (BuildContext context) {
         return AlertDialog(
-          titlePadding: EdgeInsets.fromLTRB(30, 10, 10, 0),
-          contentPadding: EdgeInsets.fromLTRB(30, 10, 30, 20),
+          titlePadding: const EdgeInsets.fromLTRB(30, 10, 10, 0),
+          contentPadding: const EdgeInsets.fromLTRB(30, 10, 30, 20),
           title: Row(
             children: [
-              Expanded(
-                child: const Text(
+              const Expanded(
+                child: Text(
                   '¿Cómo funciono?',
                   textAlign: TextAlign.left,
                   style: TextStyle(

@@ -11,6 +11,7 @@ import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manag
 import 'package:proyecto_tec/shared/features/navigation/services/navigation.dart';
 import 'package:proyecto_tec/shared/components/ui/buttons/switch_button.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
+import 'package:proyecto_tec/shared/features/navigation/services/split_nav.dart';
 
 class BotControlPage extends StatefulWidget {
   final bool embedded; // when true, render without own Scaffold/AppBar
@@ -46,6 +47,39 @@ class SimplifiedModeProvider extends ChangeNotifier {
 class _BotControlPageState extends State<BotControlPage> {
   NavigationService navService = DependencyManager().getNavigationService();
 
+  Future<void> _handleModeChange(BuildContext context, SimplifiedModeProvider provider, bool value, bool isLandscape) async {
+    if (value == provider.simplifiedMode) return; 
+    provider.setSimplifiedMode(value);
+
+    final targetCtx = (isLandscape && SplitNav.rightContext != null)
+        ? SplitNav.rightContext!
+        : context;
+
+    if (value) {
+      // Simplified mode
+      await showDialog(
+        context: targetCtx,
+        useRootNavigator: isLandscape ? false : true,
+        builder: (context) {
+          return DefaultMovementDialog(
+            initialDistance: provider.defaultDistance,
+            initialAngle: provider.defaultAngle,
+            initialCycle: provider.defaultCycle,
+            onSetDefaults: (newDistance, newAngle, newCycle) {
+              provider.setDefaults(newDistance, newAngle, newCycle);
+            },
+          );
+        },
+      );
+    } else {
+      // Manual mode
+      await SaveInstructionsDialog.showMenuForContext(
+        targetCtx,
+        useRootNavigator: isLandscape ? false : true,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final simplifiedProvider = Provider.of<SimplifiedModeProvider>(context);
@@ -68,6 +102,9 @@ class _BotControlPageState extends State<BotControlPage> {
         }
 
         double uiScale = computeUiScale(w, h);
+        if (w >= 600) {
+          uiScale = uiScale.clamp(1.0, 1.18);
+        }
         double sidePadding = computeSidePadding(w);
         double historyHeight = (h * 0.28).clamp(260.0, 360.0).toDouble(); 
 
@@ -79,7 +116,7 @@ class _BotControlPageState extends State<BotControlPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const Spacer(flex: 1), 
+                  const SizedBox(height: 6), 
                   Transform.scale(
                     scale: uiScale,
                     alignment: Alignment.center,
@@ -87,32 +124,12 @@ class _BotControlPageState extends State<BotControlPage> {
                       constraints: BoxConstraints(maxWidth: w * 0.60, minWidth: 240),
                       child: ModeSwitch(
                         isSimplified: simplifiedProvider.simplifiedMode,
-                        onChanged: (bool value) async {
-                          if (value != simplifiedProvider.simplifiedMode) {
-                            if (value) {
-                              showDialog(
-                                context: context,
-                                builder: (context) {
-                                  return DefaultMovementDialog(
-                                    initialDistance: simplifiedProvider.defaultDistance,
-                                    initialAngle: simplifiedProvider.defaultAngle,
-                                    initialCycle: simplifiedProvider.defaultCycle,
-                                    onSetDefaults: (newDistance, newAngle, newCycle) {
-                                      simplifiedProvider.setDefaults(newDistance, newAngle, newCycle);
-                                    },
-                                  );
-                                },
-                              );
-                            } else {
-                              await SaveInstructionsDialog.showMenuForContext(context);
-                            }
-                            simplifiedProvider.setSimplifiedMode(value);
-                          }
-                        },
+                        onChanged: (bool value) => _handleModeChange(context, simplifiedProvider, value, isLandscape),
+                        width: w >= 600 ? (w * 0.65).clamp(320.0, 440.0) : 360,
                       ),
                     ),
                   ),
-                  const Spacer(flex: 1),
+                  const SizedBox(height: 34),
                   Transform.scale(
                     scale: uiScale,
                     alignment: Alignment.topCenter,
@@ -152,7 +169,7 @@ class _BotControlPageState extends State<BotControlPage> {
 
         // Default (phones or shorter portrait) keeps scroll behavior to avoid overflow on small heights.
         return SingleChildScrollView(
-          padding: EdgeInsets.symmetric(vertical: h * 0.045, horizontal: w * 0.05),
+          padding: EdgeInsets.symmetric(vertical: h * 0.025, horizontal: w * 0.05),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -162,32 +179,12 @@ class _BotControlPageState extends State<BotControlPage> {
                   fit: BoxFit.scaleDown,
                   child: ModeSwitch(
                     isSimplified: simplifiedProvider.simplifiedMode,
-                    onChanged: (bool value) async {
-                      if (value != simplifiedProvider.simplifiedMode) {
-                        if (value) {
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return DefaultMovementDialog(
-                                initialDistance: simplifiedProvider.defaultDistance,
-                                initialAngle: simplifiedProvider.defaultAngle,
-                                initialCycle: simplifiedProvider.defaultCycle,
-                                onSetDefaults: (newDistance, newAngle, newCycle) {
-                                  simplifiedProvider.setDefaults(newDistance, newAngle, newCycle);
-                                },
-                              );
-                            },
-                          );
-                        } else {
-                          await SaveInstructionsDialog.showMenuForContext(context);
-                        }
-                        simplifiedProvider.setSimplifiedMode(value);
-                      }
-                    },
+                    onChanged: (bool value) => _handleModeChange(context, simplifiedProvider, value, isLandscape),
+                    width: w >= 700 ? (w * 0.65).clamp(320.0, 440.0) : 360,
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 40),
               MovementMenu(
                 simplifiedMode: simplifiedProvider.simplifiedMode,
                 defaultDistance: simplifiedProvider.defaultDistance,
@@ -226,28 +223,7 @@ class _BotControlPageState extends State<BotControlPage> {
                 alignment: Alignment.centerLeft,
                 child: ModeSwitch(
                   isSimplified: simplifiedProvider.simplifiedMode,
-                  onChanged: (bool value) async {
-                    if (value != simplifiedProvider.simplifiedMode) {
-                      if (value) {
-                        showDialog(
-                          context: context,
-                          builder: (context) {
-                            return DefaultMovementDialog(
-                              initialDistance: simplifiedProvider.defaultDistance,
-                              initialAngle: simplifiedProvider.defaultAngle,
-                              initialCycle: simplifiedProvider.defaultCycle,
-                              onSetDefaults: (newDistance, newAngle, newCycle) {
-                                simplifiedProvider.setDefaults(newDistance, newAngle, newCycle);
-                              },
-                            );
-                          },
-                        );
-                      } else {
-                        await SaveInstructionsDialog.showMenuForContext(context);
-                      }
-                      simplifiedProvider.setSimplifiedMode(value);
-                    }
-                  },
+                  onChanged: (bool value) => _handleModeChange(context, simplifiedProvider, value, isLandscape),
                 ),
               ),
             ),
@@ -292,20 +268,28 @@ class _BotControlPageState extends State<BotControlPage> {
         automaticallyImplyLeading: false,
         backgroundColor: Colors.transparent,
         actions: <Widget>[
-          IconButton(
-            icon: Image.asset(
-              'assets/button_icons/question_mark.png',
-              color: neutralWhite,
-              height: 16,
-              width: 16,
-            ),
-            color: neutralWhite,
-            onPressed: () {
-              if (simplifiedProvider.simplifiedMode) {
-                HelpDialogForSimplifiedMode.show(context);
-              } else {
-                HelpDialog.show(context);
-              }
+          Builder(
+            builder: (context) {
+              final bool isTabletPortrait = !isLandscape && MediaQuery.of(context).size.width >= 600;
+              final double questionIconSize = isTabletPortrait ? 24.0 : 16.0;
+              return IconButton(
+                splashRadius: isTabletPortrait ? 30 : null,
+                padding: EdgeInsets.symmetric(horizontal: isTabletPortrait ? 14 : 8),
+                icon: Image.asset(
+                  'assets/button_icons/question_mark.png',
+                  color: neutralWhite,
+                  height: questionIconSize,
+                  width: questionIconSize,
+                ),
+                color: neutralWhite,
+                onPressed: () {
+                  if (simplifiedProvider.simplifiedMode) {
+                    HelpDialogForSimplifiedMode.show(context);
+                  } else {
+                    HelpDialog.show(context);
+                  }
+                },
+              );
             },
           ),
         ],
