@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:proyecto_tec/pages/bot_control_page.dart';
 import 'package:proyecto_tec/pages/history_page.dart';
+import 'package:proyecto_tec/pages/simulator_page.dart';
 import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
 import 'package:proyecto_tec/shared/features/navigation/services/navigation.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
@@ -19,7 +20,8 @@ class _LandingPageState extends State<LandingPage> {
   // Navigator key for the left pane (BotControlPage) in landscape
   final GlobalKey<NavigatorState> _leftPaneNavKey = GlobalKey<NavigatorState>();
   // Navigator key for the right pane (HistoryPage) in landscape
-  final GlobalKey<NavigatorState> _rightPaneNavKey = GlobalKey<NavigatorState>();
+  final GlobalKey<NavigatorState> _rightPaneNavKey =
+      GlobalKey<NavigatorState>();
   final List<NavigationDestination> destinations = [
     const NavigationDestination(
       icon: Icon(
@@ -118,6 +120,23 @@ class _LandingPageState extends State<LandingPage> {
       ),
       label: "",
     ),
+    NavigationDestination(
+      icon: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: neutralWhite,
+            width: 1,
+          ),
+        ),
+        child: Icon(
+          Icons.smart_toy,
+          size: 20,
+          color: Colors.transparent,
+        ),
+      ),
+      label: "",
+    ),
     const NavigationDestination(
       icon: Icon(
         Icons.home,
@@ -185,7 +204,8 @@ class _LandingPageState extends State<LandingPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
 
     return Theme(
         data: Theme.of(context).copyWith(
@@ -194,7 +214,7 @@ class _LandingPageState extends State<LandingPage> {
               const TextStyle(
                 fontSize: 12,
                 fontFamily: 'Poppins',
-                color: neutralWhite, 
+                color: neutralWhite,
               ),
             ),
           ),
@@ -237,15 +257,15 @@ class _LandingPageState extends State<LandingPage> {
     return GestureDetector(
       onHorizontalDragEnd: (DragEndDetails details) {
         if (details.primaryVelocity! > 0) {
-          // Swiped right
-          if (_selectedIndex == 8) {
+          // swipe derecha (volver)
+          if (_selectedIndex > 7) {
             setState(() {
               _selectedIndex--;
             });
           }
         } else if (details.primaryVelocity! < 0) {
-          // Swiped left
-          if (_selectedIndex == 7) {
+          // swipe izquierda (avanzar)
+          if (_selectedIndex < 9) {
             setState(() {
               _selectedIndex++;
             });
@@ -255,6 +275,7 @@ class _LandingPageState extends State<LandingPage> {
       child: <Widget>[
         const BotControlPage(),
         const HistoryPage(),
+        const SimulatorPage(),
       ][_selectedIndex - 7],
     );
   }
@@ -270,7 +291,7 @@ class _LandingPageState extends State<LandingPage> {
             ),
           ),
         ),
-        const SizedBox.shrink(),
+        SizedBox.shrink(),
         Expanded(
           child: Navigator(
             key: _rightPaneNavKey,

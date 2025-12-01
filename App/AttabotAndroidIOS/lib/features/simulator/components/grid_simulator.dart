@@ -55,8 +55,10 @@ class _SimulationAreaState extends State<SimulationArea> {
             RegExp(r'ciclo abierto\s*\·\s*(\d+)', caseSensitive: false)
                 .firstMatch(line);
         final repeatCount = match != null ? int.parse(match.group(1)!) : 1;
+
         int nest = 1;
         int j = i + 1;
+
         while (j < instructions.length && nest > 0) {
           final current = instructions[j].toLowerCase();
           if (current.startsWith("ciclo abierto"))
@@ -64,10 +66,13 @@ class _SimulationAreaState extends State<SimulationArea> {
           else if (current.startsWith("ciclo cerrado")) nest--;
           j++;
         }
+
         final block = _expandCycles(instructions.sublist(i + 1, j - 1));
+
         for (int r = 0; r < repeatCount; r++) {
           output.addAll(block);
         }
+
         i = j;
       } else {
         output.add(line);
@@ -79,6 +84,7 @@ class _SimulationAreaState extends State<SimulationArea> {
 
   Future<void> _runInstructions() async {
     final expandedInstructions = _expandCycles(widget.instructions);
+
     for (final instruction in expandedInstructions) {
       widget.onInstructionChange?.call(instruction);
 
@@ -101,14 +107,14 @@ class _SimulationAreaState extends State<SimulationArea> {
         } else if (inst.contains("girar")) {
           final match = RegExp(r'(\d+)\s*[\u00b0]?', caseSensitive: false)
               .firstMatch(inst);
+
           if (match != null) {
             final degrees = double.parse(match.group(1)!);
             previousRotation = rotation;
-            if (inst.contains("izquierda")) {
+
+            if (inst.contains("izquierda"))
               rotation -= degrees;
-            } else if (inst.contains("derecha")) {
-              rotation += degrees;
-            }
+            else if (inst.contains("derecha")) rotation += degrees;
           }
         } else if (inst.contains("lápiz activado")) {
           penActive = true;
@@ -134,8 +140,11 @@ class _SimulationAreaState extends State<SimulationArea> {
       width: widget.width,
       height: widget.height,
       decoration: BoxDecoration(
-        color: Colors.grey.shade300,
-        border: Border.all(color: Colors.black, width: 2),
+        border: Border.all(color: Colors.white, width: 2),
+        image: const DecorationImage(
+          image: AssetImage('assets/grid_background.png'),
+          fit: BoxFit.cover,
+        ),
       ),
       child: Stack(
         children: [

@@ -1,9 +1,14 @@
+import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog.dart';
+import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog_for_simplified.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_tec/features/commands/components/instruction_tile.dart';
 import 'package:proyecto_tec/features/commands/components/history_dropdown_menu.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
+import 'package:proyecto_tec/pages/bot_control_page.dart';
+import 'package:proyecto_tec/features/bot-control/dialogs/default_movement_dialog.dart';
+import 'package:proyecto_tec/features/commands/components/save_instructions_dialog.dart';
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
@@ -22,11 +27,6 @@ class _HistoryPageState extends State<HistoryPage> {
       fontSize: 18,
     ),
   );
-
-  final Map<String, Color> appbarColors = {
-    'foreground': neutralWhite,
-    'background': Colors.transparent,
-  };
 
   final BoxDecoration bodyDecoration = BoxDecoration(
     color: neutralDarkBlue,
@@ -84,19 +84,17 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   Color processInstruction(String instruction) {
-    List<String> instructionParts;
-    instructionParts = instruction.split(' ');
-
-    Color? color = movementInstructions[instructionParts.first];
-    if (color != null) return color;
-    return stateInstructions[instructionParts.first] ?? Colors.white;
+    final parts = instruction.split(' ');
+    return movementInstructions[parts.first] ??
+        stateInstructions[parts.first] ??
+        Colors.white;
   }
 
   double processPadding(String instruction) {
     String shortInstruction = instruction.split(' ').take(2).join(' ');
     double preSum = tilePadding;
     if (paddingInstructions[shortInstruction] != null && tilePadding < 30) {
-      tilePadding = tilePadding + paddingInstructions[shortInstruction]!;
+      tilePadding += paddingInstructions[shortInstruction]!;
     }
     if (tilePadding < 0) tilePadding = 10;
     if (shortInstruction == 'Ciclo cerrado') {
@@ -106,7 +104,7 @@ class _HistoryPageState extends State<HistoryPage> {
     return preSum;
   }
 
-  Widget? setTrailing(String instruction, index) {
+  Widget? setTrailing(String instruction, int index) {
     if (instruction == 'Ciclo cerrado' ||
         instruction == "Detección finalizada" ||
         instruction == "Lápiz desactivado") {
@@ -160,7 +158,6 @@ class _HistoryPageState extends State<HistoryPage> {
   bool isValidMove(int oldIndex, int newIndex) {
     final commandService = context.read<CommandService>();
     final commands = commandService.commandHistory;
-
     final movingCommand = commands[oldIndex].toUiString();
 
     if (movingCommand.contains('Ciclo cerrado') ||
@@ -183,9 +180,7 @@ class _HistoryPageState extends State<HistoryPage> {
         }
       }
 
-      if (openingIndex != -1 && newIndex <= openingIndex) {
-        return false;
-      }
+      if (openingIndex != -1 && newIndex <= openingIndex) return false;
     } else if (movingCommand.contains('Ciclo abierto') ||
         movingCommand.contains('Detección iniciada') ||
         movingCommand.contains('Lápiz activado')) {
@@ -205,9 +200,7 @@ class _HistoryPageState extends State<HistoryPage> {
           break;
         }
       }
-      if (closingIndex != -1 && newIndex >= closingIndex) {
-        return false;
-      }
+      if (closingIndex != -1 && newIndex >= closingIndex) return false;
     }
     return true;
   }
@@ -221,10 +214,7 @@ class _HistoryPageState extends State<HistoryPage> {
           borderRadius: BorderRadius.circular(15),
           color: Colors.transparent,
           shadowColor: Colors.black.withOpacity(0.6),
-          child: Opacity(
-            opacity: 0.85,
-            child: child,
-          ),
+          child: Opacity(opacity: 0.85, child: child),
         );
       },
       child: child,
@@ -233,10 +223,82 @@ class _HistoryPageState extends State<HistoryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final simplifiedProvider = Provider.of<SimplifiedModeProvider>(context);
     return Scaffold(
       backgroundColor: neutralDarkBlue,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        toolbarHeight: 120,
+        automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: Image.asset(
+              'assets/button_icons/question_mark.png',
+              color: neutralWhite,
+              height: 16,
+              width: 16,
+            ),
+            onPressed: () {
+              if (simplifiedProvider.simplifiedMode) {
+                HelpDialogForSimplifiedMode.show(context);
+              } else {
+                HelpDialog.show(context);
+              }
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
+        flexibleSpace: SafeArea(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                'Atta-Bot Educativo',
+                style: TextStyle(
+                  color: neutralWhite,
+                  fontSize: 18.0,
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ModeSwitch(
+                isSimplified: simplifiedProvider.simplifiedMode,
+                onChanged: (bool value) async {
+                  if (value != simplifiedProvider.simplifiedMode) {
+                    if (value) {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return DefaultMovementDialog(
+                            initialDistance: simplifiedProvider.defaultDistance,
+                            initialAngle: simplifiedProvider.defaultAngle,
+                            initialCycle: simplifiedProvider.defaultCycle,
+                            onSetDefaults: (newDistance, newAngle, newCycle) {
+                              simplifiedProvider.setDefaults(
+                                newDistance,
+                                newAngle,
+                                newCycle,
+                              );
+                            },
+                          );
+                        },
+                      );
+                    } else {
+                      await SaveInstructionsDialog.showMenuForContext(context);
+                    }
+
+                    simplifiedProvider.setSimplifiedMode(value);
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
       body: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 50, 20, 24),
+        padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
         child: Container(
           decoration: bodyDecoration,
           child: Consumer<CommandService>(
@@ -263,55 +325,78 @@ class _HistoryPageState extends State<HistoryPage> {
                       radius: const Radius.circular(10),
                       thumbColor: neutralWhite,
                       trackColor: neutralWhite.withOpacity(0.2),
-                      trackRadius: Radius.circular(10),
-                      padding: EdgeInsets.fromLTRB(0, 0, 20, 0),
-                      child: ReorderableListView(
-                        proxyDecorator: _proxyDecorator,
-                        buildDefaultDragHandles: false,
-                        onReorder: (oldIndex, newIndex) {
-                          if (oldIndex < newIndex) {
-                            newIndex -= 1;
-                          }
-                          final commandService = context.read<CommandService>();
-                          if (isValidMove(oldIndex, newIndex)) {
-                            setState(() {
-                              commandService.reorderCommand(oldIndex, newIndex);
-                            });
-                            tilePadding = 10;
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                duration: Durations.extralong4,
-                                content:
-                                    Center(child: Text('Movimiento no válido')),
+                      trackRadius: const Radius.circular(10),
+                      padding: const EdgeInsets.fromLTRB(0, 0, 20, 0),
+                      child: historial.commandHistory.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Image.asset(
+                                    'assets/surprised face.png',
+                                    width: 90,
+                                    height: 90,
+                                    //color: Colors.white.withOpacity(0.3),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    'Aún no se han agregado instrucciones...',
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.3),
+                                      fontFamily: 'Poppins',
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            );
-                            return;
-                          }
-                        },
-                        children: List.generate(
-                          historial.commandHistory.length,
-                          (index) => InstructionTile(
-                            key: ValueKey('instruction_$index'),
-                            color: processInstruction(
-                              historial.commandHistory[index].toUiString(),
+                            )
+                          : ReorderableListView(
+                              proxyDecorator: _proxyDecorator,
+                              buildDefaultDragHandles: false,
+                              onReorder: (oldIndex, newIndex) {
+                                if (oldIndex < newIndex) newIndex -= 1;
+                                final commandService =
+                                    context.read<CommandService>();
+                                if (isValidMove(oldIndex, newIndex)) {
+                                  setState(() {
+                                    commandService.reorderCommand(
+                                        oldIndex, newIndex);
+                                  });
+                                  tilePadding = 10;
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      duration: Durations.extralong4,
+                                      content: Center(
+                                          child: Text('Movimiento no válido')),
+                                    ),
+                                  );
+                                }
+                              },
+                              children: List.generate(
+                                historial.commandHistory.length,
+                                (index) => InstructionTile(
+                                  key: ValueKey('instruction_$index'),
+                                  color: processInstruction(historial
+                                      .commandHistory[index]
+                                      .toUiString()),
+                                  tilePadding: processPadding(historial
+                                      .commandHistory[index]
+                                      .toUiString()),
+                                  title: historial.commandHistory[index]
+                                      .toUiString(),
+                                  trailing: setTrailing(
+                                      historial.commandHistory[index]
+                                          .toUiString(),
+                                      index),
+                                  index: index,
+                                ),
+                              ),
                             ),
-                            tilePadding: processPadding(
-                                historial.commandHistory[index].toUiString()),
-                            title: historial.commandHistory[index].toUiString(),
-                            trailing: setTrailing(
-                              historial.commandHistory[index].toUiString(),
-                              index,
-                            ),
-                            index: index,
-                          ),
-                        ),
-                      ),
                     ),
                   ),
-                  const SizedBox(
-                    height: 20,
-                  ),
+                  const SizedBox(height: 20),
                 ],
               );
             },
