@@ -26,6 +26,7 @@ class SimulatorBluetoothDialog {
           actions: [
             TextButton(
               onPressed: () {
+                Navigator.pop(context);
                 navService.goToBluetoothDevicesPage(context);
               },
               child: const Text(
@@ -40,7 +41,7 @@ class SimulatorBluetoothDialog {
             TextButton(
               onPressed: () {
                 navService.goToSimulatorPage(context);
-                ;
+                
               },
               child: const Text(
                 'Simular',

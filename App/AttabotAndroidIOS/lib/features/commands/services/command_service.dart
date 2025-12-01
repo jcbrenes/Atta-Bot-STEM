@@ -66,6 +66,7 @@ class CommandService extends ChangeNotifier {
         _commands.removeAt(endIndex);
         // Then remove the start command
         _commands.removeAt(index);
+        _syncFlagsFromHistory();
         notifyListeners();
         return;
       }
@@ -111,6 +112,7 @@ class CommandService extends ChangeNotifier {
         _commands.removeAt(index);
         // Then remove the start command
         _commands.removeAt(startIndex);
+        _syncFlagsFromHistory();
         notifyListeners();
         return;
       }
@@ -118,6 +120,7 @@ class CommandService extends ChangeNotifier {
 
     // If we get here, it's a regular command or we couldn't find a matching pair
     _commands.removeAt(index);
+    _syncFlagsFromHistory();
     notifyListeners();
   }
 
@@ -134,7 +137,28 @@ class CommandService extends ChangeNotifier {
     for (String command in commandList) {
       _commands.add(Command.fromBotString(command));
     }
+    _syncFlagsFromHistory();
     notifyListeners();
+  }
+
+  // Syncs the state flags with the current command history, this is O(n) so perhaps in the future we can optimize it
+  void _syncFlagsFromHistory() {
+    bool cycle = false, detection = false, pencil = false, claw = false;
+    for (final c in _commands) {
+      switch (c.action) {
+        case CommandType.initCycle: cycle = true; break;
+        case CommandType.endCycle: cycle = false; break;
+        case CommandType.activateObjectDetection: detection = true; break;
+        case CommandType.deactivateObjectDetection: detection = false; break;
+        case CommandType.activateTool: pencil = true; break;
+        case CommandType.deactivateTool: pencil = false; break;
+        default: break;
+      }
+    }
+    cycleActive = cycle;
+    obstacleDetection = detection;
+    pencilActive = pencil;
+    clawActive = claw;
   }
 
   bool validateCommandHistory() {

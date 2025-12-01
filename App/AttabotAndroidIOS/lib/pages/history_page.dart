@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:proyecto_tec/features/commands/components/instruction_tile.dart';
 import 'package:proyecto_tec/features/commands/components/history_dropdown_menu.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
-import 'package:proyecto_tec/shared/components/ui/buttons/text/button_factory.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 
 class HistoryPage extends StatefulWidget {
@@ -57,6 +56,19 @@ class _HistoryPageState extends State<HistoryPage> {
 
   double tilePadding = 10;
 
+  TextStyle get contentTextStyle => const TextStyle(
+        fontFamily: 'Poppins',
+        color: neutralWhite,
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+      );
+  TextStyle get titleTextStyle => const TextStyle(
+        fontFamily: 'Poppins',
+        color: neutralWhite,
+        fontSize: 16,
+        fontWeight: FontWeight.w700,
+      );
+
   AnimatedBuilder reorderingAnimation(child, index, animation) {
     return AnimatedBuilder(
       animation: animation,
@@ -100,7 +112,7 @@ class _HistoryPageState extends State<HistoryPage> {
         instruction == "Lápiz desactivado") {
       return null;
     }
-    ;
+    
 
     return Container(
       height: 20,
@@ -115,22 +127,28 @@ class _HistoryPageState extends State<HistoryPage> {
               context: context,
               builder: (BuildContext context) {
                 return AlertDialog(
-                  title: const Text('Confirmación'),
-                  content: const Text(
-                      '¿Estás seguro de que quieres eliminar este elemento?'),
-                  actions: <Widget>[
-                    TextButtonFactory.getButton(
-                        type: TextButtonType.text,
-                        text: "Cancelar",
-                        handleButtonPress: () => Navigator.of(context).pop()),
-                    TextButtonFactory.getButton(
-                      type: TextButtonType.warning,
-                      text: "Eliminar",
-                      handleButtonPress: () {
+                  title: Text('Eliminar Instrucción', style: titleTextStyle),
+                  backgroundColor: neutralDarkBlueAD,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24.0),
+                    side: const BorderSide(color: neutralWhite, width: 4.0),
+                  ),
+                  content: Text(
+                    '¿Estás seguro de que quieres eliminar esta instrucción?',
+                    style: contentTextStyle,
+                  ),
+                  actions: [
+                    TextButton(
+                      child: Text('Cancelar', style: contentTextStyle),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    TextButton(
+                      child: Text('Eliminar', style: contentTextStyle),
+                      onPressed: () {
                         context.read<CommandService>().removeCommand(index);
                         Navigator.of(context).pop();
                       },
-                    )
+                    ),
                   ],
                 );
               },
