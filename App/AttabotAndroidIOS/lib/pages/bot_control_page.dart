@@ -117,16 +117,16 @@ class _BotControlPageState extends State<BotControlPage> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const SizedBox(height: 6), 
-                  Transform.scale(
-                    scale: uiScale,
-                    alignment: Alignment.center,
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: w * 0.60, minWidth: 240),
-                      child: ModeSwitch(
-                        isSimplified: simplifiedProvider.simplifiedMode,
-                        onChanged: (bool value) => _handleModeChange(context, simplifiedProvider, value, isLandscape),
-                        width: w >= 600 ? (w * 0.65).clamp(320.0, 440.0) : 360,
-                      ),
+                  // Wider in portrait tall without increasing height
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: (w * 0.78).clamp(300.0, 520.0),
+                      minWidth: 260,
+                    ),
+                    child: ModeSwitch(
+                      isSimplified: simplifiedProvider.simplifiedMode,
+                      onChanged: (bool value) => _handleModeChange(context, simplifiedProvider, value, isLandscape),
+                      height: 36,
                     ),
                   ),
                   const SizedBox(height: 34),
@@ -174,14 +174,14 @@ class _BotControlPageState extends State<BotControlPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: w * 0.55, minWidth: 220),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: ModeSwitch(
-                    isSimplified: simplifiedProvider.simplifiedMode,
-                    onChanged: (bool value) => _handleModeChange(context, simplifiedProvider, value, isLandscape),
-                    width: w >= 700 ? (w * 0.65).clamp(320.0, 440.0) : 360,
-                  ),
+                constraints: BoxConstraints(
+                  maxWidth: (w * 0.8).clamp(300.0, 540.0),
+                  minWidth: 260,
+                ),
+                child: ModeSwitch(
+                  isSimplified: simplifiedProvider.simplifiedMode,
+                  onChanged: (bool value) => _handleModeChange(context, simplifiedProvider, value, isLandscape),
+                  height: 32,
                 ),
               ),
               const SizedBox(height: 40),
@@ -217,14 +217,11 @@ class _BotControlPageState extends State<BotControlPage> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: w * 0.7, minWidth: 200),
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: ModeSwitch(
-                  isSimplified: simplifiedProvider.simplifiedMode,
-                  onChanged: (bool value) => _handleModeChange(context, simplifiedProvider, value, isLandscape),
-                ),
+              constraints: BoxConstraints(maxWidth: (w * 0.7).clamp(280.0, 640.0), minWidth: 220),
+              child: ModeSwitch(
+                isSimplified: simplifiedProvider.simplifiedMode,
+                onChanged: (bool value) => _handleModeChange(context, simplifiedProvider, value, isLandscape),
+                height: 30,
               ),
             ),
             SizedBox(height: h * 0.02),

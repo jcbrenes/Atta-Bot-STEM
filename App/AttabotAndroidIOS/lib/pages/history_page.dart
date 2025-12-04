@@ -111,7 +111,6 @@ class _HistoryPageState extends State<HistoryPage> {
         instruction == "Lápiz desactivado") {
       return null;
     }
-    
 
     return Container(
       height: 20,
@@ -225,78 +224,101 @@ class _HistoryPageState extends State<HistoryPage> {
   @override
   Widget build(BuildContext context) {
     final simplifiedProvider = Provider.of<SimplifiedModeProvider>(context);
+    final bool isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
     return Scaffold(
       backgroundColor: neutralDarkBlue,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        toolbarHeight: 120,
+        toolbarHeight: isLandscape ? 0 : 120,
         automaticallyImplyLeading: false,
-        actions: [
-          IconButton(
-            icon: Image.asset(
-              'assets/button_icons/question_mark.png',
-              color: neutralWhite,
-              height: 16,
-              width: 16,
-            ),
-            onPressed: () {
-              if (simplifiedProvider.simplifiedMode) {
-                HelpDialogForSimplifiedMode.show(context);
-              } else {
-                HelpDialog.show(context);
-              }
-            },
-          ),
-          const SizedBox(width: 8),
-        ],
-        flexibleSpace: SafeArea(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                'Atta-Bot Educativo',
-                style: TextStyle(
-                  color: neutralWhite,
-                  fontSize: 18.0,
-                  fontFamily: 'Poppins',
-                  fontWeight: FontWeight.w700,
+        actions: isLandscape
+            ? []
+            : [
+                IconButton(
+                  icon: Image.asset(
+                    'assets/button_icons/question_mark.png',
+                    color: neutralWhite,
+                    height: 16,
+                    width: 16,
+                  ),
+                  onPressed: () {
+                    if (simplifiedProvider.simplifiedMode) {
+                      HelpDialogForSimplifiedMode.show(context);
+                    } else {
+                      HelpDialog.show(context);
+                    }
+                  },
+                ),
+                const SizedBox(width: 8),
+              ],
+        flexibleSpace: isLandscape
+            ? null
+            : SafeArea(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Atta-Bot Educativo',
+                      style: TextStyle(
+                        color: neutralWhite,
+                        fontSize: 18.0,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    LayoutBuilder(
+                      builder: (ctx, constraints) {
+                        final double w = MediaQuery.of(ctx).size.width;
+                        return ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: (w * 0.8).clamp(300.0, 540.0),
+                            minWidth: 260,
+                          ),
+                          child: ModeSwitch(
+                            isSimplified: simplifiedProvider.simplifiedMode,
+                            onChanged: (bool value) async {
+                              if (value == simplifiedProvider.simplifiedMode){
+                                return;
+                              }
+                              if (value) {
+                                await showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return DefaultMovementDialog(
+                                      initialDistance:
+                                          simplifiedProvider.defaultDistance,
+                                      initialAngle:
+                                          simplifiedProvider.defaultAngle,
+                                      initialCycle:
+                                          simplifiedProvider.defaultCycle,
+                                      onSetDefaults:
+                                          (newDistance, newAngle, newCycle) {
+                                        simplifiedProvider.setDefaults(
+                                          newDistance,
+                                          newAngle,
+                                          newCycle,
+                                        );
+                                      },
+                                    );
+                                  },
+                                );
+                              } else {
+                                await SaveInstructionsDialog.showMenuForContext(
+                                    context);
+                              }
+                              simplifiedProvider.setSimplifiedMode(value);
+                            },
+                            height: 32,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 12),
-              ModeSwitch(
-                isSimplified: simplifiedProvider.simplifiedMode,
-                onChanged: (bool value) async {
-                  if (value != simplifiedProvider.simplifiedMode) {
-                    if (value) {
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          return DefaultMovementDialog(
-                            initialDistance: simplifiedProvider.defaultDistance,
-                            initialAngle: simplifiedProvider.defaultAngle,
-                            initialCycle: simplifiedProvider.defaultCycle,
-                            onSetDefaults: (newDistance, newAngle, newCycle) {
-                              simplifiedProvider.setDefaults(
-                                newDistance,
-                                newAngle,
-                                newCycle,
-                              );
-                            },
-                          );
-                        },
-                      );
-                    } else {
-                      await SaveInstructionsDialog.showMenuForContext(context);
-                    }
-
-                    simplifiedProvider.setSimplifiedMode(value);
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
       ),
       body: Padding(
         padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),

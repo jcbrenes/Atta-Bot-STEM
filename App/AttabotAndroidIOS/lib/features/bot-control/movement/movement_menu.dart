@@ -134,6 +134,7 @@ class MovementMenu extends StatelessWidget {
                   if (simplifiedMode) {
                     showDialog(
                       context: context,
+                      useRootNavigator: !isLandscape,
                       builder: (BuildContext context) {
                         return SimpleConfirmDialog(movement: "backward", value: defaultDistance);
                       },
@@ -141,6 +142,7 @@ class MovementMenu extends StatelessWidget {
                   } else {
                     showDialog(
                       context: context,
+                      useRootNavigator: !isLandscape,
                       builder: (BuildContext context) {
                         return const Movement(direction: "backward");
                       },

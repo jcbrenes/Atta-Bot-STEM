@@ -12,9 +12,9 @@ class ModeSwitch extends StatelessWidget {
     super.key,
     required this.isSimplified,
     required this.onChanged,
-    this.width = 360,
-    this.height = 32,
-    this.borderRadius = 15,
+    this.width = 390,
+    this.height = 38,
+    this.borderRadius = 30,
   });
 
   @override
