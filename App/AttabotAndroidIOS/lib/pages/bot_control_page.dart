@@ -117,7 +117,6 @@ class _BotControlPageState extends State<BotControlPage> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const SizedBox(height: 6), 
-                  // Wider in portrait tall without increasing height
                   ConstrainedBox(
                     constraints: BoxConstraints(
                       maxWidth: (w * 0.78).clamp(300.0, 520.0),
