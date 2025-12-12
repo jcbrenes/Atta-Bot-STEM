@@ -68,8 +68,8 @@ long rightTicksForSpeed = 0; // Number of encoder ticks counted for right wheel 
 long rightPrevTicks = 0; // Previous encoder tick count for the right wheel (used to calculate speed)
 
 // Variables to store the servo position
-const int activateAngle = 115;  // Activated Tool
-const int deactivateAngle = 180; // Deactivated Tool
+const int activateAngle = 87;  // Activated Tool
+const int deactivateAngle = 118; // Deactivated Tool
 int set = 0;
 
 
