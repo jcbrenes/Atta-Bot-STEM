@@ -185,6 +185,7 @@ void loop() {
       pulsosAntesArranque = rightCount;
       velArranque = velArranqueInicial;
       numMedicion = 0;
+      Serial.println("Iniciando medición de motor derecho.");
 
     } else if (comando == "medirIzquierdo") { //medición del PPR del motor izquierdo
       estado = 1;
@@ -195,11 +196,13 @@ void loop() {
       pulsosAntesArranque = leftCount;
       velArranque = velArranqueInicial;
       numMedicion = 0;
+      Serial.println("Iniciando medición de motor izquierdo.");
 
     } else if (comando == "reset") { // detiene el procedimiento y el motor
       rightCount = 0;
       leftCount = 0;
       estado = 0;
+      Serial.println("Reiniciando programa.");
     } 
 
   }
@@ -245,7 +248,6 @@ void loop() {
         if (numMedicion == 0 & PPR > 700) {
           factorVel = 0.5;
           pwmMinimo = 34;
-          Serial.println("hi");
         }
         rightCount = 0;
         leftCount = 0;
@@ -350,7 +352,7 @@ bool arranque(int direccion) {
     }
 
     // Si se detectan más de 10 pulsos en el motor, se determina que el motor ya arrancó
-    if (pulsesCount > 10 && !flagArranque) {
+    if (pulsesCount > 30 && !flagArranque) {
       if (estado == 1 && numMedicion == 0) { // si se está en el estado 1 y es la primera medición
         // Se define la velocidad (PWM) que se utilizará para las mediciones
         pwmMotores = velArranque *factorVel; //0.7
