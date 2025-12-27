@@ -27,8 +27,8 @@ class SimulationArea extends StatefulWidget {
 }
 
 class _SimulationAreaState extends State<SimulationArea> {
-  double posX = 130;
-  double posY = 130;
+  Offset worldPosition = Offset.zero;
+  Offset previousWorldPosition = Offset.zero;
   double rotation = 0;
   double previousRotation = 0;
   bool obstacleDetectionActive = false;
@@ -36,11 +36,13 @@ class _SimulationAreaState extends State<SimulationArea> {
 
   final double step = 30;
   final double objectSize = 40;
+  final double gridCellSize = 30;
 
   @override
   void initState() {
     super.initState();
     previousRotation = rotation;
+    previousWorldPosition = worldPosition;
     _runInstructions();
   }
 
@@ -97,13 +99,18 @@ class _SimulationAreaState extends State<SimulationArea> {
       setState(() {
         final inst = instruction.toLowerCase();
         double angle = _radians(rotation - 90);
+        previousWorldPosition = worldPosition;
 
         if (inst.contains("avanzar")) {
-          posX += step * cos(angle);
-          posY += step * sin(angle);
+          worldPosition = worldPosition.translate(
+            step * cos(angle),
+            step * sin(angle),
+          );
         } else if (inst.contains("retroceder")) {
-          posX -= step * cos(angle);
-          posY -= step * sin(angle);
+          worldPosition = worldPosition.translate(
+            -step * cos(angle),
+            -step * sin(angle),
+          );
         } else if (inst.contains("girar")) {
           final match = RegExp(r'(\d+)\s*[\u00b0]?', caseSensitive: false)
               .firstMatch(inst);
@@ -126,8 +133,6 @@ class _SimulationAreaState extends State<SimulationArea> {
           obstacleDetectionActive = false;
         }
 
-        posX = posX.clamp(0, widget.width - objectSize);
-        posY = posY.clamp(0, widget.height - objectSize);
       });
     }
   }
@@ -136,55 +141,126 @@ class _SimulationAreaState extends State<SimulationArea> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: widget.width,
-      height: widget.height,
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.white, width: 2),
-        image: const DecorationImage(
-          image: AssetImage('assets/grid_background.png'),
-          fit: BoxFit.cover,
-        ),
-      ),
-      child: Stack(
-        children: [
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 400),
-            left: posX,
-            top: posY,
-            child: TweenAnimationBuilder<double>(
-              tween: Tween<double>(
-                begin: previousRotation,
-                end: rotation,
-              ),
-              duration: const Duration(milliseconds: 400),
-              builder: (context, angleDegrees, child) {
-                return Transform.rotate(
-                  angle: _radians(angleDegrees),
-                  origin: Offset(objectSize / 2, objectSize / 3),
-                  child: child,
-                );
-              },
-              onEnd: () {
-                setState(() {
-                  previousRotation = rotation;
-                });
-              },
-              child: SizedBox(
-                width: objectSize,
-                height: objectSize,
-                child: ObjectSimulator(
-                  size: objectSize,
-                  useImage: widget.useImage,
-                  botImagePath: widget.botImagePath ?? '',
-                  penActive: penActive,
-                  obstacleDetectionActive: obstacleDetectionActive,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = Size(constraints.maxWidth, constraints.maxHeight);
+        final robotLeft = (size.width - objectSize) / 2;
+        final robotTop = (size.height - objectSize) / 2;
+        final gridLineColor = const Color(0xFF2E6CC8).withOpacity(0.35);
+
+        return Container(
+          width: widget.width,
+          height: widget.height,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.white, width: 2),
+          ),
+          child: ClipRect(
+            child: Stack(
+              children: [
+                TweenAnimationBuilder<Offset>(
+                  tween: Tween<Offset>(
+                    begin: previousWorldPosition,
+                    end: worldPosition,
+                  ),
+                  duration: const Duration(milliseconds: 400),
+                  builder: (context, animatedWorldPosition, child) {
+                    return CustomPaint(
+                      size: size,
+                      painter: GridBackgroundPainter(
+                        cellSize: gridCellSize,
+                        offset: Offset(
+                          -animatedWorldPosition.dx,
+                          -animatedWorldPosition.dy,
+                        ),
+                        lineColor: gridLineColor,
+                        backgroundColor: Colors.white,
+                      ),
+                    );
+                  },
                 ),
-              ),
+                Positioned(
+                  left: robotLeft,
+                  top: robotTop,
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween<double>(
+                      begin: previousRotation,
+                      end: rotation,
+                    ),
+                    duration: const Duration(milliseconds: 400),
+                    builder: (context, angleDegrees, child) {
+                      return Transform.rotate(
+                        angle: _radians(angleDegrees),
+                        origin: Offset(objectSize / 2, objectSize / 3),
+                        child: child,
+                      );
+                    },
+                    onEnd: () {
+                      setState(() {
+                        previousRotation = rotation;
+                      });
+                    },
+                    child: SizedBox(
+                      width: objectSize,
+                      height: objectSize,
+                      child: ObjectSimulator(
+                        size: objectSize,
+                        useImage: widget.useImage,
+                        botImagePath: widget.botImagePath ?? '',
+                        penActive: penActive,
+                        obstacleDetectionActive: obstacleDetectionActive,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
+  }
+}
+
+class GridBackgroundPainter extends CustomPainter {
+  final double cellSize;
+  final Offset offset;
+  final Color lineColor;
+  final Color backgroundColor;
+
+  GridBackgroundPainter({
+    required this.cellSize,
+    required this.offset,
+    required this.lineColor,
+    required this.backgroundColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final backgroundPaint = Paint()..color = backgroundColor;
+    canvas.drawRect(Offset.zero & size, backgroundPaint);
+
+    final linePaint = Paint()
+      ..color = lineColor
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke;
+
+    final startX = offset.dx % cellSize;
+    final startY = offset.dy % cellSize;
+
+    for (double x = startX; x <= size.width; x += cellSize) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), linePaint);
+    }
+
+    for (double y = startY; y <= size.height; y += cellSize) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), linePaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant GridBackgroundPainter oldDelegate) {
+    return oldDelegate.offset != offset ||
+        oldDelegate.cellSize != cellSize ||
+        oldDelegate.lineColor != lineColor ||
+        oldDelegate.backgroundColor != backgroundColor;
   }
 }
