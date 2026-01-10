@@ -171,66 +171,65 @@ class _SimulationAreaState extends State<SimulationArea> {
           decoration: BoxDecoration(
             border: Border.all(color: Colors.white, width: 2),
           ),
-          child: ClipRect(
-            child: Stack(
-              children: [
-                TweenAnimationBuilder<Offset>(
-                  tween: Tween<Offset>(
-                    begin: previousWorldPosition,
-                    end: worldPosition,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              TweenAnimationBuilder<Offset>(
+                tween: Tween<Offset>(
+                  begin: previousWorldPosition,
+                  end: worldPosition,
+                ),
+                duration: const Duration(milliseconds: 400),
+                builder: (context, animatedWorldPosition, child) {
+                  return CustomPaint(
+                    size: size,
+                    painter: GridBackgroundPainter(
+                      cellSize: gridCellSize,
+                      offset: Offset(
+                        -animatedWorldPosition.dx,
+                        -animatedWorldPosition.dy,
+                      ),
+                      lineColor: gridLineColor,
+                      backgroundColor: Colors.white,
+                    ),
+                  );
+                },
+              ),
+              Positioned(
+                left: robotLeft,
+                top: robotTop,
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween<double>(
+                    begin: previousRotation,
+                    end: rotation,
                   ),
                   duration: const Duration(milliseconds: 400),
-                  builder: (context, animatedWorldPosition, child) {
-                    return CustomPaint(
-                      size: size,
-                      painter: GridBackgroundPainter(
-                        cellSize: gridCellSize,
-                        offset: Offset(
-                          -animatedWorldPosition.dx,
-                          -animatedWorldPosition.dy,
-                        ),
-                        lineColor: gridLineColor,
-                        backgroundColor: Colors.white,
-                      ),
+                  builder: (context, angleDegrees, child) {
+                    return Transform.rotate(
+                      angle: _radians(angleDegrees),
+                      origin: Offset(objectSize / 2, objectSize / 3),
+                      child: child,
                     );
                   },
-                ),
-                Positioned(
-                  left: robotLeft,
-                  top: robotTop,
-                  child: TweenAnimationBuilder<double>(
-                    tween: Tween<double>(
-                      begin: previousRotation,
-                      end: rotation,
-                    ),
-                    duration: const Duration(milliseconds: 400),
-                    builder: (context, angleDegrees, child) {
-                      return Transform.rotate(
-                        angle: _radians(angleDegrees),
-                        origin: Offset(objectSize / 2, objectSize / 3),
-                        child: child,
-                      );
-                    },
-                    onEnd: () {
-                      setState(() {
-                        previousRotation = rotation;
-                      });
-                    },
-                    child: SizedBox(
-                      width: objectSize,
-                      height: objectSize,
-                      child: ObjectSimulator(
-                        size: objectSize,
-                        useImage: widget.useImage,
-                        botImagePath: widget.botImagePath ?? '',
-                        penActive: penActive,
-                        obstacleDetectionActive: obstacleDetectionActive,
-                      ),
+                  onEnd: () {
+                    setState(() {
+                      previousRotation = rotation;
+                    });
+                  },
+                  child: SizedBox(
+                    width: objectSize,
+                    height: objectSize,
+                    child: ObjectSimulator(
+                      size: objectSize,
+                      useImage: widget.useImage,
+                      botImagePath: widget.botImagePath ?? '',
+                      penActive: penActive,
+                      obstacleDetectionActive: obstacleDetectionActive,
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },

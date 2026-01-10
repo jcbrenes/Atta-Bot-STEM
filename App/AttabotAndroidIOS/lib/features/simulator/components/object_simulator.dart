@@ -37,8 +37,8 @@ class _ObjectSimulatorState extends State<ObjectSimulator>
       parent: _glowController,
       curve: Curves.easeInOut,
     );
-    _glowScale = Tween<double>(begin: 0.92, end: 1.12).animate(curved);
-    _glowOpacity = Tween<double>(begin: 0.75, end: 1.0).animate(curved);
+    _glowScale = Tween<double>(begin: 0.95, end: 1.2).animate(curved);
+    _glowOpacity = Tween<double>(begin: 0.85, end: 1.0).animate(curved);
 
     if (widget.obstacleDetectionActive) {
       _glowController.repeat(reverse: true);
@@ -67,8 +67,8 @@ class _ObjectSimulatorState extends State<ObjectSimulator>
   }
 
   Widget _buildGlow() {
-    final double glowWidth = widget.size * 5.8;
-    final double glowHeight = widget.size * 2.2;
+    final double glowWidth = widget.size * 7.0;
+    final double glowHeight = widget.size * 2.8;
     return Align(
       alignment: Alignment.center,
       child: AnimatedBuilder(
@@ -181,17 +181,17 @@ class FlashlightGlowPainter extends CustomPainter {
     final softColor = Color.lerp(baseColor, const Color(0xFFFFF2C0), 0.45)!;
     final haloRect = Rect.fromCenter(
       center: Offset(size.width * 0.5, size.height * 0.98),
-      width: size.width * 0.78,
-      height: size.height * 0.52,
+      width: size.width * 0.9,
+      height: size.height * 0.6,
     );
     final haloPaint = Paint()
       ..shader = RadialGradient(
         center: const Alignment(0, 0.7),
         radius: 1.1,
         colors: [
-          baseColor.withOpacity(0.55),
-          softColor.withOpacity(0.25),
-          softColor.withOpacity(0.1),
+          baseColor.withOpacity(0.65),
+          softColor.withOpacity(0.3),
+          softColor.withOpacity(0.14),
           Colors.transparent,
         ],
         stops: const [0.0, 0.5, 0.78, 1.0],
@@ -204,8 +204,8 @@ class FlashlightGlowPainter extends CustomPainter {
 
     final outerPath = Path();
     outerPath.moveTo(size.width * 0.5, size.height * 1.04);
-    outerPath.lineTo(size.width * -0.14, size.height * 0.45);
-    outerPath.lineTo(size.width * 1.14, size.height * 0.45);
+    outerPath.lineTo(size.width * -0.22, size.height * 0.42);
+    outerPath.lineTo(size.width * 1.22, size.height * 0.42);
     outerPath.close();
 
     final outerPaint = Paint()
@@ -213,10 +213,10 @@ class FlashlightGlowPainter extends CustomPainter {
         begin: Alignment.bottomCenter,
         end: Alignment.topCenter,
         colors: [
-          softColor.withOpacity(0.3),
-          softColor.withOpacity(0.18),
-          softColor.withOpacity(0.1),
-          softColor.withOpacity(0.04),
+          softColor.withOpacity(0.4),
+          softColor.withOpacity(0.24),
+          softColor.withOpacity(0.14),
+          softColor.withOpacity(0.06),
           Colors.transparent,
         ],
         stops: const [0.0, 0.45, 0.7, 0.9, 1.0],
@@ -229,8 +229,8 @@ class FlashlightGlowPainter extends CustomPainter {
 
     final softBeamPath = Path();
     softBeamPath.moveTo(size.width * 0.5, size.height * 0.96);
-    softBeamPath.lineTo(size.width * -0.2, size.height * 0.22);
-    softBeamPath.lineTo(size.width * 1.2, size.height * 0.22);
+    softBeamPath.lineTo(size.width * -0.32, size.height * 0.18);
+    softBeamPath.lineTo(size.width * 1.32, size.height * 0.18);
     softBeamPath.close();
 
     final softBeamPaint = Paint()
@@ -238,9 +238,9 @@ class FlashlightGlowPainter extends CustomPainter {
         begin: Alignment.bottomCenter,
         end: Alignment.topCenter,
         colors: [
-          baseColor.withOpacity(0.5),
-          softColor.withOpacity(0.26),
-          softColor.withOpacity(0.1),
+          baseColor.withOpacity(0.75),
+          softColor.withOpacity(0.38),
+          softColor.withOpacity(0.18),
           Colors.transparent,
         ],
         stops: const [0.0, 0.45, 0.78, 1.0],
@@ -254,15 +254,15 @@ class FlashlightGlowPainter extends CustomPainter {
     final path = Path();
     path.moveTo(size.width * 0.5, size.height * 0.94);
     path.quadraticBezierTo(
-      size.width * 0.22,
-      size.height * 0.6,
-      size.width * 0.04,
-      size.height * 0.28,
+      size.width * 0.2,
+      size.height * 0.62,
+      size.width * -0.06,
+      size.height * 0.24,
     );
-    path.lineTo(size.width * 0.96, size.height * 0.28);
+    path.lineTo(size.width * 1.06, size.height * 0.24);
     path.quadraticBezierTo(
-      size.width * 0.78,
-      size.height * 0.6,
+      size.width * 0.8,
+      size.height * 0.62,
       size.width * 0.5,
       size.height * 0.94,
     );
@@ -273,9 +273,9 @@ class FlashlightGlowPainter extends CustomPainter {
         begin: Alignment.bottomCenter,
         end: Alignment.topCenter,
         colors: [
-          baseColor.withOpacity(0.78),
-          softColor.withOpacity(0.52),
-          softColor.withOpacity(0.2),
+          baseColor.withOpacity(0.92),
+          softColor.withOpacity(0.68),
+          softColor.withOpacity(0.3),
           Colors.transparent,
         ],
         stops: const [0.0, 0.45, 0.78, 1.0],
@@ -288,15 +288,15 @@ class FlashlightGlowPainter extends CustomPainter {
     final innerPath = Path();
     innerPath.moveTo(size.width * 0.5, size.height * 0.9);
     innerPath.quadraticBezierTo(
-      size.width * 0.28,
-      size.height * 0.62,
-      size.width * 0.14,
-      size.height * 0.34,
+      size.width * 0.25,
+      size.height * 0.64,
+      size.width * 0.06,
+      size.height * 0.32,
     );
-    innerPath.lineTo(size.width * 0.86, size.height * 0.34);
+    innerPath.lineTo(size.width * 0.94, size.height * 0.32);
     innerPath.quadraticBezierTo(
-      size.width * 0.72,
-      size.height * 0.62,
+      size.width * 0.75,
+      size.height * 0.64,
       size.width * 0.5,
       size.height * 0.9,
     );
@@ -307,8 +307,8 @@ class FlashlightGlowPainter extends CustomPainter {
         begin: Alignment.bottomCenter,
         end: Alignment.topCenter,
         colors: [
-          baseColor.withOpacity(0.7),
-          softColor.withOpacity(0.5),
+          baseColor.withOpacity(0.86),
+          softColor.withOpacity(0.62),
           Colors.transparent,
         ],
         stops: const [0.0, 0.65, 1.0],
