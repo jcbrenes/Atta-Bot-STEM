@@ -46,23 +46,42 @@ class _SimulationAreaState extends State<SimulationArea> {
     _runInstructions();
   }
 
+  String _normalizeInstruction(String instruction) {
+    final normalized = instruction
+        .toLowerCase()
+        .replaceAll('\u00a2', 'o')
+        .replaceAll('\u00a0', 'a')
+        .replaceAll('\u00a3', 'u')
+        .replaceAll(RegExp(r'[\u00e1\u00e0\u00e4\u00e2\u00e3]'), 'a')
+        .replaceAll(RegExp(r'[\u00e9\u00e8\u00eb\u00ea]'), 'e')
+        .replaceAll(RegExp(r'[\u00ed\u00ec\u00ef\u00ee]'), 'i')
+        .replaceAll(RegExp(r'[\u00f3\u00f2\u00f6\u00f4\u00f5]'), 'o')
+        .replaceAll(RegExp(r'[\u00fa\u00f9\u00fc\u00fb]'), 'u')
+        .replaceAll('\u00f1', 'n')
+        .replaceAll('\u00e7', 'c')
+        .replaceAll(RegExp(r'[^a-z0-9\s]'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    return normalized;
+  }
+
   List<String> _expandCycles(List<String> instructions) {
     List<String> output = [];
     int i = 0;
 
     while (i < instructions.length) {
       final line = instructions[i].trim();
-      if (line.toLowerCase().startsWith("ciclo abierto")) {
-        final match =
-            RegExp(r'ciclo abierto\s*\·\s*(\d+)', caseSensitive: false)
-                .firstMatch(line);
+      final normalizedLine = _normalizeInstruction(line);
+      if (normalizedLine.startsWith("ciclo abierto")) {
+        final match = RegExp(r'ciclo abierto\D*(\d+)', caseSensitive: false)
+            .firstMatch(normalizedLine);
         final repeatCount = match != null ? int.parse(match.group(1)!) : 1;
 
         int nest = 1;
         int j = i + 1;
 
         while (j < instructions.length && nest > 0) {
-          final current = instructions[j].toLowerCase();
+          final current = _normalizeInstruction(instructions[j]);
           if (current.startsWith("ciclo abierto"))
             nest++;
           else if (current.startsWith("ciclo cerrado")) nest--;
@@ -97,7 +116,7 @@ class _SimulationAreaState extends State<SimulationArea> {
       await Future.delayed(const Duration(milliseconds: 600));
 
       setState(() {
-        final inst = instruction.toLowerCase();
+        final inst = _normalizeInstruction(instruction);
         double angle = _radians(rotation - 90);
         previousWorldPosition = worldPosition;
 
@@ -112,8 +131,7 @@ class _SimulationAreaState extends State<SimulationArea> {
             -step * sin(angle),
           );
         } else if (inst.contains("girar")) {
-          final match = RegExp(r'(\d+)\s*[\u00b0]?', caseSensitive: false)
-              .firstMatch(inst);
+          final match = RegExp(r'(\d+)', caseSensitive: false).firstMatch(inst);
 
           if (match != null) {
             final degrees = double.parse(match.group(1)!);
@@ -123,16 +141,15 @@ class _SimulationAreaState extends State<SimulationArea> {
               rotation -= degrees;
             else if (inst.contains("derecha")) rotation += degrees;
           }
-        } else if (inst.contains("lápiz activado")) {
+        } else if (inst.contains("lapiz activado")) {
           penActive = true;
-        } else if (inst.contains("lápiz desactivado")) {
+        } else if (inst.contains("lapiz desactivado")) {
           penActive = false;
-        } else if (inst.contains("detección iniciada")) {
+        } else if (inst.contains("deteccion iniciada")) {
           obstacleDetectionActive = true;
-        } else if (inst.contains("detección finalizada")) {
+        } else if (inst.contains("deteccion finalizada")) {
           obstacleDetectionActive = false;
         }
-
       });
     }
   }
