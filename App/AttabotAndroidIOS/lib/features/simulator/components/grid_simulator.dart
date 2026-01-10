@@ -33,6 +33,8 @@ class _SimulationAreaState extends State<SimulationArea> {
   double previousRotation = 0;
   bool obstacleDetectionActive = false;
   bool penActive = false;
+  final List<List<Offset>> penPaths = [];
+  int penPointCount = 0;
 
   final double step = 30;
   final double objectSize = 60;
@@ -119,17 +121,20 @@ class _SimulationAreaState extends State<SimulationArea> {
         final inst = _normalizeInstruction(instruction);
         double angle = _radians(rotation - 90);
         previousWorldPosition = worldPosition;
+        bool moved = false;
 
         if (inst.contains("avanzar")) {
           worldPosition = worldPosition.translate(
             step * cos(angle),
             step * sin(angle),
           );
+          moved = true;
         } else if (inst.contains("retroceder")) {
           worldPosition = worldPosition.translate(
             -step * cos(angle),
             -step * sin(angle),
           );
+          moved = true;
         } else if (inst.contains("girar")) {
           final match = RegExp(r'(\d+)', caseSensitive: false).firstMatch(inst);
 
@@ -142,7 +147,10 @@ class _SimulationAreaState extends State<SimulationArea> {
             else if (inst.contains("derecha")) rotation += degrees;
           }
         } else if (inst.contains("lapiz activado")) {
-          penActive = true;
+          if (!penActive) {
+            penActive = true;
+            _startPenTrail();
+          }
         } else if (inst.contains("lapiz desactivado")) {
           penActive = false;
         } else if (inst.contains("deteccion iniciada")) {
@@ -150,11 +158,34 @@ class _SimulationAreaState extends State<SimulationArea> {
         } else if (inst.contains("deteccion finalizada")) {
           obstacleDetectionActive = false;
         }
+
+        if (moved && penActive) {
+          _extendPenTrail(worldPosition);
+        }
       });
     }
   }
 
   double _radians(double degrees) => degrees * pi / 180;
+
+  void _startPenTrail() {
+    penPaths.add([worldPosition]);
+    penPointCount++;
+  }
+
+  void _extendPenTrail(Offset position) {
+    if (penPaths.isEmpty) {
+      penPaths.add([position]);
+      penPointCount++;
+      return;
+    }
+
+    final currentPath = penPaths.last;
+    if (currentPath.isEmpty || currentPath.last != position) {
+      currentPath.add(position);
+      penPointCount++;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -181,16 +212,32 @@ class _SimulationAreaState extends State<SimulationArea> {
                 ),
                 duration: const Duration(milliseconds: 400),
                 builder: (context, animatedWorldPosition, child) {
-                  return CustomPaint(
-                    size: size,
-                    painter: GridBackgroundPainter(
-                      cellSize: gridCellSize,
-                      offset: Offset(
-                        -animatedWorldPosition.dx,
-                        -animatedWorldPosition.dy,
-                      ),
-                      lineColor: gridLineColor,
-                      backgroundColor: Colors.white,
+                  return SizedBox(
+                    width: size.width,
+                    height: size.height,
+                    child: Stack(
+                      children: [
+                        CustomPaint(
+                          size: size,
+                          painter: GridBackgroundPainter(
+                            cellSize: gridCellSize,
+                            offset: Offset(
+                              -animatedWorldPosition.dx,
+                              -animatedWorldPosition.dy,
+                            ),
+                            lineColor: gridLineColor,
+                            backgroundColor: Colors.white,
+                          ),
+                        ),
+                        CustomPaint(
+                          size: size,
+                          painter: PenTrailPainter(
+                            paths: penPaths,
+                            pointCount: penPointCount,
+                            worldPosition: animatedWorldPosition,
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 },
@@ -278,5 +325,67 @@ class GridBackgroundPainter extends CustomPainter {
         oldDelegate.cellSize != cellSize ||
         oldDelegate.lineColor != lineColor ||
         oldDelegate.backgroundColor != backgroundColor;
+  }
+}
+
+class PenTrailPainter extends CustomPainter {
+  final List<List<Offset>> paths;
+  final int pointCount;
+  final Offset worldPosition;
+  final Color color;
+  final double strokeWidth;
+
+  PenTrailPainter({
+    required this.paths,
+    required this.pointCount,
+    required this.worldPosition,
+    this.color = const Color(0xFF25B35A),
+    this.strokeWidth = 3,
+  });
+
+  Offset _toScreen(Offset world, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    return center + (world - worldPosition);
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (paths.isEmpty) return;
+
+    final trailPaint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..isAntiAlias = true;
+
+    for (final pathPoints in paths) {
+      if (pathPoints.isEmpty) continue;
+      if (pathPoints.length == 1) {
+        final point = _toScreen(pathPoints.first, size);
+        canvas.drawCircle(point, strokeWidth / 1.5, trailPaint);
+        continue;
+      }
+
+      final path = Path();
+      final first = _toScreen(pathPoints.first, size);
+      path.moveTo(first.dx, first.dy);
+
+      for (int i = 1; i < pathPoints.length; i++) {
+        final point = _toScreen(pathPoints[i], size);
+        path.lineTo(point.dx, point.dy);
+      }
+
+      canvas.drawPath(path, trailPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant PenTrailPainter oldDelegate) {
+    return oldDelegate.pointCount != pointCount ||
+        oldDelegate.worldPosition != worldPosition ||
+        oldDelegate.color != color ||
+        oldDelegate.strokeWidth != strokeWidth;
   }
 }
