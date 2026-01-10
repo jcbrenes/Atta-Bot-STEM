@@ -67,8 +67,8 @@ class _ObjectSimulatorState extends State<ObjectSimulator>
   }
 
   Widget _buildGlow() {
-    final double glowWidth = widget.size * 3.4;
-    final double glowHeight = widget.size * 3.0;
+    final double glowWidth = widget.size * 5.8;
+    final double glowHeight = widget.size * 2.2;
     return Align(
       alignment: Alignment.center,
       child: AnimatedBuilder(
@@ -77,7 +77,7 @@ class _ObjectSimulatorState extends State<ObjectSimulator>
           return Opacity(
             opacity: _glowOpacity.value,
             child: Transform.translate(
-              offset: Offset(0, -widget.size * 0.8),
+              offset: Offset(0, -widget.size * 0.55),
               child: Transform.scale(
                 scale: _glowScale.value,
                 child: child,
@@ -178,10 +178,94 @@ class FlashlightGlowPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Rect.fromLTWH(0, 0, size.width, size.height);
+    final softColor = Color.lerp(baseColor, const Color(0xFFFFF2C0), 0.45)!;
+    final haloRect = Rect.fromCenter(
+      center: Offset(size.width * 0.5, size.height * 0.98),
+      width: size.width * 0.78,
+      height: size.height * 0.52,
+    );
+    final haloPaint = Paint()
+      ..shader = RadialGradient(
+        center: const Alignment(0, 0.7),
+        radius: 1.1,
+        colors: [
+          baseColor.withOpacity(0.55),
+          softColor.withOpacity(0.25),
+          softColor.withOpacity(0.1),
+          Colors.transparent,
+        ],
+        stops: const [0.0, 0.5, 0.78, 1.0],
+      ).createShader(haloRect)
+      ..blendMode = BlendMode.plus
+      ..isAntiAlias = true
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 22);
+
+    canvas.drawOval(haloRect, haloPaint);
+
+    final outerPath = Path();
+    outerPath.moveTo(size.width * 0.5, size.height * 1.04);
+    outerPath.lineTo(size.width * -0.14, size.height * 0.45);
+    outerPath.lineTo(size.width * 1.14, size.height * 0.45);
+    outerPath.close();
+
+    final outerPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.bottomCenter,
+        end: Alignment.topCenter,
+        colors: [
+          softColor.withOpacity(0.3),
+          softColor.withOpacity(0.18),
+          softColor.withOpacity(0.1),
+          softColor.withOpacity(0.04),
+          Colors.transparent,
+        ],
+        stops: const [0.0, 0.45, 0.7, 0.9, 1.0],
+      ).createShader(rect)
+      ..blendMode = BlendMode.plus
+      ..isAntiAlias = true
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
+
+    canvas.drawPath(outerPath, outerPaint);
+
+    final softBeamPath = Path();
+    softBeamPath.moveTo(size.width * 0.5, size.height * 0.96);
+    softBeamPath.lineTo(size.width * -0.2, size.height * 0.22);
+    softBeamPath.lineTo(size.width * 1.2, size.height * 0.22);
+    softBeamPath.close();
+
+    final softBeamPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.bottomCenter,
+        end: Alignment.topCenter,
+        colors: [
+          baseColor.withOpacity(0.5),
+          softColor.withOpacity(0.26),
+          softColor.withOpacity(0.1),
+          Colors.transparent,
+        ],
+        stops: const [0.0, 0.45, 0.78, 1.0],
+      ).createShader(rect)
+      ..blendMode = BlendMode.plus
+      ..isAntiAlias = true
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 24);
+
+    canvas.drawPath(softBeamPath, softBeamPaint);
+
     final path = Path();
-    path.moveTo(size.width * 0.5, size.height * 0.86);
-    path.lineTo(size.width * 0.05, size.height * 0.02);
-    path.lineTo(size.width * 0.95, size.height * 0.02);
+    path.moveTo(size.width * 0.5, size.height * 0.94);
+    path.quadraticBezierTo(
+      size.width * 0.22,
+      size.height * 0.6,
+      size.width * 0.04,
+      size.height * 0.28,
+    );
+    path.lineTo(size.width * 0.96, size.height * 0.28);
+    path.quadraticBezierTo(
+      size.width * 0.78,
+      size.height * 0.6,
+      size.width * 0.5,
+      size.height * 0.94,
+    );
     path.close();
 
     final paint = Paint()
@@ -189,20 +273,33 @@ class FlashlightGlowPainter extends CustomPainter {
         begin: Alignment.bottomCenter,
         end: Alignment.topCenter,
         colors: [
-          baseColor.withOpacity(1.0),
-          baseColor.withOpacity(0.7),
+          baseColor.withOpacity(0.78),
+          softColor.withOpacity(0.52),
+          softColor.withOpacity(0.2),
           Colors.transparent,
         ],
-        stops: const [0.0, 0.55, 1.0],
+        stops: const [0.0, 0.45, 0.78, 1.0],
       ).createShader(rect)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+      ..isAntiAlias = true
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16);
 
     canvas.drawPath(path, paint);
 
     final innerPath = Path();
-    innerPath.moveTo(size.width * 0.5, size.height * 0.82);
-    innerPath.lineTo(size.width * 0.22, size.height * 0.1);
-    innerPath.lineTo(size.width * 0.78, size.height * 0.1);
+    innerPath.moveTo(size.width * 0.5, size.height * 0.9);
+    innerPath.quadraticBezierTo(
+      size.width * 0.28,
+      size.height * 0.62,
+      size.width * 0.14,
+      size.height * 0.34,
+    );
+    innerPath.lineTo(size.width * 0.86, size.height * 0.34);
+    innerPath.quadraticBezierTo(
+      size.width * 0.72,
+      size.height * 0.62,
+      size.width * 0.5,
+      size.height * 0.9,
+    );
     innerPath.close();
 
     final innerPaint = Paint()
@@ -210,13 +307,14 @@ class FlashlightGlowPainter extends CustomPainter {
         begin: Alignment.bottomCenter,
         end: Alignment.topCenter,
         colors: [
-          baseColor.withOpacity(1.0),
-          baseColor.withOpacity(0.85),
+          baseColor.withOpacity(0.7),
+          softColor.withOpacity(0.5),
           Colors.transparent,
         ],
-        stops: const [0.0, 0.55, 1.0],
+        stops: const [0.0, 0.65, 1.0],
       ).createShader(rect)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+      ..isAntiAlias = true
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
 
     canvas.drawPath(innerPath, innerPaint);
   }
