@@ -35,7 +35,7 @@ class _SimulationAreaState extends State<SimulationArea> {
   bool penActive = false;
 
   final double step = 30;
-  final double objectSize = 40;
+  final double objectSize = 60;
   final double gridCellSize = 30;
 
   @override

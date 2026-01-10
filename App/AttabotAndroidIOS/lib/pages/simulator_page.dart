@@ -197,8 +197,8 @@ class _SimulatorPageState extends State<SimulatorPage> {
                             paused: isPaused,
                             width: double.infinity,
                             height: double.infinity,
-                            useImage: false,
-                            botImagePath: 'assets/generic_atta_bot.png',
+                            useImage: true,
+                            botImagePath: 'assets/atta_bot.png',
                             onInstructionChange: (instruction) {
                               WidgetsBinding.instance.addPostFrameCallback((_) {
                                 if (mounted) {
