@@ -30,7 +30,7 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
 
   List<int> distanceOptions = List.generate(20, (i) => (i + 1) * 5); 
   List<int> angleOptions = [45, 90, 180, 270, 360];
-  List<int> cycleOptions = List.generate(10, (i) => i + 1);
+  List<int> cycleOptions = List.generate(5, (i) => i + 1);
 
   @override
   void initState() {
@@ -584,7 +584,7 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
                       final cmdService = context.read<CommandService>();
                       widget.onSetDefaults(selectedDistance!, selectedAngle!, selectedCycle!);
                       if (!cmdService.cycleActive && selectedCycle! > 1) {
-                        cmdService.initCycle(selectedCycle!);
+                        cmdService.initCycleSimplified(selectedCycle!);
                       }
                       Navigator.of(context).pop();
                     },

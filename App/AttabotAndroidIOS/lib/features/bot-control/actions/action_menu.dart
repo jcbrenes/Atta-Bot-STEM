@@ -75,6 +75,7 @@ class _ActionMenuState extends State<ActionMenu> {
   @override
   Widget build(BuildContext context) {
     final commandService = context.read<CommandService>();
+    final bool simplifiedMode = context.watch<SimplifiedModeProvider>().simplifiedMode;
     return LayoutBuilder(
       builder: (context, constraints) {
         final double maxW = constraints.maxWidth;
@@ -113,19 +114,22 @@ class _ActionMenuState extends State<ActionMenu> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              DefaultButtonFactory.getButton(
-                color: secondaryGreen,
-                iconSize: iconSize,
-                buttonType: ButtonType.primaryIcon,
-                onPressed: () {
-                  if (!commandService.cycleActive) {
-                    CycleDialog.show(context);
-                  } else {
-                    context.read<CommandService>().endCycle();
-                    showInfoDialog(context, 'Se ha cerrado el ciclo');
-                  }
-                },
-                icon: IconType.cycle,
+              IgnorePointer( //we use this to disable the button when in simplified mode,the button could cause confusion
+                ignoring: simplifiedMode,
+                child: DefaultButtonFactory.getButton(
+                  color: simplifiedMode ? Colors.grey : secondaryGreen,
+                  iconSize: iconSize,
+                  buttonType: ButtonType.primaryIcon,
+                  onPressed: () {
+                    if (!commandService.cycleActive) {
+                      CycleDialog.show(context);
+                    } else {
+                      context.read<CommandService>().endCycle();
+                      showInfoDialog(context, 'Se ha cerrado el ciclo');
+                    }
+                  },
+                  icon: IconType.cycle,
+                ),
               ),
               SizedBox(width: gap),
               DefaultButtonFactory.getButton(
@@ -203,7 +207,7 @@ class _ActionMenuState extends State<ActionMenu> {
                     showEmptyHistorySnackBar(context);
                     return;
                   }
-                  String message = context.read<CommandService>().getCommandsBotString(context.watch<SimplifiedModeProvider>().simplifiedMode);
+                  String message = context.read<CommandService>().getCommandsBotString();
                   bool messageSent = await btService.sendStringToDevice(message);
                   if (!messageSent) {
                     showMessageSnackBar("Error al enviar comandos");

@@ -5,7 +5,6 @@ import 'package:proyecto_tec/shared/features/navigation/services/navigation.dart
 import 'package:proyecto_tec/shared/interfaces/bluetooth/bluetooth_service_interface.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
-import 'package:proyecto_tec/pages/bot_control_page.dart'; // to find out if simplified mode is active
 
 
 class HistoryMenu extends StatefulWidget {
@@ -147,7 +146,7 @@ class _HistoryMenuState extends State<HistoryMenu> {
                             showEmptyHistorySnackBar(context);
                             return;
                           }
-                          String message = context.read<CommandService>().getCommandsBotString(context.watch<SimplifiedModeProvider>().simplifiedMode); // pass simplified mode status to know if we need to add endCycle
+                          String message = context.read<CommandService>().getCommandsBotString(); 
                           bool messageSent = await btService.sendStringToDevice(message);
                           if (!messageSent) {
                             showMessageSnackBar("Error al enviar comandos");

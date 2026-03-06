@@ -12,6 +12,7 @@ import 'package:proyecto_tec/shared/features/navigation/services/navigation.dart
 import 'package:proyecto_tec/shared/components/ui/buttons/switch_button.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 import 'package:proyecto_tec/shared/features/navigation/services/split_nav.dart';
+import 'package:proyecto_tec/features/commands/services/command_service.dart';
 
 class BotControlPage extends StatefulWidget {
   final bool embedded; // when true, render without own Scaffold/AppBar
@@ -50,6 +51,7 @@ class _BotControlPageState extends State<BotControlPage> {
   Future<void> _handleModeChange(BuildContext context, SimplifiedModeProvider provider, bool value, bool isLandscape) async {
     if (value == provider.simplifiedMode) return; 
     provider.setSimplifiedMode(value);
+    context.read<CommandService>().setSimplifiedMode(value); // inform command service of mode change
 
     final targetCtx = (isLandscape && SplitNav.rightContext != null)
         ? SplitNav.rightContext!

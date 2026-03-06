@@ -91,11 +91,12 @@ class _SimulatorPageState extends State<SimulatorPage> {
                     .map((cmd) => cmd.toUiString())
                     .toList();
 
-                if (context.watch<CommandService>().cycleActive &&
-                    context.watch<SimplifiedModeProvider>().simplifiedMode) {
-                  instructions
-                      .add(Command(CommandType.endCycle, null).toUiString());
-                }
+                // if we're in simplified mode and there's an active cycle, we force the end cycle
+                // if (context.watch<CommandService>().cycleActive &&
+                //     context.watch<SimplifiedModeProvider>().simplifiedMode) {
+                //   instructions
+                //       .add(Command(CommandType.endCycle, null).toUiString());
+                // }
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,

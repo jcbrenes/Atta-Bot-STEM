@@ -160,6 +160,30 @@ class _HistoryPageState extends State<HistoryPage> {
     final commands = commandService.commandHistory;
     final movingCommand = commands[oldIndex].toUiString();
 
+    // In simplified mode, we want to prevent moving commands outside of their cycle block
+    if (commandService.simplifiedMode) {
+      // search for the nearest cycle block surrounding the old index
+      int cycleStartIndex = commands.indexWhere(
+        (c) => c.toUiString().contains('Ciclo abierto'),
+      );
+      int cycleEndIndex = commands.lastIndexWhere(
+        (c) => c.toUiString().contains('Ciclo cerrado'),
+      );
+
+      
+      if (cycleStartIndex != -1 && cycleEndIndex != -1) {
+        if (movingCommand.contains('Ciclo abierto') ||
+            movingCommand.contains('Ciclo cerrado')) {
+          return false;
+        }
+
+        // don't allow moving commands outside of the cycle block
+        if (newIndex <= cycleStartIndex || newIndex >= cycleEndIndex) {
+          return false;
+        }
+      }
+    }
+
     if (movingCommand.contains('Ciclo cerrado') ||
         movingCommand.contains('Detección finalizada') ||
         movingCommand.contains('Lápiz desactivado')) {
