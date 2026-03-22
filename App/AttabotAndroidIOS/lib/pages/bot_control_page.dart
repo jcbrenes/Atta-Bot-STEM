@@ -109,9 +109,11 @@ class _BotControlPageState extends State<BotControlPage> {
           uiScale = uiScale.clamp(1.0, 1.18);
         }
         double sidePadding = computeSidePadding(w);
-        double historyHeight = (h * 0.28).clamp(260.0, 360.0).toDouble();
+        double historyHeight = isTabletPortrait
+            ? (h * 0.24).clamp(220.0, 300.0).toDouble()
+            : (h * 0.28).clamp(260.0, 360.0).toDouble();
         double tabletActionTopPadding =
-            isTabletPortrait ? (h * 0.035).clamp(28.0, 44.0).toDouble() : 0.0;
+            isTabletPortrait ? (h * 0.105).clamp(84.0, 132.0).toDouble() : 0.0;
 
         if (isTallPortrait) {
           return Padding(
