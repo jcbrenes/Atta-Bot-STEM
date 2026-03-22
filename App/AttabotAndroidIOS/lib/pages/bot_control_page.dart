@@ -47,8 +47,9 @@ class SimplifiedModeProvider extends ChangeNotifier {
 class _BotControlPageState extends State<BotControlPage> {
   NavigationService navService = DependencyManager().getNavigationService();
 
-  Future<void> _handleModeChange(BuildContext context, SimplifiedModeProvider provider, bool value, bool isLandscape) async {
-    if (value == provider.simplifiedMode) return; 
+  Future<void> _handleModeChange(BuildContext context,
+      SimplifiedModeProvider provider, bool value, bool isLandscape) async {
+    if (value == provider.simplifiedMode) return;
     provider.setSimplifiedMode(value);
 
     final targetCtx = (isLandscape && SplitNav.rightContext != null)
@@ -83,16 +84,18 @@ class _BotControlPageState extends State<BotControlPage> {
   @override
   Widget build(BuildContext context) {
     final simplifiedProvider = Provider.of<SimplifiedModeProvider>(context);
-    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
 
     Widget buildContent(double w, double h) {
       if (!isLandscape) {
-        // For very tall portrait screens (e.g., tablets) 
-        final bool isTallPortrait = h >= 820; 
+        // For very tall portrait screens (e.g., tablets)
+        final bool isTallPortrait = h >= 820;
+        final bool isTabletPortrait = w >= 600;
         // Responsive sizing helpers
         double computeUiScale(double w, double h) {
-          double widthFactor = w / 400.0; 
-          double heightFactor = h / 900.0; 
+          double widthFactor = w / 400.0;
+          double heightFactor = h / 900.0;
           double raw = (widthFactor * 0.65) + (heightFactor * 0.35);
           return raw.clamp(1.0, 1.35).toDouble();
         }
@@ -106,7 +109,9 @@ class _BotControlPageState extends State<BotControlPage> {
           uiScale = uiScale.clamp(1.0, 1.18);
         }
         double sidePadding = computeSidePadding(w);
-        double historyHeight = (h * 0.28).clamp(260.0, 360.0).toDouble(); 
+        double historyHeight = (h * 0.28).clamp(260.0, 360.0).toDouble();
+        double tabletActionTopPadding =
+            isTabletPortrait ? (h * 0.035).clamp(28.0, 44.0).toDouble() : 0.0;
 
         if (isTallPortrait) {
           return Padding(
@@ -116,7 +121,7 @@ class _BotControlPageState extends State<BotControlPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 6), 
+                  const SizedBox(height: 6),
                   ConstrainedBox(
                     constraints: BoxConstraints(
                       maxWidth: (w * 0.78).clamp(300.0, 520.0),
@@ -124,7 +129,8 @@ class _BotControlPageState extends State<BotControlPage> {
                     ),
                     child: ModeSwitch(
                       isSimplified: simplifiedProvider.simplifiedMode,
-                      onChanged: (bool value) => _handleModeChange(context, simplifiedProvider, value, isLandscape),
+                      onChanged: (bool value) => _handleModeChange(
+                          context, simplifiedProvider, value, isLandscape),
                       height: 36,
                     ),
                   ),
@@ -139,14 +145,15 @@ class _BotControlPageState extends State<BotControlPage> {
                     ),
                   ),
                   const Spacer(flex: 6),
-    
-                  Transform.scale(
-                    scale: uiScale,
-                    alignment: Alignment.center,
-                    child: const ActionMenu(),
+                  Padding(
+                    padding: EdgeInsets.only(top: tabletActionTopPadding),
+                    child: Transform.scale(
+                      scale: uiScale,
+                      alignment: Alignment.center,
+                      child: const ActionMenu(),
+                    ),
                   ),
                   const Spacer(flex: 2),
-
                   Align(
                     alignment: Alignment.centerRight,
                     child: ConstrainedBox(
@@ -159,7 +166,7 @@ class _BotControlPageState extends State<BotControlPage> {
                       child: const HistoryMenu(),
                     ),
                   ),
-                  const Spacer(flex: 1), 
+                  const Spacer(flex: 1),
                 ],
               ),
             ),
@@ -168,7 +175,8 @@ class _BotControlPageState extends State<BotControlPage> {
 
         // Default (phones or shorter portrait) keeps scroll behavior to avoid overflow on small heights.
         return SingleChildScrollView(
-          padding: EdgeInsets.symmetric(vertical: h * 0.025, horizontal: w * 0.05),
+          padding:
+              EdgeInsets.symmetric(vertical: h * 0.025, horizontal: w * 0.05),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -179,7 +187,8 @@ class _BotControlPageState extends State<BotControlPage> {
                 ),
                 child: ModeSwitch(
                   isSimplified: simplifiedProvider.simplifiedMode,
-                  onChanged: (bool value) => _handleModeChange(context, simplifiedProvider, value, isLandscape),
+                  onChanged: (bool value) => _handleModeChange(
+                      context, simplifiedProvider, value, isLandscape),
                   height: 32,
                 ),
               ),
@@ -211,15 +220,18 @@ class _BotControlPageState extends State<BotControlPage> {
       }
       // Landscape (embedded)
       return SingleChildScrollView(
-        padding: EdgeInsets.symmetric(vertical: h * 0.025, horizontal: w * 0.025),
+        padding:
+            EdgeInsets.symmetric(vertical: h * 0.025, horizontal: w * 0.025),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: (w * 0.7).clamp(280.0, 640.0), minWidth: 220),
+              constraints: BoxConstraints(
+                  maxWidth: (w * 0.7).clamp(280.0, 640.0), minWidth: 220),
               child: ModeSwitch(
                 isSimplified: simplifiedProvider.simplifiedMode,
-                onChanged: (bool value) => _handleModeChange(context, simplifiedProvider, value, isLandscape),
+                onChanged: (bool value) => _handleModeChange(
+                    context, simplifiedProvider, value, isLandscape),
                 height: 30,
               ),
             ),
@@ -266,11 +278,13 @@ class _BotControlPageState extends State<BotControlPage> {
         actions: <Widget>[
           Builder(
             builder: (context) {
-              final bool isTabletPortrait = !isLandscape && MediaQuery.of(context).size.width >= 600;
+              final bool isTabletPortrait =
+                  !isLandscape && MediaQuery.of(context).size.width >= 600;
               final double questionIconSize = isTabletPortrait ? 24.0 : 16.0;
               return IconButton(
                 splashRadius: isTabletPortrait ? 30 : null,
-                padding: EdgeInsets.symmetric(horizontal: isTabletPortrait ? 14 : 8),
+                padding:
+                    EdgeInsets.symmetric(horizontal: isTabletPortrait ? 14 : 8),
                 icon: Image.asset(
                   'assets/button_icons/question_mark.png',
                   color: neutralWhite,
@@ -293,7 +307,7 @@ class _BotControlPageState extends State<BotControlPage> {
       body: LayoutBuilder(
         builder: (context, constraints) => Container(
           color: neutralDarkBlue,
-            child: buildContent(constraints.maxWidth, constraints.maxHeight),
+          child: buildContent(constraints.maxWidth, constraints.maxHeight),
         ),
       ),
     );
