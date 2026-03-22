@@ -40,11 +40,13 @@ class _SimulatorPageState extends State<SimulatorPage> {
   @override
   Widget build(BuildContext context) {
     final simplifiedProvider = Provider.of<SimplifiedModeProvider>(context);
+    final bool isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
 
     return Scaffold(
       backgroundColor: neutralDarkBlue,
       appBar: AppBar(
-        title: const Text('Atta-bot Educativo'),
+        title: const Text('Atta-Bot Educativo'),
         centerTitle: true,
         titleTextStyle: const TextStyle(
           color: neutralWhite,
@@ -54,21 +56,31 @@ class _SimulatorPageState extends State<SimulatorPage> {
         ),
         automaticallyImplyLeading: false,
         backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: Image.asset(
-              'assets/button_icons/question_mark.png',
-              color: neutralWhite,
-              height: 16,
-              width: 16,
-            ),
-            onPressed: () {
-              if (simplifiedProvider.simplifiedMode) {
-                HelpDialogForSimplifiedMode.show(context);
-              } else {
-                HelpDialog.show(context);
-              }
+        actions: <Widget>[
+          Builder(
+            builder: (context) {
+              final bool isTabletPortrait =
+                  !isLandscape && MediaQuery.of(context).size.width >= 600;
+              final double questionIconSize = isTabletPortrait ? 24.0 : 16.0;
+              return IconButton(
+                splashRadius: isTabletPortrait ? 30 : null,
+                padding:
+                    EdgeInsets.symmetric(horizontal: isTabletPortrait ? 14 : 8),
+                icon: Image.asset(
+                  'assets/button_icons/question_mark.png',
+                  color: neutralWhite,
+                  height: questionIconSize,
+                  width: questionIconSize,
+                ),
+                color: neutralWhite,
+                onPressed: () {
+                  if (simplifiedProvider.simplifiedMode) {
+                    HelpDialogForSimplifiedMode.show(context);
+                  } else {
+                    HelpDialog.show(context);
+                  }
+                },
+              );
             },
           ),
         ],
@@ -133,7 +145,7 @@ class _SimulatorPageState extends State<SimulatorPage> {
                                   padding:
                                       const EdgeInsets.symmetric(horizontal: 8),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.10),
+                                    color: Colors.white.withValues(alpha: 0.10),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: DropdownButtonHideUnderline(
