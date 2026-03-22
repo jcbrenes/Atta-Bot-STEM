@@ -114,6 +114,8 @@ class _BotControlPageState extends State<BotControlPage> {
             : (h * 0.28).clamp(260.0, 360.0).toDouble();
         double tabletActionTopPadding =
             isTabletPortrait ? (h * 0.105).clamp(84.0, 132.0).toDouble() : 0.0;
+        double tabletHistoryTopPadding =
+            isTabletPortrait ? (h * 0.055).clamp(36.0, 58.0).toDouble() : 0.0;
 
         if (isTallPortrait) {
           return Padding(
@@ -165,7 +167,7 @@ class _BotControlPageState extends State<BotControlPage> {
                         maxHeight: historyHeight,
                         minHeight: historyHeight,
                       ),
-                      child: const HistoryMenu(),
+                      child: HistoryMenu(topPadding: tabletHistoryTopPadding),
                     ),
                   ),
                   const Spacer(flex: 1),
