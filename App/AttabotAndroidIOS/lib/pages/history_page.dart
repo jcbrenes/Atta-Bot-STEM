@@ -57,6 +57,38 @@ class _HistoryPageState extends State<HistoryPage> {
 
   double tilePadding = 10;
 
+  Future<void> _handleModeChange(
+    BuildContext context,
+    SimplifiedModeProvider provider,
+    bool value,
+  ) async {
+    if (value == provider.simplifiedMode) {
+      return;
+    }
+    if (value) {
+      await showDialog(
+        context: context,
+        builder: (context) {
+          return DefaultMovementDialog(
+            initialDistance: provider.defaultDistance,
+            initialAngle: provider.defaultAngle,
+            initialCycle: provider.defaultCycle,
+            onSetDefaults: (newDistance, newAngle, newCycle) {
+              provider.setDefaults(
+                newDistance,
+                newAngle,
+                newCycle,
+              );
+            },
+          );
+        },
+      );
+    } else {
+      await SaveInstructionsDialog.showMenuForContext(context);
+    }
+    provider.setSimplifiedMode(value);
+  }
+
   TextStyle get contentTextStyle => const TextStyle(
         fontFamily: 'Poppins',
         color: neutralWhite,
@@ -112,46 +144,47 @@ class _HistoryPageState extends State<HistoryPage> {
       return null;
     }
 
-    return Container(
+    return SizedBox(
       height: 20,
       child: IconButton(
-          padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
-          icon: Icon(
-            Icons.delete,
-            color: Colors.grey[400],
-          ),
-          onPressed: () {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text('Eliminar Instrucción', style: titleTextStyle),
-                  backgroundColor: neutralDarkBlueAD,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24.0),
-                    side: const BorderSide(color: neutralWhite, width: 4.0),
+        padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+        icon: Icon(
+          Icons.delete,
+          color: Colors.grey[400],
+        ),
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text('Eliminar Instrucción', style: titleTextStyle),
+                backgroundColor: neutralDarkBlueAD,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24.0),
+                  side: const BorderSide(color: neutralWhite, width: 4.0),
+                ),
+                content: Text(
+                  '¿Estás seguro de que quieres eliminar esta instrucción?',
+                  style: contentTextStyle,
+                ),
+                actions: [
+                  TextButton(
+                    child: Text('Cancelar', style: contentTextStyle),
+                    onPressed: () => Navigator.of(context).pop(),
                   ),
-                  content: Text(
-                    '¿Estás seguro de que quieres eliminar esta instrucción?',
-                    style: contentTextStyle,
+                  TextButton(
+                    child: Text('Eliminar', style: contentTextStyle),
+                    onPressed: () {
+                      context.read<CommandService>().removeCommand(index);
+                      Navigator.of(context).pop();
+                    },
                   ),
-                  actions: [
-                    TextButton(
-                      child: Text('Cancelar', style: contentTextStyle),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                    TextButton(
-                      child: Text('Eliminar', style: contentTextStyle),
-                      onPressed: () {
-                        context.read<CommandService>().removeCommand(index);
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                  ],
-                );
-              },
-            );
-          }),
+                ],
+              );
+            },
+          );
+        },
+      ),
     );
   }
 
@@ -237,7 +270,7 @@ class _HistoryPageState extends State<HistoryPage> {
           elevation: 8.0 * animation.value,
           borderRadius: BorderRadius.circular(15),
           color: Colors.transparent,
-          shadowColor: Colors.black.withOpacity(0.6),
+          shadowColor: Colors.black.withValues(alpha: 0.6),
           child: Opacity(opacity: 0.85, child: child),
         );
       },
@@ -250,22 +283,36 @@ class _HistoryPageState extends State<HistoryPage> {
     final simplifiedProvider = Provider.of<SimplifiedModeProvider>(context);
     final bool isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isTabletPortrait = !isLandscape && screenWidth >= 600;
+    final double switchHeight = isTabletPortrait ? 36.0 : 32.0;
     return Scaffold(
       backgroundColor: neutralDarkBlue,
       appBar: AppBar(
+        title: const Text('Atta-Bot Educativo'),
+        centerTitle: true,
+        titleTextStyle: const TextStyle(
+          color: neutralWhite,
+          fontSize: 18.0,
+          fontFamily: 'Poppins',
+          fontWeight: FontWeight.w700,
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        toolbarHeight: isLandscape ? 0 : 120,
         automaticallyImplyLeading: false,
         actions: isLandscape
             ? []
             : [
                 IconButton(
+                  splashRadius: isTabletPortrait ? 30 : null,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isTabletPortrait ? 14 : 8,
+                  ),
                   icon: Image.asset(
                     'assets/button_icons/question_mark.png',
                     color: neutralWhite,
-                    height: 16,
-                    width: 16,
+                    height: isTabletPortrait ? 24 : 16,
+                    width: isTabletPortrait ? 24 : 16,
                   ),
                   onPressed: () {
                     if (simplifiedProvider.simplifiedMode) {
@@ -275,180 +322,152 @@ class _HistoryPageState extends State<HistoryPage> {
                     }
                   },
                 ),
-                const SizedBox(width: 8),
               ],
-        flexibleSpace: isLandscape
-            ? null
-            : SafeArea(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      'Atta-Bot Educativo',
-                      style: TextStyle(
-                        color: neutralWhite,
-                        fontSize: 18.0,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w700,
-                      ),
+      ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final double switchMaxWidth = isTabletPortrait
+              ? (constraints.maxWidth * 0.78).clamp(300.0, 520.0)
+              : (constraints.maxWidth * 0.8).clamp(300.0, 540.0);
+
+          return Padding(
+            padding: EdgeInsets.fromLTRB(20, isLandscape ? 10 : 0, 20, 24),
+            child: Column(
+              children: [
+                if (!isLandscape) ...[
+                  const SizedBox(height: 6),
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: switchMaxWidth,
+                      minWidth: 260,
                     ),
-                    const SizedBox(height: 12),
-                    LayoutBuilder(
-                      builder: (ctx, constraints) {
-                        final double w = MediaQuery.of(ctx).size.width;
-                        return ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxWidth: (w * 0.8).clamp(300.0, 540.0),
-                            minWidth: 260,
-                          ),
-                          child: ModeSwitch(
-                            isSimplified: simplifiedProvider.simplifiedMode,
-                            onChanged: (bool value) async {
-                              if (value == simplifiedProvider.simplifiedMode){
-                                return;
-                              }
-                              if (value) {
-                                await showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    return DefaultMovementDialog(
-                                      initialDistance:
-                                          simplifiedProvider.defaultDistance,
-                                      initialAngle:
-                                          simplifiedProvider.defaultAngle,
-                                      initialCycle:
-                                          simplifiedProvider.defaultCycle,
-                                      onSetDefaults:
-                                          (newDistance, newAngle, newCycle) {
-                                        simplifiedProvider.setDefaults(
-                                          newDistance,
-                                          newAngle,
-                                          newCycle,
-                                        );
-                                      },
-                                    );
-                                  },
-                                );
-                              } else {
-                                await SaveInstructionsDialog.showMenuForContext(
-                                    context);
-                              }
-                              simplifiedProvider.setSimplifiedMode(value);
-                            },
-                            height: 32,
-                          ),
+                    child: ModeSwitch(
+                      isSimplified: simplifiedProvider.simplifiedMode,
+                      onChanged: (bool value) =>
+                          _handleModeChange(context, simplifiedProvider, value),
+                      height: switchHeight,
+                    ),
+                  ),
+                  SizedBox(height: isTabletPortrait ? 18 : 12),
+                ],
+                Expanded(
+                  child: Container(
+                    decoration: bodyDecoration,
+                    child: Consumer<CommandService>(
+                      builder: (context, historial, child) {
+                        return Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(10, 5, 0, 0),
+                              child: Row(
+                                children: [
+                                  const SizedBox(width: 10),
+                                  pageTitle,
+                                  const Spacer(),
+                                  const InstructionHistoryDropdown(),
+                                ],
+                              ),
+                            ),
+                            Expanded(
+                              child: RawScrollbar(
+                                trackVisibility: true,
+                                thumbVisibility: true,
+                                controller: ScrollController(),
+                                interactive: true,
+                                radius: const Radius.circular(10),
+                                thumbColor: neutralWhite,
+                                trackColor: neutralWhite.withValues(alpha: 0.2),
+                                trackRadius: const Radius.circular(10),
+                                padding: const EdgeInsets.fromLTRB(0, 0, 20, 0),
+                                child: historial.commandHistory.isEmpty
+                                    ? Center(
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Image.asset(
+                                              'assets/surprised face.png',
+                                              width: 90,
+                                              height: 90,
+                                            ),
+                                            const SizedBox(height: 10),
+                                            Text(
+                                              'Aún no se han agregado instrucciones...',
+                                              style: TextStyle(
+                                                color: Colors.white
+                                                    .withValues(alpha: 0.3),
+                                                fontFamily: 'Poppins',
+                                                fontWeight: FontWeight.w500,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    : ReorderableListView(
+                                        proxyDecorator: _proxyDecorator,
+                                        buildDefaultDragHandles: false,
+                                        onReorder: (oldIndex, newIndex) {
+                                          if (oldIndex < newIndex) {
+                                            newIndex -= 1;
+                                          }
+                                          final commandService =
+                                              context.read<CommandService>();
+                                          if (isValidMove(oldIndex, newIndex)) {
+                                            setState(() {
+                                              commandService.reorderCommand(
+                                                  oldIndex, newIndex);
+                                            });
+                                            tilePadding = 10;
+                                          } else {
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              const SnackBar(
+                                                duration: Durations.extralong4,
+                                                content: Center(
+                                                  child: Text(
+                                                      'Movimiento no válido'),
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        },
+                                        children: List.generate(
+                                          historial.commandHistory.length,
+                                          (index) => InstructionTile(
+                                            key: ValueKey('instruction_$index'),
+                                            color: processInstruction(historial
+                                                .commandHistory[index]
+                                                .toUiString()),
+                                            tilePadding: processPadding(
+                                              historial.commandHistory[index]
+                                                  .toUiString(),
+                                            ),
+                                            title: historial
+                                                .commandHistory[index]
+                                                .toUiString(),
+                                            trailing: setTrailing(
+                                              historial.commandHistory[index]
+                                                  .toUiString(),
+                                              index,
+                                            ),
+                                            index: index,
+                                          ),
+                                        ),
+                                      ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                          ],
                         );
                       },
                     ),
-                  ],
+                  ),
                 ),
-              ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
-        child: Container(
-          decoration: bodyDecoration,
-          child: Consumer<CommandService>(
-            builder: (context, historial, child) {
-              return Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 5, 0, 0),
-                    child: Row(
-                      children: [
-                        const SizedBox(width: 10),
-                        pageTitle,
-                        const Spacer(),
-                        InstructionHistoryDropdown(),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: RawScrollbar(
-                      trackVisibility: true,
-                      thumbVisibility: true,
-                      controller: ScrollController(),
-                      interactive: true,
-                      radius: const Radius.circular(10),
-                      thumbColor: neutralWhite,
-                      trackColor: neutralWhite.withOpacity(0.2),
-                      trackRadius: const Radius.circular(10),
-                      padding: const EdgeInsets.fromLTRB(0, 0, 20, 0),
-                      child: historial.commandHistory.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Image.asset(
-                                    'assets/surprised face.png',
-                                    width: 90,
-                                    height: 90,
-                                    //color: Colors.white.withOpacity(0.3),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Text(
-                                    'Aún no se han agregado instrucciones...',
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.3),
-                                      fontFamily: 'Poppins',
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )
-                          : ReorderableListView(
-                              proxyDecorator: _proxyDecorator,
-                              buildDefaultDragHandles: false,
-                              onReorder: (oldIndex, newIndex) {
-                                if (oldIndex < newIndex) newIndex -= 1;
-                                final commandService =
-                                    context.read<CommandService>();
-                                if (isValidMove(oldIndex, newIndex)) {
-                                  setState(() {
-                                    commandService.reorderCommand(
-                                        oldIndex, newIndex);
-                                  });
-                                  tilePadding = 10;
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      duration: Durations.extralong4,
-                                      content: Center(
-                                          child: Text('Movimiento no válido')),
-                                    ),
-                                  );
-                                }
-                              },
-                              children: List.generate(
-                                historial.commandHistory.length,
-                                (index) => InstructionTile(
-                                  key: ValueKey('instruction_$index'),
-                                  color: processInstruction(historial
-                                      .commandHistory[index]
-                                      .toUiString()),
-                                  tilePadding: processPadding(historial
-                                      .commandHistory[index]
-                                      .toUiString()),
-                                  title: historial.commandHistory[index]
-                                      .toUiString(),
-                                  trailing: setTrailing(
-                                      historial.commandHistory[index]
-                                          .toUiString(),
-                                      index),
-                                  index: index,
-                                ),
-                              ),
-                            ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                ],
-              );
-            },
-          ),
-        ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

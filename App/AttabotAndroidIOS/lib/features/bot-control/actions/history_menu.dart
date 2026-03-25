@@ -5,17 +5,22 @@ import 'package:proyecto_tec/shared/features/navigation/services/navigation.dart
 import 'package:proyecto_tec/shared/interfaces/bluetooth/bluetooth_service_interface.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
-
+import 'package:proyecto_tec/pages/bot_control_page.dart'; // to find out if simplified mode is active
 
 class HistoryMenu extends StatefulWidget {
-  const HistoryMenu({super.key});
+  final double topPadding;
+
+  const HistoryMenu({
+    super.key,
+    this.topPadding = 0,
+  });
 
   @override
   State<HistoryMenu> createState() => _HistoryMenuState();
 }
 
 class _HistoryMenuState extends State<HistoryMenu> {
-  String selectedBot = 'Bot 1'; 
+  String selectedBot = 'Bot 1';
   final List<String> bots = ['Bot 1', 'Bot 2', 'Bot 3']; // Add available bots
 
   BluetoothServiceInterface btService =
@@ -45,6 +50,7 @@ class _HistoryMenuState extends State<HistoryMenu> {
   @override
   Widget build(BuildContext context) {
     return Container(
+      padding: EdgeInsets.only(top: widget.topPadding),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
       ),
@@ -53,11 +59,10 @@ class _HistoryMenuState extends State<HistoryMenu> {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(width: 50), 
+              const SizedBox(width: 50),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                 
                   Text(
                     commandService.getLastCommand(),
                     style: const TextStyle(
@@ -72,12 +77,11 @@ class _HistoryMenuState extends State<HistoryMenu> {
                       decoration: TextDecoration.underline,
                     ),
                   ),
-                  const SizedBox(height: 8), 
-                  
+                  const SizedBox(height: 8),
                   const Text(
                     "acerca de:",
                     style: TextStyle(
-                      fontSize: 11, 
+                      fontSize: 11,
                       fontWeight: FontWeight.normal,
                       color: neutralGray,
                     ),
@@ -100,12 +104,11 @@ class _HistoryMenuState extends State<HistoryMenu> {
                           decoration: TextDecoration.underline,
                         ),
                       ),
-                      const SizedBox(width: 6), 
+                      const SizedBox(width: 6),
                       GestureDetector(
-                        onTap: () {
-                        },
+                        onTap: () {},
                         child: const Icon(
-                          Icons.link, 
+                          Icons.link,
                           size: 18,
                           color: neutralWhite,
                         ),
@@ -116,9 +119,9 @@ class _HistoryMenuState extends State<HistoryMenu> {
               ),
               const Spacer(),
               Padding(
-                padding: const EdgeInsets.only(left: 30), 
+                padding: const EdgeInsets.only(left: 30),
                 child: Baseline(
-                  baseline: 14, 
+                  baseline: 14,
                   baselineType: TextBaseline.alphabetic,
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -126,7 +129,9 @@ class _HistoryMenuState extends State<HistoryMenu> {
                       const Text(
                         "atta-bot13",
                         style: TextStyle(
-                          shadows: [Shadow(color: neutralWhite, offset: Offset(0, -6))],
+                          shadows: [
+                            Shadow(color: neutralWhite, offset: Offset(0, -6))
+                          ],
                           fontSize: 12,
                           color: Colors.transparent,
                           fontWeight: FontWeight.w500,
@@ -135,19 +140,27 @@ class _HistoryMenuState extends State<HistoryMenu> {
                           decoration: TextDecoration.underline,
                         ),
                       ),
-                      const SizedBox(width: 4), 
+                      const SizedBox(width: 4),
                       GestureDetector(
                         onTap: () async {
                           if (!btService.isConnected) {
                             navService.goToBluetoothDevicesPage(context);
                             return;
                           }
-                          if (context.read<CommandService>().commandHistory.isEmpty) {
+                          if (context
+                              .read<CommandService>()
+                              .commandHistory
+                              .isEmpty) {
                             showEmptyHistorySnackBar(context);
                             return;
                           }
-                          String message = context.read<CommandService>().getCommandsBotString(); 
-                          bool messageSent = await btService.sendStringToDevice(message);
+                          String message = context
+                              .read<CommandService>()
+                              .getCommandsBotString(context
+                                  .watch<SimplifiedModeProvider>()
+                                  .simplifiedMode); // pass simplified mode status to know if we need to add endCycle
+                          bool messageSent =
+                              await btService.sendStringToDevice(message);
                           if (!messageSent) {
                             showMessageSnackBar("Error al enviar comandos");
                           }

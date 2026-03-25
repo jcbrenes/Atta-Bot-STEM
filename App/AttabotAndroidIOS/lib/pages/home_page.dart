@@ -21,23 +21,28 @@ class _HomePageState extends State<HomePage> {
   String get pageTitle => 'atta bot';
 
   Future<void> initApp(BuildContext context) async {
-    bool isBluetoothEnabled = await bluetoothService.initBluetooth();
-
     if (!mounted) return;
-    if (isBluetoothEnabled) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const LandingPage()),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Para continuar activa el Bluetooth'),
-          duration: Duration(seconds: 3),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const LandingPage()),
+    );
+    //bool isBluetoothEnabled = await bluetoothService.initBluetooth();
+
+    //if (!mounted) return;
+    //if (isBluetoothEnabled) {
+      //Navigator.push(
+        //context,
+        //MaterialPageRoute(builder: (context) => const LandingPage()),
+      //);
+    //} else {
+      //ScaffoldMessenger.of(context).showSnackBar(
+      //const SnackBar(
+      //content: Text('Para continuar activa el Bluetooth'),
+      //duration: Duration(seconds: 3),
+      //behavior: SnackBarBehavior.floating,
+      //),
+      //);
+    //}
   }
 
   @override
