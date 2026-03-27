@@ -27,6 +27,9 @@ class DefaultButtonFactory {
     IconType? icon,
     required Color color,
     required ButtonType buttonType,
+    TextStyle? textStyle,
+    Color? borderColor,
+    bool fullWidthText = false,
     double? iconSize = 26,
     double borderWidth = 3.5,
     double verticalPadding = 16,
@@ -49,15 +52,20 @@ class DefaultButtonFactory {
       } else if (text != null) {
         horizontalPadding = 20;
         verticalPadding = 4;
-        buttonData = Text(
+        final textWidget = Text(
           text,
-          style: const TextStyle(
-            color: neutralWhite,
-            fontFamily: 'Poppins',
-            fontWeight: FontWeight.w500,
-            fontSize: 20,
-          ),
+          textAlign: TextAlign.center,
+          style: textStyle ??
+              const TextStyle(
+                color: neutralWhite,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w500,
+                fontSize: 20,
+              ),
         );
+        buttonData = fullWidthText
+            ? SizedBox(width: double.infinity, child: textWidget)
+            : textWidget;
       } else {
         throw ArgumentError(
             'Either text or icon must be provided for the button.');
@@ -73,11 +81,13 @@ class DefaultButtonFactory {
       } else if (text != null) {
         buttonData = Text(
           text,
-          style: TextStyle(
-            fontFamily: 'Poppins',
-            fontWeight: FontWeight.w500,
-            fontSize: 20,
-          ),
+          textAlign: TextAlign.center,
+          style: textStyle ??
+              const TextStyle(
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w500,
+                fontSize: 20,
+              ),
         );
       } else {
         throw ArgumentError(
@@ -92,6 +102,7 @@ class DefaultButtonFactory {
       ButtonType.primaryIcon: PrimaryIconButton(
         onPressed: onPressed,
         color: color,
+        borderColor: borderColor ?? neutralWhite,
         verticalPadding: verticalPadding,
         horizontalPadding: horizontalPadding,
         borderWidth: borderWidth,

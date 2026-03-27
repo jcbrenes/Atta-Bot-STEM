@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:proyecto_tec/features/commands/components/warning_mode_dialog.dart';
+import 'package:proyecto_tec/features/commands/services/command_service.dart';
 import 'package:proyecto_tec/pages/bot_control_page.dart';
+import 'package:proyecto_tec/pages/home_page.dart';
 import 'package:proyecto_tec/pages/history_page.dart';
 import 'package:proyecto_tec/pages/simulator_page.dart';
 import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
@@ -8,7 +12,18 @@ import 'package:proyecto_tec/shared/styles/colors.dart';
 import 'package:proyecto_tec/shared/features/navigation/services/split_nav.dart';
 
 class LandingPage extends StatefulWidget {
-  const LandingPage({super.key});
+  final bool initialSimplifiedMode;
+  final int initialDistance;
+  final int initialAngle;
+  final int initialCycle;
+
+  const LandingPage({
+    super.key,
+    this.initialSimplifiedMode = false,
+    this.initialDistance = 10,
+    this.initialAngle = 90,
+    this.initialCycle = 1,
+  });
 
   @override
   State<LandingPage> createState() => _LandingPageState();
@@ -207,35 +222,64 @@ class _LandingPageState extends State<LandingPage> {
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
 
-    return Theme(
-        data: Theme.of(context).copyWith(
-          navigationBarTheme: NavigationBarThemeData(
-            labelTextStyle: WidgetStateProperty.all(
-              const TextStyle(
-                fontSize: 12,
-                fontFamily: 'Poppins',
-                color: neutralWhite,
+    return WillPopScope(
+      onWillPop: _handleBackNavigation,
+      child: Theme(
+          data: Theme.of(context).copyWith(
+            navigationBarTheme: NavigationBarThemeData(
+              labelTextStyle: WidgetStateProperty.all(
+                const TextStyle(
+                  fontSize: 12,
+                  fontFamily: 'Poppins',
+                  color: neutralWhite,
+                ),
               ),
             ),
           ),
-        ),
-        child: Scaffold(
-          appBar: isLandscape
-              ? AppBar(
-                  title: const Text('Atta-Bot Educativo'),
-                  centerTitle: true,
-                  titleTextStyle: const TextStyle(
-                      color: neutralWhite,
-                      fontSize: 18.0,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w700),
-                  backgroundColor: Colors.transparent,
-                )
-              : null,
-          body: isLandscape ? _buildLandscapeLayout() : _buildPortraitLayout(),
-          bottomNavigationBar: isLandscape ? null : _buildNavigationBar(),
-          backgroundColor: neutralDarkBlue,
-        ));
+          child: Scaffold(
+            appBar: isLandscape
+                ? AppBar(
+                    title: const Text('Atta-Bot Educativo'),
+                    centerTitle: true,
+                    titleTextStyle: const TextStyle(
+                        color: neutralWhite,
+                        fontSize: 18.0,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w700),
+                    backgroundColor: Colors.transparent,
+                  )
+                : null,
+            body:
+                isLandscape ? _buildLandscapeLayout() : _buildPortraitLayout(),
+            bottomNavigationBar: isLandscape ? null : _buildNavigationBar(),
+            backgroundColor: neutralDarkBlue,
+          )),
+    );
+  }
+
+  Future<bool> _handleBackNavigation() async {
+    final commandService = context.read<CommandService>();
+    final hasInstructions = commandService.commandHistory.isNotEmpty;
+
+    if (hasInstructions) {
+      final shouldContinue = await WarningModeDialog.show(context);
+      if (!shouldContinue) return false;
+      commandService.clearCommands();
+    }
+
+    if (!mounted) return false;
+
+    if (widget.initialSimplifiedMode) {
+      Navigator.of(context).pop();
+      return false;
+    }
+
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (context) => const HomePage(openModeSelectionOnStart: true),
+      ),
+    );
+    return false;
   }
 
   @override
@@ -273,7 +317,12 @@ class _LandingPageState extends State<LandingPage> {
         }
       },
       child: <Widget>[
-        const BotControlPage(),
+        BotControlPage(
+          simplifiedMode: widget.initialSimplifiedMode,
+          defaultDistance: widget.initialDistance,
+          defaultAngle: widget.initialAngle,
+          defaultCycle: widget.initialCycle,
+        ),
         const HistoryPage(),
         const SimulatorPage(),
       ][_selectedIndex - 7],
@@ -287,7 +336,13 @@ class _LandingPageState extends State<LandingPage> {
           child: Navigator(
             key: _leftPaneNavKey,
             onGenerateRoute: (settings) => MaterialPageRoute(
-              builder: (_) => const BotControlPage(embedded: true),
+              builder: (_) => BotControlPage(
+                embedded: true,
+                simplifiedMode: widget.initialSimplifiedMode,
+                defaultDistance: widget.initialDistance,
+                defaultAngle: widget.initialAngle,
+                defaultCycle: widget.initialCycle,
+              ),
             ),
           ),
         ),

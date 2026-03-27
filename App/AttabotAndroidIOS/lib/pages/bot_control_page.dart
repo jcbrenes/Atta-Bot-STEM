@@ -4,19 +4,25 @@ import 'package:proyecto_tec/features/bot-control/actions/action_menu.dart';
 import 'package:proyecto_tec/features/bot-control/actions/history_menu.dart';
 import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog.dart';
 import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog_for_simplified.dart';
-import 'package:proyecto_tec/features/commands/components/save_instructions_dialog.dart';
-import 'package:proyecto_tec/features/bot-control/dialogs/default_movement_dialog.dart';
 import 'package:proyecto_tec/features/bot-control/movement/movement_menu.dart';
-import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
-import 'package:proyecto_tec/shared/features/navigation/services/navigation.dart';
-import 'package:proyecto_tec/shared/components/ui/buttons/switch_button.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
-import 'package:proyecto_tec/shared/features/navigation/services/split_nav.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
 
 class BotControlPage extends StatefulWidget {
   final bool embedded; // when true, render without own Scaffold/AppBar
-  const BotControlPage({super.key, this.embedded = false});
+  final bool simplifiedMode;
+  final int defaultDistance;
+  final int defaultAngle;
+  final int defaultCycle;
+
+  const BotControlPage({
+    super.key,
+    this.embedded = false,
+    this.simplifiedMode = false,
+    this.defaultDistance = 10,
+    this.defaultAngle = 90,
+    this.defaultCycle = 1,
+  });
   @override
   State<BotControlPage> createState() => _BotControlPageState();
 }
@@ -46,46 +52,17 @@ class SimplifiedModeProvider extends ChangeNotifier {
 }
 
 class _BotControlPageState extends State<BotControlPage> {
-  NavigationService navService = DependencyManager().getNavigationService();
-
-  Future<void> _handleModeChange(BuildContext context,
-      SimplifiedModeProvider provider, bool value, bool isLandscape) async {
-    if (value == provider.simplifiedMode) return;
-    provider.setSimplifiedMode(value);
-    context.read<CommandService>().setSimplifiedMode(value); // inform command service of mode change
-
-    final targetCtx = (isLandscape && SplitNav.rightContext != null)
-        ? SplitNav.rightContext!
-        : context;
-
-    if (value) {
-      // Simplified mode
-      await showDialog(
-        context: targetCtx,
-        useRootNavigator: isLandscape ? false : true,
-        builder: (context) {
-          return DefaultMovementDialog(
-            initialDistance: provider.defaultDistance,
-            initialAngle: provider.defaultAngle,
-            initialCycle: provider.defaultCycle,
-            onSetDefaults: (newDistance, newAngle, newCycle) {
-              provider.setDefaults(newDistance, newAngle, newCycle);
-            },
-          );
-        },
-      );
-    } else {
-      // Manual mode
-      await SaveInstructionsDialog.showMenuForContext(
-        targetCtx,
-        useRootNavigator: isLandscape ? false : true,
-      );
-    }
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<CommandService>().setSimplifiedMode(widget.simplifiedMode);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final simplifiedProvider = Provider.of<SimplifiedModeProvider>(context);
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
 
@@ -127,27 +104,14 @@ class _BotControlPageState extends State<BotControlPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 6),
-                  ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxWidth: (w * 0.78).clamp(300.0, 520.0),
-                      minWidth: 260,
-                    ),
-                    child: ModeSwitch(
-                      isSimplified: simplifiedProvider.simplifiedMode,
-                      onChanged: (bool value) => _handleModeChange(
-                          context, simplifiedProvider, value, isLandscape),
-                      height: 36,
-                    ),
-                  ),
-                  const SizedBox(height: 34),
+                  const SizedBox(height: 30),
                   Transform.scale(
                     scale: uiScale,
                     alignment: Alignment.topCenter,
                     child: MovementMenu(
-                      simplifiedMode: simplifiedProvider.simplifiedMode,
-                      defaultDistance: simplifiedProvider.defaultDistance,
-                      defaultAngle: simplifiedProvider.defaultAngle,
+                      simplifiedMode: widget.simplifiedMode,
+                      defaultDistance: widget.defaultDistance,
+                      defaultAngle: widget.defaultAngle,
                     ),
                   ),
                   const Spacer(flex: 6),
@@ -186,23 +150,11 @@ class _BotControlPageState extends State<BotControlPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: (w * 0.8).clamp(300.0, 540.0),
-                  minWidth: 260,
-                ),
-                child: ModeSwitch(
-                  isSimplified: simplifiedProvider.simplifiedMode,
-                  onChanged: (bool value) => _handleModeChange(
-                      context, simplifiedProvider, value, isLandscape),
-                  height: 32,
-                ),
-              ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 18),
               MovementMenu(
-                simplifiedMode: simplifiedProvider.simplifiedMode,
-                defaultDistance: simplifiedProvider.defaultDistance,
-                defaultAngle: simplifiedProvider.defaultAngle,
+                simplifiedMode: widget.simplifiedMode,
+                defaultDistance: widget.defaultDistance,
+                defaultAngle: widget.defaultAngle,
               ),
               const SizedBox(height: 28),
               const ActionMenu(),
@@ -231,21 +183,11 @@ class _BotControlPageState extends State<BotControlPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            ConstrainedBox(
-              constraints: BoxConstraints(
-                  maxWidth: (w * 0.7).clamp(280.0, 640.0), minWidth: 220),
-              child: ModeSwitch(
-                isSimplified: simplifiedProvider.simplifiedMode,
-                onChanged: (bool value) => _handleModeChange(
-                    context, simplifiedProvider, value, isLandscape),
-                height: 30,
-              ),
-            ),
-            SizedBox(height: h * 0.02),
+            SizedBox(height: h * 0.03),
             MovementMenu(
-              simplifiedMode: simplifiedProvider.simplifiedMode,
-              defaultDistance: simplifiedProvider.defaultDistance,
-              defaultAngle: simplifiedProvider.defaultAngle,
+              simplifiedMode: widget.simplifiedMode,
+              defaultDistance: widget.defaultDistance,
+              defaultAngle: widget.defaultAngle,
             ),
             SizedBox(height: h * 0.03),
             const ActionMenu(),
@@ -280,7 +222,44 @@ class _BotControlPageState extends State<BotControlPage> {
             fontFamily: 'Poppins',
             fontWeight: FontWeight.w700),
         automaticallyImplyLeading: false,
+        leading: Builder(
+          builder: (context) {
+            final bool isTabletPortrait =
+                !isLandscape && MediaQuery.of(context).size.width >= 600;
+            final double leftIconSize = isTabletPortrait ? 24.0 : 16.0;
+            return IconButton(
+              splashRadius: isTabletPortrait ? 30 : null,
+              padding:
+                  EdgeInsets.symmetric(horizontal: isTabletPortrait ? 14 : 8),
+              icon: Image.asset(
+                'assets/button_icons/left_arrow.png',
+                color: neutralWhite,
+                height: leftIconSize,
+                width: leftIconSize,
+              ),
+              color: neutralWhite,
+              onPressed: () {
+                Navigator.of(context).maybePop();
+              },
+            );
+          },
+        ),
         backgroundColor: Colors.transparent,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(24),
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Text(
+              widget.simplifiedMode ? 'Modo Simplificado' : 'Modo Manual',
+              style: const TextStyle(
+                color: neutralWhite,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+              ),
+            ),
+          ),
+        ),
         actions: <Widget>[
           Builder(
             builder: (context) {
@@ -299,7 +278,7 @@ class _BotControlPageState extends State<BotControlPage> {
                 ),
                 color: neutralWhite,
                 onPressed: () {
-                  if (simplifiedProvider.simplifiedMode) {
+                  if (widget.simplifiedMode) {
                     HelpDialogForSimplifiedMode.show(context);
                   } else {
                     HelpDialog.show(context);

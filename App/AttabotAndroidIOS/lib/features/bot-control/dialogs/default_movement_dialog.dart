@@ -9,7 +9,10 @@ class DefaultMovementDialog extends StatefulWidget {
   final int initialDistance;
   final int initialAngle;
   final int initialCycle;
-  final void Function(int newDistance, int newAngle, int newCycle) onSetDefaults;
+  final void Function(int newDistance, int newAngle, int newCycle)
+      onSetDefaults;
+  final bool showCloseButton;
+  final VoidCallback? onClose;
 
   const DefaultMovementDialog({
     super.key,
@@ -17,6 +20,8 @@ class DefaultMovementDialog extends StatefulWidget {
     required this.initialAngle,
     required this.initialCycle,
     required this.onSetDefaults,
+    this.showCloseButton = false,
+    this.onClose,
   });
 
   @override
@@ -28,7 +33,7 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
   late int? selectedAngle;
   late int? selectedCycle;
 
-  List<int> distanceOptions = List.generate(20, (i) => (i + 1) * 5); 
+  List<int> distanceOptions = List.generate(20, (i) => (i + 1) * 5);
   List<int> angleOptions = [45, 90, 180, 270, 360];
   List<int> cycleOptions = List.generate(5, (i) => i + 1);
 
@@ -81,14 +86,34 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                "Definir parámetros",
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                  fontFamily: "Poppins",
-                  color: neutralWhite,
-                ),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      "Definir parámetros",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        fontFamily: "Poppins",
+                        color: neutralWhite,
+                      ),
+                    ),
+                  ),
+                  if (widget.showCloseButton)
+                    IconButton(
+                      onPressed: () {
+                        if (widget.onClose != null) {
+                          widget.onClose!();
+                          return;
+                        }
+                        Navigator.of(context).pop(false);
+                      },
+                      icon: const Icon(
+                        Icons.close,
+                        color: neutralWhite,
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(height: 35),
               Column(
@@ -266,7 +291,9 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
                 children: [
                   GestureDetector(
                     onTap: () {
-                      if (selectedDistance == null || selectedAngle == null || selectedCycle == null) {
+                      if (selectedDistance == null ||
+                          selectedAngle == null ||
+                          selectedCycle == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: const Row(
@@ -296,20 +323,23 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
                             margin: const EdgeInsets.all(16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
-                              side: const BorderSide(color: neutralWhite, width: 2),
+                              side: const BorderSide(
+                                  color: neutralWhite, width: 2),
                             ),
                             elevation: 6,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 14),
                           ),
                         );
                         return;
                       }
                       final cmdService = context.read<CommandService>();
-                      widget.onSetDefaults(selectedDistance!, selectedAngle!, selectedCycle!);
+                      widget.onSetDefaults(
+                          selectedDistance!, selectedAngle!, selectedCycle!);
                       if (!cmdService.cycleActive && selectedCycle! > 1) {
                         cmdService.initCycle(selectedCycle!);
                       }
-                      Navigator.of(context).pop();
+                      Navigator.of(context).pop(true);
                     },
                     child: const Text(
                       "Aplicar cambios",
@@ -350,7 +380,8 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
       );
     }
 
-    final dialogWidth = (size.width * (isTablet ? 0.65 : 0.55)).clamp(360.0, 860.0);
+    final dialogWidth =
+        (size.width * (isTablet ? 0.65 : 0.55)).clamp(360.0, 860.0);
     final scale = (dialogWidth / 360.0).clamp(1.0, 1.75);
     final paddingScale = scale.clamp(1.0, 1.3);
     final titleFontSize = 16.0 * scale.clamp(1.0, 1.6);
@@ -387,14 +418,35 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                "Definir parámetros",
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: titleFontSize,
-                  fontFamily: "Poppins",
-                  color: neutralWhite,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      "Definir parámetros",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: titleFontSize,
+                        fontFamily: "Poppins",
+                        color: neutralWhite,
+                      ),
+                    ),
+                  ),
+                  if (widget.showCloseButton)
+                    IconButton(
+                      onPressed: () {
+                        if (widget.onClose != null) {
+                          widget.onClose!();
+                          return;
+                        }
+                        Navigator.of(context).pop(false);
+                      },
+                      icon: Icon(
+                        Icons.close,
+                        color: neutralWhite,
+                        size: isTablet ? 30 : 24,
+                      ),
+                    ),
+                ],
               ),
               SizedBox(height: headerGap),
               Column(
@@ -542,7 +594,9 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
                 children: [
                   GestureDetector(
                     onTap: () {
-                      if (selectedDistance == null || selectedAngle == null || selectedCycle == null) {
+                      if (selectedDistance == null ||
+                          selectedAngle == null ||
+                          selectedCycle == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Row(
@@ -572,21 +626,25 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
                             margin: EdgeInsets.all(16 * paddingScale),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
-                              side: const BorderSide(color: neutralWhite, width: 2),
+                              side: const BorderSide(
+                                  color: neutralWhite, width: 2),
                             ),
                             elevation: 6,
-                            padding: EdgeInsets.symmetric(horizontal: 16 * paddingScale, vertical: 14 * paddingScale),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 16 * paddingScale,
+                                vertical: 14 * paddingScale),
                           ),
                         );
                         return;
                       }
 
                       final cmdService = context.read<CommandService>();
-                      widget.onSetDefaults(selectedDistance!, selectedAngle!, selectedCycle!);
+                      widget.onSetDefaults(
+                          selectedDistance!, selectedAngle!, selectedCycle!);
                       if (!cmdService.cycleActive && selectedCycle! > 1) {
                         cmdService.initCycleSimplified(selectedCycle!);
                       }
-                      Navigator.of(context).pop();
+                      Navigator.of(context).pop(true);
                     },
                     child: Text(
                       "Aplicar cambios",

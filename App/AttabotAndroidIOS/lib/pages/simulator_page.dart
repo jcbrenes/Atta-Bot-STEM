@@ -3,8 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:proyecto_tec/pages/bot_control_page.dart';
 import 'package:proyecto_tec/features/simulator/dialogs/simulator_actions_dialog.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
-import 'package:proyecto_tec/features/commands/models/command.dart';
-import 'package:proyecto_tec/features/commands/enums/command_types.dart';
 import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
 import 'package:proyecto_tec/shared/features/navigation/services/navigation.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
