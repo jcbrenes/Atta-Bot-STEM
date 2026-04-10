@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:proyecto_tec/pages/bot_control_page.dart';
 import 'package:proyecto_tec/features/simulator/dialogs/simulator_actions_dialog.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
 import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
@@ -11,7 +10,12 @@ import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog.dart';
 import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog_for_simplified.dart';
 
 class SimulatorPage extends StatefulWidget {
-  const SimulatorPage({super.key});
+  final bool embedded;
+
+  const SimulatorPage({
+    super.key,
+    this.embedded = false,
+  });
 
   @override
   State<SimulatorPage> createState() => _SimulatorPageState();
@@ -37,69 +41,26 @@ class _SimulatorPageState extends State<SimulatorPage> {
 
   @override
   Widget build(BuildContext context) {
-    final simplifiedProvider = Provider.of<SimplifiedModeProvider>(context);
     final bool isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
 
-    return Scaffold(
-      backgroundColor: neutralDarkBlue,
-      appBar: AppBar(
-        title: const Text('Atta-Bot Educativo'),
-        centerTitle: true,
-        titleTextStyle: const TextStyle(
-          color: neutralWhite,
-          fontSize: 18.0,
-          fontFamily: 'Poppins',
-          fontWeight: FontWeight.w700,
-        ),
-        automaticallyImplyLeading: false,
-        backgroundColor: Colors.transparent,
-        actions: <Widget>[
-          Builder(
-            builder: (context) {
-              final bool isTabletPortrait =
-                  !isLandscape && MediaQuery.of(context).size.width >= 600;
-              final double questionIconSize = isTabletPortrait ? 24.0 : 16.0;
-              return IconButton(
-                splashRadius: isTabletPortrait ? 30 : null,
-                padding:
-                    EdgeInsets.symmetric(horizontal: isTabletPortrait ? 14 : 8),
-                icon: Image.asset(
-                  'assets/button_icons/question_mark.png',
-                  color: neutralWhite,
-                  height: questionIconSize,
-                  width: questionIconSize,
-                ),
-                color: neutralWhite,
-                onPressed: () {
-                  if (simplifiedProvider.simplifiedMode) {
-                    HelpDialogForSimplifiedMode.show(context);
-                  } else {
-                    HelpDialog.show(context);
-                  }
-                },
-              );
-            },
+    Widget pageBody = SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(8, 12, 8, 12),
+        child: Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: neutralDarkBlue,
+            borderRadius: BorderRadius.circular(25),
+            border: Border.all(color: Colors.white, width: 3),
           ),
-        ],
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
-          child: Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: neutralDarkBlue,
-              borderRadius: BorderRadius.circular(25),
-              border: Border.all(color: Colors.white, width: 3),
-            ),
-            child: Builder(
-              builder: (context) {
-                final instructions = context
-                    .read<CommandService>()
-                    .commandHistory
-                    .map((cmd) => cmd.toUiString())
-                    .toList();
+          child: Builder(
+            builder: (context) {
+              final instructions = context
+                  .read<CommandService>()
+                  .commandHistory
+                  .map((cmd) => cmd.toUiString())
+                  .toList();
 
                 // if we're in simplified mode and there's an active cycle, we force the end cycle
                 // if (context.watch<CommandService>().cycleActive &&
@@ -108,9 +69,9 @@ class _SimulatorPageState extends State<SimulatorPage> {
                 //       .add(Command(CommandType.endCycle, null).toUiString());
                 // }
 
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                     // -------------------- TÍTULO & DROPDOWN ----------------------
                     Padding(
                       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
@@ -227,27 +188,75 @@ class _SimulatorPageState extends State<SimulatorPage> {
                     // --------------------- TEXTO DE INSTRUCCIÓN ----------------------
                     const SizedBox(height: 12),
 
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          currentInstruction,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontFamily: 'Poppins',
-                          ),
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        currentInstruction,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontFamily: 'Poppins',
                         ),
                       ),
                     ),
-                  ],
-                );
-              },
-            ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),
+    );
+
+    if (widget.embedded) {
+      return pageBody;
+    }
+
+    return Scaffold(
+      backgroundColor: neutralDarkBlue,
+      appBar: AppBar(
+        title: const Text('Atta-Bot Educativo'),
+        centerTitle: true,
+        titleTextStyle: const TextStyle(
+          color: neutralWhite,
+          fontSize: 18.0,
+          fontFamily: 'Poppins',
+          fontWeight: FontWeight.w700,
+        ),
+        automaticallyImplyLeading: false,
+        backgroundColor: Colors.transparent,
+        actions: <Widget>[
+          Builder(
+            builder: (context) {
+              final bool isTabletPortrait =
+                  !isLandscape && MediaQuery.of(context).size.width >= 600;
+              final double questionIconSize = isTabletPortrait ? 24.0 : 16.0;
+              return IconButton(
+                splashRadius: isTabletPortrait ? 30 : null,
+                padding:
+                    EdgeInsets.symmetric(horizontal: isTabletPortrait ? 14 : 8),
+                icon: Image.asset(
+                  'assets/button_icons/question_mark.png',
+                  color: neutralWhite,
+                  height: questionIconSize,
+                  width: questionIconSize,
+                ),
+                color: neutralWhite,
+                onPressed: () {
+                  if (context.read<CommandService>().simplifiedMode) {
+                    HelpDialogForSimplifiedMode.show(context);
+                  } else {
+                    HelpDialog.show(context);
+                  }
+                },
+              );
+            },
+          ),
+        ],
+      ),
+      body: pageBody,
     );
   }
 }

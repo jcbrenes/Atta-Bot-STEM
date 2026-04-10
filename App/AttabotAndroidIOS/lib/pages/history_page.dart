@@ -6,19 +6,22 @@ import 'package:proyecto_tec/features/commands/components/instruction_tile.dart'
 import 'package:proyecto_tec/features/commands/components/history_dropdown_menu.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
-import 'package:proyecto_tec/shared/components/ui/buttons/switch_button.dart';
-import 'package:proyecto_tec/pages/bot_control_page.dart';
-import 'package:proyecto_tec/features/bot-control/dialogs/default_movement_dialog.dart';
-import 'package:proyecto_tec/features/commands/components/save_instructions_dialog.dart';
 
 class HistoryPage extends StatefulWidget {
-  const HistoryPage({super.key});
+  final bool embedded;
+
+  const HistoryPage({
+    super.key,
+    this.embedded = false,
+  });
 
   @override
   State<HistoryPage> createState() => _HistoryPageState();
 }
 
 class _HistoryPageState extends State<HistoryPage> {
+  final ScrollController _historyScrollController = ScrollController();
+
   final Text pageTitle = const Text(
     'Instrucciones',
     textAlign: TextAlign.left,
@@ -56,38 +59,6 @@ class _HistoryPageState extends State<HistoryPage> {
   };
 
   double tilePadding = 10;
-
-  Future<void> _handleModeChange(
-    BuildContext context,
-    SimplifiedModeProvider provider,
-    bool value,
-  ) async {
-    if (value == provider.simplifiedMode) {
-      return;
-    }
-    if (value) {
-      await showDialog(
-        context: context,
-        builder: (context) {
-          return DefaultMovementDialog(
-            initialDistance: provider.defaultDistance,
-            initialAngle: provider.defaultAngle,
-            initialCycle: provider.defaultCycle,
-            onSetDefaults: (newDistance, newAngle, newCycle) {
-              provider.setDefaults(
-                newDistance,
-                newAngle,
-                newCycle,
-              );
-            },
-          );
-        },
-      );
-    } else {
-      await SaveInstructionsDialog.showMenuForContext(context);
-    }
-    provider.setSimplifiedMode(value);
-  }
 
   TextStyle get contentTextStyle => const TextStyle(
         fontFamily: 'Poppins',
@@ -279,13 +250,164 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   @override
+  void dispose() {
+    _historyScrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final simplifiedProvider = Provider.of<SimplifiedModeProvider>(context);
+    final bool simplifiedMode = context.watch<CommandService>().simplifiedMode;
     final bool isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
     final double screenWidth = MediaQuery.of(context).size.width;
     final bool isTabletPortrait = !isLandscape && screenWidth >= 600;
-    final double switchHeight = isTabletPortrait ? 36.0 : 32.0;
+    Widget pageBody = LayoutBuilder(
+        builder: (context, constraints) {
+          final double switchMaxWidth = isTabletPortrait
+              ? (constraints.maxWidth * 0.78).clamp(300.0, 520.0)
+              : (constraints.maxWidth * 0.8).clamp(300.0, 540.0);
+
+          return Padding(
+            padding: EdgeInsets.fromLTRB(10, isLandscape ? 5 : 0, 10, 12),
+            child: Column(
+              children: [
+                Expanded(
+                  child: Container(
+                    decoration: bodyDecoration,
+                    child: Consumer<CommandService>(
+                      builder: (context, historial, child) {
+                        return Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(10, 5, 0, 0),
+                              child: Row(
+                                children: [
+                                  const SizedBox(width: 10),
+                                  pageTitle,
+                                  const Spacer(),
+                                  const InstructionHistoryDropdown(),
+                                ],
+                              ),
+                            ),
+                            Expanded(
+                              child: historial.commandHistory.isEmpty
+                                  ? Center(
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Image.asset(
+                                            'assets/surprised face.png',
+                                            width: 90,
+                                            height: 90,
+                                          ),
+                                          const SizedBox(height: 10),
+                                          Text(
+                                            'Aún no se han agregado instrucciones...',
+                                            style: TextStyle(
+                                              color: Colors.white
+                                                  .withValues(alpha: 0.3),
+                                              fontFamily: 'Poppins',
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  : RawScrollbar(
+                                      trackVisibility: true,
+                                      thumbVisibility: true,
+                                      controller: _historyScrollController,
+                                      interactive: true,
+                                      radius: const Radius.circular(10),
+                                      thumbColor: neutralWhite,
+                                      trackColor:
+                                          neutralWhite.withValues(alpha: 0.2),
+                                      trackRadius: const Radius.circular(10),
+                                      padding: const EdgeInsets.fromLTRB(
+                                        0,
+                                        0,
+                                        20,
+                                        0,
+                                      ),
+                                      child: ReorderableListView(
+                                        scrollController:
+                                            _historyScrollController,
+                                        proxyDecorator: _proxyDecorator,
+                                        buildDefaultDragHandles: false,
+                                        onReorder: (oldIndex, newIndex) {
+                                          if (oldIndex < newIndex) {
+                                            newIndex -= 1;
+                                          }
+                                          final commandService =
+                                              context.read<CommandService>();
+                                          if (isValidMove(oldIndex, newIndex)) {
+                                            setState(() {
+                                              commandService.reorderCommand(
+                                                oldIndex,
+                                                newIndex,
+                                              );
+                                            });
+                                            tilePadding = 10;
+                                          } else {
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              const SnackBar(
+                                                duration: Durations.extralong4,
+                                                content: Center(
+                                                  child: Text(
+                                                    'Movimiento no válido',
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        },
+                                        children: List.generate(
+                                          historial.commandHistory.length,
+                                          (index) => InstructionTile(
+                                            key: ValueKey('instruction_$index'),
+                                            color: processInstruction(
+                                              historial.commandHistory[index]
+                                                  .toUiString(),
+                                            ),
+                                            tilePadding: processPadding(
+                                              historial.commandHistory[index]
+                                                  .toUiString(),
+                                            ),
+                                            title: historial
+                                                .commandHistory[index]
+                                                .toUiString(),
+                                            trailing: setTrailing(
+                                              historial.commandHistory[index]
+                                                  .toUiString(),
+                                              index,
+                                            ),
+                                            index: index,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                            ),
+                            const SizedBox(height: 20),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+
+    if (widget.embedded) {
+      return pageBody;
+    }
+
     return Scaffold(
       backgroundColor: neutralDarkBlue,
       appBar: AppBar(
@@ -315,7 +437,7 @@ class _HistoryPageState extends State<HistoryPage> {
                     width: isTabletPortrait ? 24 : 16,
                   ),
                   onPressed: () {
-                    if (simplifiedProvider.simplifiedMode) {
+                    if (simplifiedMode) {
                       HelpDialogForSimplifiedMode.show(context);
                     } else {
                       HelpDialog.show(context);
@@ -324,151 +446,7 @@ class _HistoryPageState extends State<HistoryPage> {
                 ),
               ],
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final double switchMaxWidth = isTabletPortrait
-              ? (constraints.maxWidth * 0.78).clamp(300.0, 520.0)
-              : (constraints.maxWidth * 0.8).clamp(300.0, 540.0);
-
-          return Padding(
-            padding: EdgeInsets.fromLTRB(20, isLandscape ? 10 : 0, 20, 24),
-            child: Column(
-              children: [
-                if (!isLandscape) ...[
-                  const SizedBox(height: 6),
-                  ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxWidth: switchMaxWidth,
-                      minWidth: 260,
-                    ),
-                    child: ModeSwitch(
-                      isSimplified: simplifiedProvider.simplifiedMode,
-                      onChanged: (bool value) =>
-                          _handleModeChange(context, simplifiedProvider, value),
-                      height: switchHeight,
-                    ),
-                  ),
-                  SizedBox(height: isTabletPortrait ? 18 : 12),
-                ],
-                Expanded(
-                  child: Container(
-                    decoration: bodyDecoration,
-                    child: Consumer<CommandService>(
-                      builder: (context, historial, child) {
-                        return Column(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(10, 5, 0, 0),
-                              child: Row(
-                                children: [
-                                  const SizedBox(width: 10),
-                                  pageTitle,
-                                  const Spacer(),
-                                  const InstructionHistoryDropdown(),
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              child: RawScrollbar(
-                                trackVisibility: true,
-                                thumbVisibility: true,
-                                controller: ScrollController(),
-                                interactive: true,
-                                radius: const Radius.circular(10),
-                                thumbColor: neutralWhite,
-                                trackColor: neutralWhite.withValues(alpha: 0.2),
-                                trackRadius: const Radius.circular(10),
-                                padding: const EdgeInsets.fromLTRB(0, 0, 20, 0),
-                                child: historial.commandHistory.isEmpty
-                                    ? Center(
-                                        child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Image.asset(
-                                              'assets/surprised face.png',
-                                              width: 90,
-                                              height: 90,
-                                            ),
-                                            const SizedBox(height: 10),
-                                            Text(
-                                              'Aún no se han agregado instrucciones...',
-                                              style: TextStyle(
-                                                color: Colors.white
-                                                    .withValues(alpha: 0.3),
-                                                fontFamily: 'Poppins',
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 13,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      )
-                                    : ReorderableListView(
-                                        proxyDecorator: _proxyDecorator,
-                                        buildDefaultDragHandles: false,
-                                        onReorder: (oldIndex, newIndex) {
-                                          if (oldIndex < newIndex) {
-                                            newIndex -= 1;
-                                          }
-                                          final commandService =
-                                              context.read<CommandService>();
-                                          if (isValidMove(oldIndex, newIndex)) {
-                                            setState(() {
-                                              commandService.reorderCommand(
-                                                  oldIndex, newIndex);
-                                            });
-                                            tilePadding = 10;
-                                          } else {
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(
-                                              const SnackBar(
-                                                duration: Durations.extralong4,
-                                                content: Center(
-                                                  child: Text(
-                                                      'Movimiento no válido'),
-                                                ),
-                                              ),
-                                            );
-                                          }
-                                        },
-                                        children: List.generate(
-                                          historial.commandHistory.length,
-                                          (index) => InstructionTile(
-                                            key: ValueKey('instruction_$index'),
-                                            color: processInstruction(historial
-                                                .commandHistory[index]
-                                                .toUiString()),
-                                            tilePadding: processPadding(
-                                              historial.commandHistory[index]
-                                                  .toUiString(),
-                                            ),
-                                            title: historial
-                                                .commandHistory[index]
-                                                .toUiString(),
-                                            trailing: setTrailing(
-                                              historial.commandHistory[index]
-                                                  .toUiString(),
-                                              index,
-                                            ),
-                                            index: index,
-                                          ),
-                                        ),
-                                      ),
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
+      body: pageBody,
     );
   }
 }

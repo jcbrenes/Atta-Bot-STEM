@@ -52,6 +52,15 @@ class SimplifiedModeProvider extends ChangeNotifier {
 }
 
 class _BotControlPageState extends State<BotControlPage> {
+  final BoxDecoration bodyDecoration = BoxDecoration(
+    color: neutralDarkBlue,
+    borderRadius: BorderRadius.circular(20),
+    border: Border.all(
+      color: Colors.white,
+      width: 3,
+    ),
+  );
+
   @override
   void initState() {
     super.initState();
@@ -129,7 +138,7 @@ class _BotControlPageState extends State<BotControlPage> {
                     child: ConstrainedBox(
                       constraints: BoxConstraints(
                         maxWidth: w * 0.9,
-                        minWidth: 300,
+                        minWidth: (w * 0.9).clamp(0, 300).toDouble(),
                         maxHeight: historyHeight,
                         minHeight: historyHeight,
                       ),
@@ -164,7 +173,7 @@ class _BotControlPageState extends State<BotControlPage> {
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
                     maxWidth: w * 0.9,
-                    minWidth: 280,
+                    minWidth: (w * 0.9).clamp(0, 280).toDouble(),
                   ),
                   child: const SizedBox(
                     height: 320,
@@ -205,7 +214,18 @@ class _BotControlPageState extends State<BotControlPage> {
       return LayoutBuilder(
         builder: (context, constraints) => Container(
           color: neutralDarkBlue,
-          child: buildContent(constraints.maxWidth, constraints.maxHeight),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(10, isLandscape ? 5 : 0, 10, 12),
+            child: Container(
+              decoration: bodyDecoration,
+              child: LayoutBuilder(
+                builder: (context, innerConstraints) => buildContent(
+                  innerConstraints.maxWidth,
+                  innerConstraints.maxHeight,
+                ),
+              ),
+            ),
+          ),
         ),
       );
     }
@@ -292,7 +312,18 @@ class _BotControlPageState extends State<BotControlPage> {
       body: LayoutBuilder(
         builder: (context, constraints) => Container(
           color: neutralDarkBlue,
-          child: buildContent(constraints.maxWidth, constraints.maxHeight),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(10, isLandscape ? 5 : 0, 10, 12),
+            child: Container(
+              decoration: bodyDecoration,
+              child: LayoutBuilder(
+                builder: (context, innerConstraints) => buildContent(
+                  innerConstraints.maxWidth,
+                  innerConstraints.maxHeight,
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );

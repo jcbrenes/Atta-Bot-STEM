@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_tec/features/commands/components/warning_mode_dialog.dart';
+import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog.dart';
+import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog_for_simplified.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
 import 'package:proyecto_tec/pages/bot_control_page.dart';
 import 'package:proyecto_tec/pages/home_page.dart';
@@ -32,6 +34,7 @@ class LandingPage extends StatefulWidget {
 class _LandingPageState extends State<LandingPage> {
   NavigationService navService = DependencyManager().getNavigationService();
   int _selectedIndex = 7;
+  late final PageController _portraitPageController;
   // Navigator key for the left pane (BotControlPage) in landscape
   final GlobalKey<NavigatorState> _leftPaneNavKey = GlobalKey<NavigatorState>();
   // Navigator key for the right pane (HistoryPage) in landscape
@@ -248,7 +251,89 @@ class _LandingPageState extends State<LandingPage> {
                         fontWeight: FontWeight.w700),
                     backgroundColor: Colors.transparent,
                   )
-                : null,
+                : AppBar(
+                    title: const Text('Atta-Bot Educativo'),
+                    centerTitle: true,
+                    titleTextStyle: const TextStyle(
+                      color: neutralWhite,
+                      fontSize: 18.0,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w700,
+                    ),
+                    automaticallyImplyLeading: false,
+                    leading: Builder(
+                      builder: (context) {
+                        final bool isTabletPortrait =
+                            MediaQuery.of(context).size.width >= 600;
+                        final double leftIconSize =
+                            isTabletPortrait ? 24.0 : 16.0;
+                        return IconButton(
+                          splashRadius: isTabletPortrait ? 30 : null,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isTabletPortrait ? 14 : 8,
+                          ),
+                          icon: Image.asset(
+                            'assets/button_icons/left_arrow.png',
+                            color: neutralWhite,
+                            height: leftIconSize,
+                            width: leftIconSize,
+                          ),
+                          color: neutralWhite,
+                          onPressed: () {
+                            _handleBackNavigation();
+                          },
+                        );
+                      },
+                    ),
+                    backgroundColor: Colors.transparent,
+                    bottom: PreferredSize(
+                      preferredSize: const Size.fromHeight(24),
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Text(
+                          widget.initialSimplifiedMode
+                              ? 'Modo Simplificado'
+                              : 'Modo Manual',
+                          style: const TextStyle(
+                            color: neutralWhite,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ),
+                    ),
+                    actions: <Widget>[
+                      Builder(
+                        builder: (context) {
+                          final bool isTabletPortrait =
+                              MediaQuery.of(context).size.width >= 600;
+                          final double questionIconSize =
+                              isTabletPortrait ? 24.0 : 16.0;
+                          return IconButton(
+                            splashRadius: isTabletPortrait ? 30 : null,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isTabletPortrait ? 14 : 8,
+                            ),
+                            icon: Image.asset(
+                              'assets/button_icons/question_mark.png',
+                              color: neutralWhite,
+                              height: questionIconSize,
+                              width: questionIconSize,
+                            ),
+                            color: neutralWhite,
+                            onPressed: () {
+                              if (widget.initialSimplifiedMode) {
+                                HelpDialogForSimplifiedMode.show(context);
+                              } else {
+                                HelpDialog.show(context);
+                              }
+                            },
+                          );
+                        },
+                      ),
+                    ],
+                  ),
             body:
                 isLandscape ? _buildLandscapeLayout() : _buildPortraitLayout(),
             bottomNavigationBar: isLandscape ? null : _buildNavigationBar(),
@@ -285,47 +370,49 @@ class _LandingPageState extends State<LandingPage> {
   @override
   void initState() {
     super.initState();
+    _portraitPageController = PageController(
+      initialPage: _selectedIndex - 7,
+      viewportFraction: 0.90,
+    );
     // Expose the right pane navigator key globally for dialogs from the left pane
     SplitNav.rightPaneNavKey = _rightPaneNavKey;
   }
 
   @override
   void dispose() {
+    _portraitPageController.dispose();
     if (SplitNav.rightPaneNavKey == _rightPaneNavKey) {
       SplitNav.rightPaneNavKey = null;
     }
     super.dispose();
   }
 
+  List<Widget> _buildPortraitPages() {
+    return [
+      BotControlPage(
+        embedded: true,
+        simplifiedMode: widget.initialSimplifiedMode,
+        defaultDistance: widget.initialDistance,
+        defaultAngle: widget.initialAngle,
+        defaultCycle: widget.initialCycle,
+      ),
+      const HistoryPage(embedded: true),
+      const SimulatorPage(embedded: true),
+    ];
+  }
+
   Widget _buildPortraitLayout() {
-    return GestureDetector(
-      onHorizontalDragEnd: (DragEndDetails details) {
-        if (details.primaryVelocity! > 0) {
-          // swipe derecha (volver)
-          if (_selectedIndex > 7) {
-            setState(() {
-              _selectedIndex--;
-            });
-          }
-        } else if (details.primaryVelocity! < 0) {
-          // swipe izquierda (avanzar)
-          if (_selectedIndex < 9) {
-            setState(() {
-              _selectedIndex++;
-            });
-          }
-        }
+    final pages = _buildPortraitPages();
+    return PageView.builder(
+      controller: _portraitPageController,
+      padEnds: true,
+      itemCount: pages.length,
+      onPageChanged: (pageIndex) {
+        setState(() {
+          _selectedIndex = pageIndex + 7;
+        });
       },
-      child: <Widget>[
-        BotControlPage(
-          simplifiedMode: widget.initialSimplifiedMode,
-          defaultDistance: widget.initialDistance,
-          defaultAngle: widget.initialAngle,
-          defaultCycle: widget.initialCycle,
-        ),
-        const HistoryPage(),
-        const SimulatorPage(),
-      ][_selectedIndex - 7],
+      itemBuilder: (context, index) => pages[index],
     );
   }
 
@@ -371,9 +458,19 @@ class _LandingPageState extends State<LandingPage> {
         selectedIndex: _selectedIndex,
         height: 10,
         onDestinationSelected: (index) {
+          if (index < 7 || index > 9) return;
+
           setState(() {
             _selectedIndex = index;
           });
+
+          if (_portraitPageController.hasClients) {
+            _portraitPageController.animateToPage(
+              index - 7,
+              duration: const Duration(milliseconds: 280),
+              curve: Curves.easeOutCubic,
+            );
+          }
         },
       ),
     );
