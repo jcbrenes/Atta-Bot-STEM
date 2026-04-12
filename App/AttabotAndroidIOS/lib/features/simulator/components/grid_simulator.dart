@@ -174,12 +174,16 @@ class _SimulationAreaState extends State<SimulationArea> {
           instructionMarkerLabel = "Lápiz activado";
           penActive = true;
         } else if (inst.contains("lapiz desactivado")) {
+          markInstructionStart = true;
+          instructionMarkerLabel = "Lápiz desactivado";
           penActive = false;
         } else if (inst.contains("deteccion iniciada")) {
           markInstructionStart = true;
           instructionMarkerLabel = "Detección de objetos activada";
           obstacleDetectionActive = true;
         } else if (inst.contains("deteccion finalizada")) {
+          markInstructionStart = true;
+          instructionMarkerLabel = "Detección de objetos desactivada";
           obstacleDetectionActive = false;
         }
 
