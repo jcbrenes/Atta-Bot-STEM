@@ -251,7 +251,7 @@ class _SimulationAreaState extends State<SimulationArea> {
                   builder: (context, angleDegrees, child) {
                     return Transform.rotate(
                       angle: _radians(angleDegrees),
-                      origin: Offset(objectSize / 2, objectSize / 3),
+                      alignment: Alignment.center,
                       child: child,
                     );
                   },
