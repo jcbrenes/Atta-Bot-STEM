@@ -245,6 +245,12 @@ class _SimulationAreaState extends State<SimulationArea> {
     return null;
   }
 
+  List<_InstructionMarker> _markersAtPosition(Offset position) {
+    return instructionMarkers
+        .where((marker) => (marker.position - position).distance < 0.01)
+        .toList();
+  }
+
   void _addTrailSegment(Offset start, Offset end) {
     if (start == end) return;
 
@@ -333,8 +339,9 @@ class _SimulationAreaState extends State<SimulationArea> {
                             selectedInstructionMarkerIndex! <
                                 instructionMarkers.length)
                           _InstructionMarkerTooltip(
-                            marker: instructionMarkers[
-                                selectedInstructionMarkerIndex!],
+                            markers: _markersAtPosition(instructionMarkers[
+                                    selectedInstructionMarkerIndex!]
+                                .position),
                             position: _worldToScreen(
                               instructionMarkers[
                                       selectedInstructionMarkerIndex!]
@@ -459,28 +466,28 @@ class _InstructionMarker {
 
 class _InstructionMarkerTooltip extends StatelessWidget {
   static const double _width = 220;
-  static const double _estimatedHeight = 56;
 
-  final _InstructionMarker marker;
+  final List<_InstructionMarker> markers;
   final Offset position;
   final Size canvasSize;
 
   const _InstructionMarkerTooltip({
-    required this.marker,
+    required this.markers,
     required this.position,
     required this.canvasSize,
   });
 
   @override
   Widget build(BuildContext context) {
+    final estimatedHeight = 24.0 + (markers.length * 26.0);
     final tooltipWidth = min(_width, max(80.0, canvasSize.width - 16.0));
     final maxLeft = max(8.0, canvasSize.width - tooltipWidth - 8.0);
     final left =
         (position.dx - (tooltipWidth / 2)).clamp(8.0, maxLeft).toDouble();
-    final hasSpaceAbove = position.dy > _estimatedHeight + 18;
+    final hasSpaceAbove = position.dy > estimatedHeight + 18;
     final rawTop =
-        hasSpaceAbove ? position.dy - _estimatedHeight - 12 : position.dy + 12;
-    final maxTop = max(8.0, canvasSize.height - _estimatedHeight - 8.0);
+        hasSpaceAbove ? position.dy - estimatedHeight - 12 : position.dy + 12;
+    final maxTop = max(8.0, canvasSize.height - estimatedHeight - 8.0);
     final top = rawTop.clamp(8.0, maxTop).toDouble();
 
     return Positioned(
@@ -501,29 +508,40 @@ class _InstructionMarkerTooltip extends StatelessWidget {
             ),
           ],
         ),
-        child: Row(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 9,
-              height: 9,
-              decoration: const BoxDecoration(
-                color: primaryOrange,
-                shape: BoxShape.circle,
+            for (int i = 0; i < markers.length; i++) ...[
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 9,
+                    height: 9,
+                    decoration: const BoxDecoration(
+                      color: primaryOrange,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      markers[i].label,
+                      style: const TextStyle(
+                        color: neutralWhite,
+                        fontFamily: "Poppins",
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                marker.label,
-                style: const TextStyle(
-                  color: neutralWhite,
-                  fontFamily: "Poppins",
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+              if (i < markers.length - 1)
+                const SizedBox(
+                  height: 6,
                 ),
-              ),
-            ),
+            ],
           ],
         ),
       ),
@@ -534,6 +552,7 @@ class _InstructionMarkerTooltip extends StatelessWidget {
 class _PenTrailPainter extends CustomPainter {
   static const double _strokeWidth = 3;
   static const double _markerRadius = 4;
+  static const double _overlapDistance = 0.01;
 
   final List<_TrailSegment> segments;
   final int segmentCount;
@@ -583,13 +602,66 @@ class _PenTrailPainter extends CustomPainter {
       ..style = PaintingStyle.fill
       ..isAntiAlias = true;
 
+    final paintedPositions = <Offset>[];
     for (final marker in markers) {
+      if (paintedPositions.any(
+        (position) => (position - marker.position).distance < _overlapDistance,
+      )) {
+        continue;
+      }
+
+      final markerCount = markers
+          .where(
+            (other) =>
+                (other.position - marker.position).distance < _overlapDistance,
+          )
+          .length;
+      paintedPositions.add(marker.position);
+
+      final screenPosition = _toScreen(marker.position, size);
       canvas.drawCircle(
-        _toScreen(marker.position, size),
+        screenPosition,
         _markerRadius,
         markerPaint,
       );
+
+      if (markerCount > 1) {
+        _paintMarkerCount(canvas, screenPosition, markerCount);
+      }
     }
+  }
+
+  void _paintMarkerCount(Canvas canvas, Offset markerPosition, int count) {
+    final badgeCenter = markerPosition + const Offset(7, -7);
+    final badgePaint = Paint()
+      ..color = neutralDarkBlueAD
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
+    final badgeBorderPaint = Paint()
+      ..color = neutralWhite
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke
+      ..isAntiAlias = true;
+
+    canvas.drawCircle(badgeCenter, 7, badgePaint);
+    canvas.drawCircle(badgeCenter, 7, badgeBorderPaint);
+
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: count.toString(),
+        style: const TextStyle(
+          color: neutralWhite,
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    textPainter.paint(
+      canvas,
+      badgeCenter - Offset(textPainter.width / 2, textPainter.height / 2),
+    );
   }
 
   @override
