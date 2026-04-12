@@ -35,13 +35,15 @@ class _SimulationAreaState extends State<SimulationArea> {
   bool obstacleDetectionActive = false;
   bool penActive = false;
   final List<_TrailSegment> trailSegments = [];
-  final List<Offset> instructionMarkers = [];
+  final List<_InstructionMarker> instructionMarkers = [];
   int trailSegmentCount = 0;
   int instructionMarkerCount = 0;
+  int? selectedInstructionMarkerIndex;
 
   final double step = 30;
   final double objectSize = 60;
   final double gridCellSize = 30;
+  static const double _markerHitRadius = 14;
 
   @override
   void initState() {
@@ -128,9 +130,12 @@ class _SimulationAreaState extends State<SimulationArea> {
         previousWorldPosition = worldPosition;
         bool moved = false;
         bool markInstructionStart = false;
+        String? instructionMarkerLabel;
 
         if (inst.contains("avanzar")) {
           markInstructionStart = true;
+          instructionMarkerLabel =
+              "Avanzar ${_instructionValue(instruction)} cm";
           worldPosition = worldPosition.translate(
             step * cos(angle),
             step * sin(angle),
@@ -138,6 +143,8 @@ class _SimulationAreaState extends State<SimulationArea> {
           moved = true;
         } else if (inst.contains("retroceder")) {
           markInstructionStart = true;
+          instructionMarkerLabel =
+              "Retroceder ${_instructionValue(instruction)} cm";
           worldPosition = worldPosition.translate(
             -step * cos(angle),
             -step * sin(angle),
@@ -152,26 +159,32 @@ class _SimulationAreaState extends State<SimulationArea> {
 
             if (inst.contains("izquierda")) {
               markInstructionStart = true;
+              instructionMarkerLabel =
+                  "Girar a la izquierda ${_formatDegrees(degrees)}°";
               rotation -= degrees;
             } else if (inst.contains("derecha")) {
               markInstructionStart = true;
+              instructionMarkerLabel =
+                  "Girar a la derecha ${_formatDegrees(degrees)}°";
               rotation += degrees;
             }
           }
         } else if (inst.contains("lapiz activado")) {
           markInstructionStart = true;
+          instructionMarkerLabel = "Lápiz activado";
           penActive = true;
         } else if (inst.contains("lapiz desactivado")) {
           penActive = false;
         } else if (inst.contains("deteccion iniciada")) {
           markInstructionStart = true;
+          instructionMarkerLabel = "Detección de objetos activada";
           obstacleDetectionActive = true;
         } else if (inst.contains("deteccion finalizada")) {
           obstacleDetectionActive = false;
         }
 
-        if (markInstructionStart) {
-          _addInstructionMarker(previousWorldPosition);
+        if (markInstructionStart && instructionMarkerLabel != null) {
+          _addInstructionMarker(previousWorldPosition, instructionMarkerLabel);
         }
 
         if (moved) {
@@ -183,9 +196,53 @@ class _SimulationAreaState extends State<SimulationArea> {
 
   double _radians(double degrees) => degrees * pi / 180;
 
-  void _addInstructionMarker(Offset position) {
-    instructionMarkers.add(position);
+  String _instructionValue(String instruction) {
+    final match = RegExp(r'(\d+(?:[\.,]\d+)?)').firstMatch(instruction);
+    if (match == null) return "1";
+
+    final value = double.tryParse(match.group(1)!.replaceAll(',', '.'));
+    if (value == null) return match.group(1)!;
+    return _formatDegrees(value);
+  }
+
+  String _formatDegrees(double degrees) {
+    if (degrees % 1 == 0) return degrees.toInt().toString();
+    return degrees.toStringAsFixed(1);
+  }
+
+  void _addInstructionMarker(Offset position, String label) {
+    instructionMarkers.add(
+      _InstructionMarker(
+        position: position,
+        label: label,
+      ),
+    );
     instructionMarkerCount++;
+  }
+
+  Offset _worldToScreen(Offset world, Size size, Offset cameraWorldPosition) {
+    final center = Offset(size.width / 2, size.height / 2);
+    return center + (world - cameraWorldPosition);
+  }
+
+  int? _findTappedInstructionMarker(
+    Offset tapPosition,
+    Size size,
+    Offset cameraWorldPosition,
+  ) {
+    for (int i = instructionMarkers.length - 1; i >= 0; i--) {
+      final markerPosition = _worldToScreen(
+        instructionMarkers[i].position,
+        size,
+        cameraWorldPosition,
+      );
+
+      if ((tapPosition - markerPosition).distance <= _markerHitRadius) {
+        return i;
+      }
+    }
+
+    return null;
   }
 
   void _addTrailSegment(Offset start, Offset end) {
@@ -254,6 +311,39 @@ class _SimulationAreaState extends State<SimulationArea> {
                             targetWorldPosition: worldPosition,
                           ),
                         ),
+                        GestureDetector(
+                          behavior: HitTestBehavior.translucent,
+                          onTapDown: (details) {
+                            final markerIndex = _findTappedInstructionMarker(
+                              details.localPosition,
+                              size,
+                              animatedWorldPosition,
+                            );
+
+                            setState(() {
+                              selectedInstructionMarkerIndex = markerIndex;
+                            });
+                          },
+                          child: SizedBox(
+                            width: size.width,
+                            height: size.height,
+                          ),
+                        ),
+                        if (selectedInstructionMarkerIndex != null &&
+                            selectedInstructionMarkerIndex! <
+                                instructionMarkers.length)
+                          _InstructionMarkerTooltip(
+                            marker: instructionMarkers[
+                                selectedInstructionMarkerIndex!],
+                            position: _worldToScreen(
+                              instructionMarkers[
+                                      selectedInstructionMarkerIndex!]
+                                  .position,
+                              size,
+                              animatedWorldPosition,
+                            ),
+                            canvasSize: size,
+                          ),
                       ],
                     ),
                   );
@@ -357,13 +447,97 @@ class _TrailSegment {
   });
 }
 
+class _InstructionMarker {
+  final Offset position;
+  final String label;
+
+  const _InstructionMarker({
+    required this.position,
+    required this.label,
+  });
+}
+
+class _InstructionMarkerTooltip extends StatelessWidget {
+  static const double _width = 220;
+  static const double _estimatedHeight = 56;
+
+  final _InstructionMarker marker;
+  final Offset position;
+  final Size canvasSize;
+
+  const _InstructionMarkerTooltip({
+    required this.marker,
+    required this.position,
+    required this.canvasSize,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tooltipWidth = min(_width, max(80.0, canvasSize.width - 16.0));
+    final maxLeft = max(8.0, canvasSize.width - tooltipWidth - 8.0);
+    final left =
+        (position.dx - (tooltipWidth / 2)).clamp(8.0, maxLeft).toDouble();
+    final hasSpaceAbove = position.dy > _estimatedHeight + 18;
+    final rawTop =
+        hasSpaceAbove ? position.dy - _estimatedHeight - 12 : position.dy + 12;
+    final maxTop = max(8.0, canvasSize.height - _estimatedHeight - 8.0);
+    final top = rawTop.clamp(8.0, maxTop).toDouble();
+
+    return Positioned(
+      left: left,
+      top: top,
+      width: tooltipWidth,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: neutralDarkBlueAD,
+          border: Border.all(color: neutralWhite, width: 2),
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.25),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 9,
+              height: 9,
+              decoration: const BoxDecoration(
+                color: primaryOrange,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                marker.label,
+                style: const TextStyle(
+                  color: neutralWhite,
+                  fontFamily: "Poppins",
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _PenTrailPainter extends CustomPainter {
   static const double _strokeWidth = 3;
   static const double _markerRadius = 4;
 
   final List<_TrailSegment> segments;
   final int segmentCount;
-  final List<Offset> markers;
+  final List<_InstructionMarker> markers;
   final int markerCount;
   final Offset worldPosition;
   final Offset targetWorldPosition;
@@ -411,7 +585,7 @@ class _PenTrailPainter extends CustomPainter {
 
     for (final marker in markers) {
       canvas.drawCircle(
-        _toScreen(marker, size),
+        _toScreen(marker.position, size),
         _markerRadius,
         markerPaint,
       );
