@@ -35,7 +35,9 @@ class _SimulationAreaState extends State<SimulationArea> {
   bool obstacleDetectionActive = false;
   bool penActive = false;
   final List<_TrailSegment> trailSegments = [];
+  final List<Offset> instructionMarkers = [];
   int trailSegmentCount = 0;
+  int instructionMarkerCount = 0;
 
   final double step = 30;
   final double objectSize = 60;
@@ -125,14 +127,17 @@ class _SimulationAreaState extends State<SimulationArea> {
         double angle = _radians(rotation - 90);
         previousWorldPosition = worldPosition;
         bool moved = false;
+        bool markInstructionStart = false;
 
         if (inst.contains("avanzar")) {
+          markInstructionStart = true;
           worldPosition = worldPosition.translate(
             step * cos(angle),
             step * sin(angle),
           );
           moved = true;
         } else if (inst.contains("retroceder")) {
+          markInstructionStart = true;
           worldPosition = worldPosition.translate(
             -step * cos(angle),
             -step * sin(angle),
@@ -146,19 +151,27 @@ class _SimulationAreaState extends State<SimulationArea> {
             previousRotation = rotation;
 
             if (inst.contains("izquierda")) {
+              markInstructionStart = true;
               rotation -= degrees;
             } else if (inst.contains("derecha")) {
+              markInstructionStart = true;
               rotation += degrees;
             }
           }
         } else if (inst.contains("lapiz activado")) {
+          markInstructionStart = true;
           penActive = true;
         } else if (inst.contains("lapiz desactivado")) {
           penActive = false;
         } else if (inst.contains("deteccion iniciada")) {
+          markInstructionStart = true;
           obstacleDetectionActive = true;
         } else if (inst.contains("deteccion finalizada")) {
           obstacleDetectionActive = false;
+        }
+
+        if (markInstructionStart) {
+          _addInstructionMarker(previousWorldPosition);
         }
 
         if (moved) {
@@ -169,6 +182,11 @@ class _SimulationAreaState extends State<SimulationArea> {
   }
 
   double _radians(double degrees) => degrees * pi / 180;
+
+  void _addInstructionMarker(Offset position) {
+    instructionMarkers.add(position);
+    instructionMarkerCount++;
+  }
 
   void _addTrailSegment(Offset start, Offset end) {
     if (start == end) return;
@@ -230,6 +248,8 @@ class _SimulationAreaState extends State<SimulationArea> {
                           painter: _PenTrailPainter(
                             segments: trailSegments,
                             segmentCount: trailSegmentCount,
+                            markers: instructionMarkers,
+                            markerCount: instructionMarkerCount,
                             worldPosition: animatedWorldPosition,
                             targetWorldPosition: worldPosition,
                           ),
@@ -339,15 +359,20 @@ class _TrailSegment {
 
 class _PenTrailPainter extends CustomPainter {
   static const double _strokeWidth = 3;
+  static const double _markerRadius = 4;
 
   final List<_TrailSegment> segments;
   final int segmentCount;
+  final List<Offset> markers;
+  final int markerCount;
   final Offset worldPosition;
   final Offset targetWorldPosition;
 
   _PenTrailPainter({
     required this.segments,
     required this.segmentCount,
+    required this.markers,
+    required this.markerCount,
     required this.worldPosition,
     required this.targetWorldPosition,
   });
@@ -359,8 +384,6 @@ class _PenTrailPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (segments.isEmpty) return;
-
     final trailPaint = Paint()
       ..strokeWidth = _strokeWidth
       ..style = PaintingStyle.stroke
@@ -380,11 +403,25 @@ class _PenTrailPainter extends CustomPainter {
         trailPaint,
       );
     }
+
+    final markerPaint = Paint()
+      ..color = primaryOrange
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
+
+    for (final marker in markers) {
+      canvas.drawCircle(
+        _toScreen(marker, size),
+        _markerRadius,
+        markerPaint,
+      );
+    }
   }
 
   @override
   bool shouldRepaint(covariant _PenTrailPainter oldDelegate) {
     return oldDelegate.segmentCount != segmentCount ||
+        oldDelegate.markerCount != markerCount ||
         oldDelegate.worldPosition != worldPosition ||
         oldDelegate.targetWorldPosition != targetWorldPosition;
   }
