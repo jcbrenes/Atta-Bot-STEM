@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:proyecto_tec/shared/styles/colors.dart';
 import 'object_simulator.dart';
 
 class SimulationArea extends StatefulWidget {
@@ -12,7 +13,7 @@ class SimulationArea extends StatefulWidget {
   final bool paused;
 
   const SimulationArea({
-    Key? key,
+    super.key,
     required this.instructions,
     required this.paused,
     this.width = 300,
@@ -20,7 +21,7 @@ class SimulationArea extends StatefulWidget {
     this.onInstructionChange,
     this.useImage = false,
     this.botImagePath,
-  }) : super(key: key);
+  });
 
   @override
   State<SimulationArea> createState() => _SimulationAreaState();
@@ -33,8 +34,8 @@ class _SimulationAreaState extends State<SimulationArea> {
   double previousRotation = 0;
   bool obstacleDetectionActive = false;
   bool penActive = false;
-  final List<List<Offset>> penPaths = [];
-  int penPointCount = 0;
+  final List<_TrailSegment> trailSegments = [];
+  int trailSegmentCount = 0;
 
   final double step = 30;
   final double objectSize = 60;
@@ -84,9 +85,11 @@ class _SimulationAreaState extends State<SimulationArea> {
 
         while (j < instructions.length && nest > 0) {
           final current = _normalizeInstruction(instructions[j]);
-          if (current.startsWith("ciclo abierto"))
+          if (current.startsWith("ciclo abierto")) {
             nest++;
-          else if (current.startsWith("ciclo cerrado")) nest--;
+          } else if (current.startsWith("ciclo cerrado")) {
+            nest--;
+          }
           j++;
         }
 
@@ -142,15 +145,14 @@ class _SimulationAreaState extends State<SimulationArea> {
             final degrees = double.parse(match.group(1)!);
             previousRotation = rotation;
 
-            if (inst.contains("izquierda"))
+            if (inst.contains("izquierda")) {
               rotation -= degrees;
-            else if (inst.contains("derecha")) rotation += degrees;
+            } else if (inst.contains("derecha")) {
+              rotation += degrees;
+            }
           }
         } else if (inst.contains("lapiz activado")) {
-          if (!penActive) {
-            penActive = true;
-            _startPenTrail();
-          }
+          penActive = true;
         } else if (inst.contains("lapiz desactivado")) {
           penActive = false;
         } else if (inst.contains("deteccion iniciada")) {
@@ -159,8 +161,8 @@ class _SimulationAreaState extends State<SimulationArea> {
           obstacleDetectionActive = false;
         }
 
-        if (moved && penActive) {
-          _extendPenTrail(worldPosition);
+        if (moved) {
+          _addTrailSegment(previousWorldPosition, worldPosition);
         }
       });
     }
@@ -168,23 +170,17 @@ class _SimulationAreaState extends State<SimulationArea> {
 
   double _radians(double degrees) => degrees * pi / 180;
 
-  void _startPenTrail() {
-    penPaths.add([worldPosition]);
-    penPointCount++;
-  }
+  void _addTrailSegment(Offset start, Offset end) {
+    if (start == end) return;
 
-  void _extendPenTrail(Offset position) {
-    if (penPaths.isEmpty) {
-      penPaths.add([position]);
-      penPointCount++;
-      return;
-    }
-
-    final currentPath = penPaths.last;
-    if (currentPath.isEmpty || currentPath.last != position) {
-      currentPath.add(position);
-      penPointCount++;
-    }
+    trailSegments.add(
+      _TrailSegment(
+        start: start,
+        end: end,
+        color: penActive ? secondaryPurple : primaryBlue,
+      ),
+    );
+    trailSegmentCount++;
   }
 
   @override
@@ -194,7 +190,7 @@ class _SimulationAreaState extends State<SimulationArea> {
         final size = Size(constraints.maxWidth, constraints.maxHeight);
         final robotLeft = (size.width - objectSize) / 2;
         final robotTop = (size.height - objectSize) / 2;
-        final gridLineColor = const Color(0xFF2E6CC8).withOpacity(0.35);
+        final gridLineColor = const Color(0xFF2E6CC8).withValues(alpha: 0.35);
 
         return Container(
           width: widget.width,
@@ -231,10 +227,11 @@ class _SimulationAreaState extends State<SimulationArea> {
                         ),
                         CustomPaint(
                           size: size,
-                          painter: PenTrailPainter(
-                            paths: penPaths,
-                            pointCount: penPointCount,
+                          painter: _PenTrailPainter(
+                            segments: trailSegments,
+                            segmentCount: trailSegmentCount,
                             worldPosition: animatedWorldPosition,
+                            targetWorldPosition: worldPosition,
                           ),
                         ),
                       ],
@@ -328,19 +325,31 @@ class GridBackgroundPainter extends CustomPainter {
   }
 }
 
-class PenTrailPainter extends CustomPainter {
-  final List<List<Offset>> paths;
-  final int pointCount;
-  final Offset worldPosition;
+class _TrailSegment {
+  final Offset start;
+  final Offset end;
   final Color color;
-  final double strokeWidth;
 
-  PenTrailPainter({
-    required this.paths,
-    required this.pointCount,
+  const _TrailSegment({
+    required this.start,
+    required this.end,
+    required this.color,
+  });
+}
+
+class _PenTrailPainter extends CustomPainter {
+  static const double _strokeWidth = 3;
+
+  final List<_TrailSegment> segments;
+  final int segmentCount;
+  final Offset worldPosition;
+  final Offset targetWorldPosition;
+
+  _PenTrailPainter({
+    required this.segments,
+    required this.segmentCount,
     required this.worldPosition,
-    this.color = const Color(0xFF25B35A),
-    this.strokeWidth = 3,
+    required this.targetWorldPosition,
   });
 
   Offset _toScreen(Offset world, Size size) {
@@ -350,42 +359,33 @@ class PenTrailPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (paths.isEmpty) return;
+    if (segments.isEmpty) return;
 
     final trailPaint = Paint()
-      ..color = color
-      ..strokeWidth = strokeWidth
+      ..strokeWidth = _strokeWidth
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
       ..isAntiAlias = true;
 
-    for (final pathPoints in paths) {
-      if (pathPoints.isEmpty) continue;
-      if (pathPoints.length == 1) {
-        final point = _toScreen(pathPoints.first, size);
-        canvas.drawCircle(point, strokeWidth / 1.5, trailPaint);
-        continue;
-      }
-
-      final path = Path();
-      final first = _toScreen(pathPoints.first, size);
-      path.moveTo(first.dx, first.dy);
-
-      for (int i = 1; i < pathPoints.length; i++) {
-        final point = _toScreen(pathPoints[i], size);
-        path.lineTo(point.dx, point.dy);
-      }
-
-      canvas.drawPath(path, trailPaint);
+    for (int i = 0; i < segments.length; i++) {
+      final segment = segments[i];
+      final end = i == segments.length - 1 && segment.end == targetWorldPosition
+          ? worldPosition
+          : segment.end;
+      trailPaint.color = segment.color;
+      canvas.drawLine(
+        _toScreen(segment.start, size),
+        _toScreen(end, size),
+        trailPaint,
+      );
     }
   }
 
   @override
-  bool shouldRepaint(covariant PenTrailPainter oldDelegate) {
-    return oldDelegate.pointCount != pointCount ||
+  bool shouldRepaint(covariant _PenTrailPainter oldDelegate) {
+    return oldDelegate.segmentCount != segmentCount ||
         oldDelegate.worldPosition != worldPosition ||
-        oldDelegate.color != color ||
-        oldDelegate.strokeWidth != strokeWidth;
+        oldDelegate.targetWorldPosition != targetWorldPosition;
   }
 }
