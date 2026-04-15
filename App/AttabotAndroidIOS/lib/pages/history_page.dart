@@ -174,7 +174,6 @@ class _HistoryPageState extends State<HistoryPage> {
         (c) => c.toUiString().contains('Ciclo cerrado'),
       );
 
-      
       if (cycleStartIndex != -1 && cycleEndIndex != -1) {
         if (movingCommand.contains('Ciclo abierto') ||
             movingCommand.contains('Ciclo cerrado')) {
@@ -262,147 +261,139 @@ class _HistoryPageState extends State<HistoryPage> {
         MediaQuery.of(context).orientation == Orientation.landscape;
     final double screenWidth = MediaQuery.of(context).size.width;
     final bool isTabletPortrait = !isLandscape && screenWidth >= 600;
-    Widget pageBody = LayoutBuilder(
-        builder: (context, constraints) {
-          final double switchMaxWidth = isTabletPortrait
-              ? (constraints.maxWidth * 0.78).clamp(300.0, 520.0)
-              : (constraints.maxWidth * 0.8).clamp(300.0, 540.0);
-
-          return Padding(
-            padding: EdgeInsets.fromLTRB(10, isLandscape ? 5 : 0, 10, 12),
-            child: Column(
-              children: [
-                Expanded(
-                  child: Container(
-                    decoration: bodyDecoration,
-                    child: Consumer<CommandService>(
-                      builder: (context, historial, child) {
-                        return Column(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(10, 5, 0, 0),
-                              child: Row(
-                                children: [
-                                  const SizedBox(width: 10),
-                                  pageTitle,
-                                  const Spacer(),
-                                  const InstructionHistoryDropdown(),
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              child: historial.commandHistory.isEmpty
-                                  ? Center(
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Image.asset(
-                                            'assets/surprised face.png',
-                                            width: 90,
-                                            height: 90,
-                                          ),
-                                          const SizedBox(height: 10),
-                                          Text(
-                                            'Aún no se han agregado instrucciones...',
-                                            style: TextStyle(
-                                              color: Colors.white
-                                                  .withValues(alpha: 0.3),
-                                              fontFamily: 'Poppins',
-                                              fontWeight: FontWeight.w500,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                        ],
+    Widget pageBody = SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+        child: Container(
+          width: double.infinity,
+          decoration: bodyDecoration,
+          child: Column(
+            children: [
+              Expanded(
+                child: Consumer<CommandService>(
+                  builder: (context, historial, child) {
+                    return Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(10, 5, 0, 0),
+                          child: Row(
+                            children: [
+                              const SizedBox(width: 10),
+                              pageTitle,
+                              const Spacer(),
+                              const InstructionHistoryDropdown(),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: historial.commandHistory.isEmpty
+                              ? Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Image.asset(
+                                        'assets/surprised face.png',
+                                        width: 90,
+                                        height: 90,
                                       ),
-                                    )
-                                  : RawScrollbar(
-                                      trackVisibility: true,
-                                      thumbVisibility: true,
-                                      controller: _historyScrollController,
-                                      interactive: true,
-                                      radius: const Radius.circular(10),
-                                      thumbColor: neutralWhite,
-                                      trackColor:
-                                          neutralWhite.withValues(alpha: 0.2),
-                                      trackRadius: const Radius.circular(10),
-                                      padding: const EdgeInsets.fromLTRB(
-                                        0,
-                                        0,
-                                        20,
-                                        0,
-                                      ),
-                                      child: ReorderableListView(
-                                        scrollController:
-                                            _historyScrollController,
-                                        proxyDecorator: _proxyDecorator,
-                                        buildDefaultDragHandles: false,
-                                        onReorder: (oldIndex, newIndex) {
-                                          if (oldIndex < newIndex) {
-                                            newIndex -= 1;
-                                          }
-                                          final commandService =
-                                              context.read<CommandService>();
-                                          if (isValidMove(oldIndex, newIndex)) {
-                                            setState(() {
-                                              commandService.reorderCommand(
-                                                oldIndex,
-                                                newIndex,
-                                              );
-                                            });
-                                            tilePadding = 10;
-                                          } else {
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(
-                                              const SnackBar(
-                                                duration: Durations.extralong4,
-                                                content: Center(
-                                                  child: Text(
-                                                    'Movimiento no válido',
-                                                  ),
-                                                ),
-                                              ),
-                                            );
-                                          }
-                                        },
-                                        children: List.generate(
-                                          historial.commandHistory.length,
-                                          (index) => InstructionTile(
-                                            key: ValueKey('instruction_$index'),
-                                            color: processInstruction(
-                                              historial.commandHistory[index]
-                                                  .toUiString(),
-                                            ),
-                                            tilePadding: processPadding(
-                                              historial.commandHistory[index]
-                                                  .toUiString(),
-                                            ),
-                                            title: historial
-                                                .commandHistory[index]
-                                                .toUiString(),
-                                            trailing: setTrailing(
-                                              historial.commandHistory[index]
-                                                  .toUiString(),
-                                              index,
-                                            ),
-                                            index: index,
-                                          ),
+                                      const SizedBox(height: 10),
+                                      Text(
+                                        'Aún no se han agregado instrucciones...',
+                                        style: TextStyle(
+                                          color:
+                                              Colors.white.withValues(alpha: 0.3),
+                                          fontFamily: 'Poppins',
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 13,
                                         ),
                                       ),
+                                    ],
+                                  ),
+                                )
+                              : RawScrollbar(
+                                  trackVisibility: true,
+                                  thumbVisibility: true,
+                                  controller: _historyScrollController,
+                                  interactive: true,
+                                  radius: const Radius.circular(10),
+                                  thumbColor: neutralWhite,
+                                  trackColor:
+                                      neutralWhite.withValues(alpha: 0.2),
+                                  trackRadius: const Radius.circular(10),
+                                  padding: const EdgeInsets.fromLTRB(
+                                    0,
+                                    0,
+                                    20,
+                                    0,
+                                  ),
+                                  child: ReorderableListView(
+                                    scrollController: _historyScrollController,
+                                    proxyDecorator: _proxyDecorator,
+                                    buildDefaultDragHandles: false,
+                                    onReorder: (oldIndex, newIndex) {
+                                      if (oldIndex < newIndex) {
+                                        newIndex -= 1;
+                                      }
+                                      final commandService =
+                                          context.read<CommandService>();
+                                      if (isValidMove(oldIndex, newIndex)) {
+                                        setState(() {
+                                          commandService.reorderCommand(
+                                            oldIndex,
+                                            newIndex,
+                                          );
+                                        });
+                                        tilePadding = 10;
+                                      } else {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                            duration: Durations.extralong4,
+                                            content: Center(
+                                              child: Text(
+                                                'Movimiento no válido',
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    children: List.generate(
+                                      historial.commandHistory.length,
+                                      (index) => InstructionTile(
+                                        key: ValueKey('instruction_$index'),
+                                        color: processInstruction(
+                                          historial.commandHistory[index]
+                                              .toUiString(),
+                                        ),
+                                        tilePadding: processPadding(
+                                          historial.commandHistory[index]
+                                              .toUiString(),
+                                        ),
+                                        title: historial.commandHistory[index]
+                                            .toUiString(),
+                                        trailing: setTrailing(
+                                          historial.commandHistory[index]
+                                              .toUiString(),
+                                          index,
+                                        ),
+                                        index: index,
+                                      ),
                                     ),
-                            ),
-                            const SizedBox(height: 20),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
+                                  ),
+                                ),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+                    );
+                  },
                 ),
-              ],
-            ),
-          );
-        },
-      );
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
 
     if (widget.embedded) {
       return pageBody;

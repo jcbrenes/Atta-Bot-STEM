@@ -438,7 +438,7 @@ class _LandingPageState extends State<LandingPage> {
           child: Navigator(
             key: _rightPaneNavKey,
             onGenerateRoute: (settings) => MaterialPageRoute(
-              builder: (_) => const HistoryPage(),
+              builder: (_) => const HistoryPage(embedded: true),
             ),
           ),
         ),

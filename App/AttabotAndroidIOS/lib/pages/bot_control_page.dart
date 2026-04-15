@@ -101,9 +101,9 @@ class _BotControlPageState extends State<BotControlPage> {
             ? (h * 0.24).clamp(220.0, 300.0).toDouble()
             : (h * 0.28).clamp(260.0, 360.0).toDouble();
         double tabletActionTopPadding =
-            isTabletPortrait ? (h * 0.105).clamp(84.0, 132.0).toDouble() : 0.0;
+          isTabletPortrait ? (h * 0.105).clamp(84.0, 132.0).toDouble() : 0.0;
         double tabletHistoryTopPadding =
-            isTabletPortrait ? (h * 0.055).clamp(36.0, 58.0).toDouble() : 0.0;
+          isTabletPortrait ? (h * 0.055).clamp(36.0, 58.0).toDouble() : 0.0;
 
         if (isTallPortrait) {
           return Padding(
@@ -113,7 +113,7 @@ class _BotControlPageState extends State<BotControlPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 76),
                   Transform.scale(
                     scale: uiScale,
                     alignment: Alignment.topCenter,
@@ -138,7 +138,7 @@ class _BotControlPageState extends State<BotControlPage> {
                     child: ConstrainedBox(
                       constraints: BoxConstraints(
                         maxWidth: w * 0.9,
-                        minWidth: (w * 0.9).clamp(0, 300).toDouble(),
+                        minWidth: 300,
                         maxHeight: historyHeight,
                         minHeight: historyHeight,
                       ),
@@ -159,7 +159,7 @@ class _BotControlPageState extends State<BotControlPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 18),
+              const SizedBox(height: 72),
               MovementMenu(
                 simplifiedMode: widget.simplifiedMode,
                 defaultDistance: widget.defaultDistance,
@@ -173,7 +173,7 @@ class _BotControlPageState extends State<BotControlPage> {
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
                     maxWidth: w * 0.9,
-                    minWidth: (w * 0.9).clamp(0, 280).toDouble(),
+                    minWidth: 280,
                   ),
                   child: const SizedBox(
                     height: 320,
@@ -192,7 +192,7 @@ class _BotControlPageState extends State<BotControlPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SizedBox(height: h * 0.03),
+            SizedBox(height: 30 + (h * 0.02)),
             MovementMenu(
               simplifiedMode: widget.simplifiedMode,
               defaultDistance: widget.defaultDistance,
@@ -210,23 +210,26 @@ class _BotControlPageState extends State<BotControlPage> {
       );
     }
 
-    if (widget.embedded) {
-      return LayoutBuilder(
-        builder: (context, constraints) => Container(
-          color: neutralDarkBlue,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(10, isLandscape ? 5 : 0, 10, 12),
-            child: Container(
-              decoration: bodyDecoration,
-              child: LayoutBuilder(
-                builder: (context, innerConstraints) => buildContent(
-                  innerConstraints.maxWidth,
-                  innerConstraints.maxHeight,
-                ),
-              ),
+    final Widget framedBody = SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+        child: Container(
+          width: double.infinity,
+          decoration: bodyDecoration,
+          child: LayoutBuilder(
+            builder: (context, innerConstraints) => buildContent(
+              innerConstraints.maxWidth,
+              innerConstraints.maxHeight,
             ),
           ),
         ),
+      ),
+    );
+
+    if (widget.embedded) {
+      return Container(
+        color: neutralDarkBlue,
+        child: framedBody,
       );
     }
 
@@ -309,23 +312,7 @@ class _BotControlPageState extends State<BotControlPage> {
           ),
         ],
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) => Container(
-          color: neutralDarkBlue,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(10, isLandscape ? 5 : 0, 10, 12),
-            child: Container(
-              decoration: bodyDecoration,
-              child: LayoutBuilder(
-                builder: (context, innerConstraints) => buildContent(
-                  innerConstraints.maxWidth,
-                  innerConstraints.maxHeight,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
+      body: framedBody,
     );
   }
 }

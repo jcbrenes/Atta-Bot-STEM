@@ -46,7 +46,7 @@ class _SimulatorPageState extends State<SimulatorPage> {
 
     Widget pageBody = SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 12, 8, 12),
+        padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
         child: Container(
           width: double.infinity,
           decoration: BoxDecoration(
@@ -62,131 +62,131 @@ class _SimulatorPageState extends State<SimulatorPage> {
                   .map((cmd) => cmd.toUiString())
                   .toList();
 
-                // if we're in simplified mode and there's an active cycle, we force the end cycle
-                // if (context.watch<CommandService>().cycleActive &&
-                //     context.watch<SimplifiedModeProvider>().simplifiedMode) {
-                //   instructions
-                //       .add(Command(CommandType.endCycle, null).toUiString());
-                // }
+              // if we're in simplified mode and there's an active cycle, we force the end cycle
+              // if (context.watch<CommandService>().cycleActive &&
+              //     context.watch<SimplifiedModeProvider>().simplifiedMode) {
+              //   instructions
+              //       .add(Command(CommandType.endCycle, null).toUiString());
+              // }
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                    // -------------------- TÍTULO & DROPDOWN ----------------------
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Simulación',
-                            style: TextStyle(
-                              color: neutralWhite,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'Poppins',
+                  // -------------------- TÍTULO & DROPDOWN ----------------------
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Simulación',
+                          style: TextStyle(
+                            color: neutralWhite,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            const Text(
+                              'Visualizando:',
+                              style: TextStyle(
+                                color: neutralWhite,
+                                fontSize: 14,
+                                fontFamily: 'Poppins',
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              const Text(
-                                'Visualizando:',
-                                style: TextStyle(
-                                  color: neutralWhite,
-                                  fontSize: 14,
-                                  fontFamily: 'Poppins',
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Container(
+                                height: 32,
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.10),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Container(
-                                  height: 32,
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.10),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: DropdownButtonHideUnderline(
-                                    child: DropdownButton<String>(
-                                      value: selectedFile,
-                                      isExpanded: true,
-                                      iconSize: 14,
-                                      iconEnabledColor: neutralWhite,
-                                      dropdownColor: neutralDarkBlue,
-                                      style: const TextStyle(
-                                        color: neutralWhite,
-                                        fontSize: 14,
-                                        fontFamily: 'Poppins',
-                                      ),
-                                      items: availableFiles.map((file) {
-                                        return DropdownMenuItem(
-                                          value: file,
-                                          child: Text(
-                                            file,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        );
-                                      }).toList(),
-                                      onChanged: (value) {
-                                        if (value != null) {
-                                          setState(() => selectedFile = value);
-                                        }
-                                      },
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value: selectedFile,
+                                    isExpanded: true,
+                                    iconSize: 14,
+                                    iconEnabledColor: neutralWhite,
+                                    dropdownColor: neutralDarkBlue,
+                                    style: const TextStyle(
+                                      color: neutralWhite,
+                                      fontSize: 14,
+                                      fontFamily: 'Poppins',
                                     ),
+                                    items: availableFiles.map((file) {
+                                      return DropdownMenuItem(
+                                        value: file,
+                                        child: Text(
+                                          file,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      );
+                                    }).toList(),
+                                    onChanged: (value) {
+                                      if (value != null) {
+                                        setState(() => selectedFile = value);
+                                      }
+                                    },
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              IconButton(
-                                icon: Image.asset(
-                                  'assets/button_icons/add.png',
-                                  height: 20,
-                                  width: 20,
-                                  color: neutralWhite,
-                                ),
-                                onPressed: () {
-                                  showSimulatorActionsDialog(context);
-                                },
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              icon: Image.asset(
+                                'assets/button_icons/add.png',
+                                height: 20,
+                                width: 20,
+                                color: neutralWhite,
                               ),
-                            ],
-                          ),
-                        ],
-                      ),
+                              onPressed: () {
+                                showSimulatorActionsDialog(context);
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
+                  ),
 
-                    const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-                    // ---------------------- GRID SIMULATOR ------------------------
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: AspectRatio(
-                          aspectRatio: 1,
-                          child: SimulationArea(
-                            instructions: instructions,
-                            paused: isPaused,
-                            width: double.infinity,
-                            height: double.infinity,
-                            useImage: true,
-                            botImagePath: 'assets/atta_bot.png',
-                            onInstructionChange: (instruction) {
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                if (mounted) {
-                                  setState(() {
-                                    currentInstruction = instruction;
-                                  });
-                                }
-                              });
-                            },
-                          ),
+                  // ---------------------- GRID SIMULATOR ------------------------
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: AspectRatio(
+                        aspectRatio: 1,
+                        child: SimulationArea(
+                          instructions: instructions,
+                          paused: isPaused,
+                          width: double.infinity,
+                          height: double.infinity,
+                          useImage: true,
+                          botImagePath: 'assets/atta_bot.png',
+                          onInstructionChange: (instruction) {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (mounted) {
+                                setState(() {
+                                  currentInstruction = instruction;
+                                });
+                              }
+                            });
+                          },
                         ),
                       ),
                     ),
+                  ),
 
-                    // --------------------- TEXTO DE INSTRUCCIÓN ----------------------
-                    const SizedBox(height: 12),
+                  // --------------------- TEXTO DE INSTRUCCIÓN ----------------------
+                  const SizedBox(height: 12),
 
                   Center(
                     child: Padding(
