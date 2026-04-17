@@ -67,86 +67,210 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
     );
   }
 
+  Widget _landscapeActionLink(
+    BuildContext context, {
+    required String label,
+    required VoidCallback onTap,
+    required TextStyle style,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Text(label, style: style),
+    );
+  }
+
+  Widget _landscapeMovementRow({
+    required Color iconColor,
+    required IconType firstIcon,
+    required IconType secondIcon,
+    required String title,
+    required String subtitle,
+    required Widget dropdown,
+    required TextStyle labelStyle,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _tinyIconButton(
+          color: iconColor,
+          icon: firstIcon,
+        ),
+        const SizedBox(width: 6),
+        _tinyIconButton(
+          color: iconColor,
+          icon: secondIcon,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 6,
+                children: [
+                  Text(title, style: labelStyle),
+                  dropdown,
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(subtitle, style: labelStyle),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final bool isTablet = size.shortestSide >= 600;
     final bool isLandscape = size.width > size.height;
 
-    if (!isTablet && isLandscape) {
+    // Common styles for both orientations
+    const modeLabelStyle = TextStyle(
+      color: neutralWhite,
+      fontFamily: 'Poppins',
+      fontWeight: FontWeight.w500,
+      fontSize: 16,
+    );
+    const modeTitleStyle = TextStyle(
+      color: neutralWhite,
+      fontFamily: 'Poppins',
+      fontWeight: FontWeight.w700,
+      fontSize: 20,
+    );
+    const landscapeTitleStyle = TextStyle(
+      fontWeight: FontWeight.w700,
+      fontSize: 16,
+      fontFamily: 'Poppins',
+      color: neutralWhite,
+    );
+    const labelStyle = TextStyle(
+      color: neutralWhite,
+      fontWeight: FontWeight.w600,
+      fontFamily: 'Poppins',
+      fontSize: 12,
+    );
+
+    final actionStyle = labelStyle.copyWith(
+      decoration: TextDecoration.underline,
+      decorationThickness: 2,
+      decorationColor: neutralWhite,
+    );
+
+    if (isTablet && isLandscape) {
+
       return AlertDialog(
         backgroundColor: neutralDarkBlueAD,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20.0),
           side: const BorderSide(color: Colors.white, width: 4.0),
         ),
-        contentPadding: const EdgeInsets.all(16),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      "Definir parámetros",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                        fontFamily: "Poppins",
-                        color: neutralWhite,
-                      ),
-                    ),
-                  ),
-                  if (widget.showCloseButton)
-                    IconButton(
-                      onPressed: () {
+        insetPadding: EdgeInsets.symmetric(
+          horizontal: size.width * 0.06,
+          vertical: size.height * 0.06,
+        ),
+        contentPadding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
+        content: SizedBox(
+          width: (size.width * 0.50).clamp(560.0, 680.0).toDouble(),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    GestureDetector(
+                      onTap: () {
                         if (widget.onClose != null) {
                           widget.onClose!();
                           return;
                         }
                         Navigator.of(context).pop(false);
                       },
-                      icon: const Icon(
-                        Icons.close,
-                        color: neutralWhite,
+                      child: Image.asset(
+                          'assets/button_icons/left_arrow.png',
+                          width: 28,
+                          height: 28,
+                          color: neutralWhite,
+                        ),
+                    ),
+                    const Expanded(
+                      child: Center(
+                        child: Text(
+                          'PARÁMETROS DE MEDIDA',
+                          style: TextStyle(
+                            color: neutralWhite,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 20,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
                       ),
                     ),
-                ],
-              ),
-              const SizedBox(height: 35),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      _tinyIconButton(
-                        color: primaryBlue,
-                        icon: IconType.forwardArrow,
-                      ),
-                      const SizedBox(width: 6),
-                      _tinyIconButton(
-                        color: primaryBlue,
-                        icon: IconType.backwardArrow,
-                      ),
-                      const SizedBox(width: 8),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Text(
-                                "Avanzar/Retroceder",
-                                style: TextStyle(
-                                  color: neutralWhite,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'Poppins',
-                                  fontSize: 12,
-                                ),
+                    const SizedBox(width: 48),
+                  ],
+                ),
+                const SizedBox(height: 28),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 5,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 32),
+                            const Text(
+                              'Modo de uso seleccionado:',
+                              style: modeLabelStyle,
+                            ),
+                            const SizedBox(height: 14),
+                            Text(
+                              'Simplificado',
+                              style: modeTitleStyle.copyWith(
+                                decorationThickness: 2,
+                                decorationColor: neutralWhite,
                               ),
-                              const SizedBox(width: 8),
-                              CustomDropdown(
+                            ),
+                            const SizedBox(height: 10),
+                            const SizedBox(
+                              width: 300,
+                              child: Text(
+                                'Utiliza valores predeterminados y fijos para todos los movimientos. El entorno de ejecución se limita a los parámetros establecidos al inicio de la sesión.',
+                                style: modeLabelStyle,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 7,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Definir parámetros',
+                              style: landscapeTitleStyle,
+                            ),
+                            const SizedBox(height: 28),
+                            _landscapeMovementRow(
+                              iconColor: primaryBlue,
+                              firstIcon: IconType.forwardArrow,
+                              secondIcon: IconType.backwardArrow,
+                              title: 'Avanzar/Retroceder',
+                              subtitle: 'centímetros',
+                              labelStyle: labelStyle,
+                              dropdown: CustomDropdown(
                                 selectedValue: selectedDistance,
                                 options: distanceOptions,
                                 onChanged: (value) {
@@ -155,56 +279,16 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
                                   });
                                 },
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            "centímetros",
-                            style: TextStyle(
-                              color: neutralWhite,
-                              fontWeight: FontWeight.w600,
-                              fontFamily: 'Poppins',
-                              fontSize: 12,
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 30),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      _tinyIconButton(
-                        color: secondaryIconOrange,
-                        icon: IconType.rotateRight,
-                      ),
-                      const SizedBox(width: 6),
-                      _tinyIconButton(
-                        color: secondaryIconOrange,
-                        icon: IconType.rotateLeft,
-                      ),
-                      const SizedBox(width: 8),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Text(
-                                "Girar",
-                                style: TextStyle(
-                                  color: neutralWhite,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'Poppins',
-                                  fontSize: 12,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              CustomDropdown(
+                            const SizedBox(height: 24),
+                            _landscapeMovementRow(
+                              iconColor: secondaryIconOrange,
+                              firstIcon: IconType.rotateLeft,
+                              secondIcon: IconType.rotateRight,
+                              title: 'Girar',
+                              subtitle: 'a la izquierda/derecha',
+                              labelStyle: labelStyle,
+                              dropdown: CustomDropdown(
                                 selectedValue: selectedAngle,
                                 options: angleOptions,
                                 onChanged: (value) {
@@ -214,51 +298,16 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
                                 },
                                 suffix: '°',
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            "a la izquierda/derecha",
-                            style: TextStyle(
-                              color: neutralWhite,
-                              fontWeight: FontWeight.w600,
-                              fontFamily: 'Poppins',
-                              fontSize: 12,
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 30),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      _tinyIconButton(
-                        color: secondaryGreen,
-                        icon: IconType.cycle,
-                      ),
-                      const SizedBox(width: 8),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Text(
-                                "Iniciar un ciclo, y repetirlo",
-                                style: TextStyle(
-                                  color: neutralWhite,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'Poppins',
-                                  fontSize: 12,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              CustomDropdown(
+                            const SizedBox(height: 24),
+                            _landscapeMovementRow(
+                              iconColor: secondaryGreen,
+                              firstIcon: IconType.cycle,
+                              secondIcon: IconType.cycle,
+                              title: 'Iniciar un ciclo, y repetirlo',
+                              subtitle: 'veces',
+                              labelStyle: labelStyle,
+                              dropdown: CustomDropdown(
                                 selectedValue: selectedCycle,
                                 options: cycleOptions,
                                 onChanged: (value) {
@@ -267,114 +316,92 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
                                   });
                                 },
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            "veces",
-                            style: TextStyle(
-                              color: neutralWhite,
-                              fontWeight: FontWeight.w600,
-                              fontFamily: 'Poppins',
-                              fontSize: 12,
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 34),
+                Center(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _landscapeActionLink(
+                        context,
+                        label: 'Aplicar parámetros',
+                        style: labelStyle,
+                        onTap: () {
+                          if (selectedDistance == null ||
+                              selectedAngle == null ||
+                              selectedCycle == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Row(
+                                  children: [
+                                    Icon(
+                                      Icons.warning_amber_rounded,
+                                      color: neutralDarkBlueAD,
+                                      size: 24,
+                                    ),
+                                    SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        'Por favor selecciona todos los parámetros',
+                                        style: TextStyle(
+                                          color: neutralDarkBlueAD,
+                                          fontFamily: 'Poppins',
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                backgroundColor: neutralGray,
+                                duration: const Duration(seconds: 2),
+                                behavior: SnackBarBehavior.floating,
+                                margin: const EdgeInsets.all(16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  side: const BorderSide(
+                                      color: neutralWhite, width: 2),
+                                ),
+                                elevation: 6,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 14),
+                              ),
+                            );
+                            return;
+                          }
+                          final cmdService = context.read<CommandService>();
+                          widget.onSetDefaults(
+                              selectedDistance!, selectedAngle!, selectedCycle!);
+                          if (!cmdService.cycleActive && selectedCycle! > 1) {
+                            cmdService.initCycleSimplified(selectedCycle!);
+                          }
+                          Navigator.of(context).pop(true);
+                        },
+                      ),
+                      const SizedBox(width: 36),
+                      _landscapeActionLink(
+                        context,
+                        label: 'Limpiar parámetros',
+                        style: labelStyle,
+                        onTap: () {
+                          setState(() {
+                            selectedDistance = null;
+                            selectedAngle = null;
+                            selectedCycle = null;
+                          });
+                        },
                       ),
                     ],
                   ),
-                ],
-              ),
-              const SizedBox(height: 35),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      if (selectedDistance == null ||
-                          selectedAngle == null ||
-                          selectedCycle == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Row(
-                              children: [
-                                Icon(
-                                  Icons.warning_amber_rounded,
-                                  color: neutralDarkBlueAD,
-                                  size: 24,
-                                ),
-                                SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    'Por favor selecciona todos los parámetros',
-                                    style: TextStyle(
-                                      color: neutralDarkBlueAD,
-                                      fontFamily: 'Poppins',
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            backgroundColor: neutralGray,
-                            duration: const Duration(seconds: 2),
-                            behavior: SnackBarBehavior.floating,
-                            margin: const EdgeInsets.all(16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              side: const BorderSide(
-                                  color: neutralWhite, width: 2),
-                            ),
-                            elevation: 6,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 14),
-                          ),
-                        );
-                        return;
-                      }
-                      final cmdService = context.read<CommandService>();
-                      widget.onSetDefaults(
-                          selectedDistance!, selectedAngle!, selectedCycle!);
-                      if (!cmdService.cycleActive && selectedCycle! > 1) {
-                        cmdService.initCycle(selectedCycle!);
-                      }
-                      Navigator.of(context).pop(true);
-                    },
-                    child: const Text(
-                      "Aplicar cambios",
-                      style: TextStyle(
-                        color: neutralWhite,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'Poppins',
-                        fontSize: 12,
-                        decoration: TextDecoration.underline,
-                        decorationThickness: 2,
-                        decorationColor: neutralWhite,
-                      ),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        selectedDistance = null;
-                        selectedAngle = null;
-                        selectedCycle = null;
-                      });
-                    },
-                    child: const Text(
-                      "Limpiar cambios",
-                      style: TextStyle(
-                        color: neutralWhite,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'Poppins',
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -385,15 +412,11 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
     final scale = (dialogWidth / 360.0).clamp(1.0, 1.75);
     final paddingScale = scale.clamp(1.0, 1.3);
     final titleFontSize = 16.0 * scale.clamp(1.0, 1.6);
-    final bodyFontSize = 12.0 * scale.clamp(1.0, 1.5);
     final headerGap = 35.0 * scale.clamp(1.0, 1.25);
     final sectionGap = 30.0 * scale.clamp(1.0, 1.2);
 
-    TextStyle bodyStyle = TextStyle(
-      color: neutralWhite,
-      fontWeight: FontWeight.w600,
-      fontFamily: 'Poppins',
-      fontSize: bodyFontSize,
+    final bodyStyle = labelStyle.copyWith(
+      fontSize: 12.0 * scale.clamp(1.0, 1.5),
     );
 
     return AlertDialog(
@@ -418,9 +441,9 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              Stack(
                 children: [
-                  Expanded(
+                  Center(
                     child: Text(
                       "Definir parámetros",
                       style: TextStyle(
@@ -431,21 +454,24 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
                       ),
                     ),
                   ),
-                  if (widget.showCloseButton)
-                    IconButton(
-                      onPressed: () {
+                  Positioned(
+                    left: 0,
+                    child: GestureDetector(
+                      onTap: () {
                         if (widget.onClose != null) {
                           widget.onClose!();
                           return;
                         }
                         Navigator.of(context).pop(false);
                       },
-                      icon: Icon(
-                        Icons.close,
+                      child: Image.asset(
+                        'assets/button_icons/left_arrow.png',
+                        width: 28,
+                        height: 28,
                         color: neutralWhite,
-                        size: isTablet ? 30 : 24,
                       ),
                     ),
+                  ),
                 ],
               ),
               SizedBox(height: headerGap),
@@ -647,12 +673,8 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
                       Navigator.of(context).pop(true);
                     },
                     child: Text(
-                      "Aplicar cambios",
-                      style: bodyStyle.copyWith(
-                        decoration: TextDecoration.underline,
-                        decorationThickness: 2,
-                        decorationColor: neutralWhite,
-                      ),
+                      "Aplicar parámetros",
+                      style: bodyStyle,
                     ),
                   ),
                   GestureDetector(

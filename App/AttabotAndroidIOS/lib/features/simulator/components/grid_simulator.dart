@@ -53,12 +53,6 @@ class _SimulationAreaState extends State<SimulationArea> {
     _runInstructions();
   }
 
-  @override
-  void dispose() {
-    _isDisposed = true;
-    super.dispose();
-  }
-
   String _normalizeInstruction(String instruction) {
     final normalized = instruction
         .toLowerCase()
@@ -122,23 +116,15 @@ class _SimulationAreaState extends State<SimulationArea> {
     final expandedInstructions = _expandCycles(widget.instructions);
 
     for (final instruction in expandedInstructions) {
-      if (_isDisposed || !mounted) return;
-
       widget.onInstructionChange?.call(instruction);
 
       while (widget.paused) {
-        if (_isDisposed || !mounted) return;
         await Future.delayed(const Duration(milliseconds: 100));
       }
 
-      if (_isDisposed || !mounted) return;
       await Future.delayed(const Duration(milliseconds: 600));
 
-      if (_isDisposed || !mounted) return;
-
       setState(() {
-        if (_isDisposed || !mounted) return;
-
         final inst = _normalizeInstruction(instruction);
         double angle = _radians(rotation - 90);
         previousWorldPosition = worldPosition;
@@ -391,7 +377,6 @@ class _SimulationAreaState extends State<SimulationArea> {
                     );
                   },
                   onEnd: () {
-                    if (!mounted || _isDisposed) return;
                     setState(() {
                       previousRotation = rotation;
                     });

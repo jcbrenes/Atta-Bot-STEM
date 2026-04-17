@@ -13,6 +13,7 @@ class SelectModeDialog {
       builder: (BuildContext context) {
         final size = MediaQuery.of(context).size;
         final bool isTablet = size.shortestSide >= 600;
+        final bool isLandscape = size.width > size.height;
 
         final dialogWidth =
             (size.width * (isTablet ? 0.65 : 0.82)).clamp(320.0, 860.0);
@@ -24,6 +25,13 @@ class SelectModeDialog {
           fontFamily: 'Poppins',
           fontWeight: FontWeight.w700,
           fontSize: 20 * scale.clamp(1.0, 1.3),
+        );
+
+        final headingStyle = TextStyle(
+          color: neutralWhite,
+          fontFamily: 'Poppins',
+          fontWeight: FontWeight.w700,
+          fontSize: 20 * scale.clamp(1.0, 1.15),
         );
 
         final bodyStyle = TextStyle(
@@ -39,6 +47,11 @@ class SelectModeDialog {
           fontWeight: FontWeight.w700,
           fontSize: 16,
         );
+
+        const manualDescription =
+            'Permite la definición personalizada de los parámetros de movimiento (giros, desplazamientos y ciclos) según los requerimientos específicos de la secuencia de instrucciones.';
+        const simplifiedDescription =
+            'Utiliza valores predeterminados y fijos para todos los movimientos. El entorno de ejecución se limita a los parámetros establecidos al inicio de la sesión.';
 
         return AlertDialog(
           backgroundColor: neutralDarkBlueAD,
@@ -87,63 +100,134 @@ class SelectModeDialog {
                     ),
                   ),
                   SizedBox(height: 12 * paddingScale),
+                  if (isLandscape) ...[
+                    Center(
+                      child: Text(
+                        'MODO DE USO ATTA-BOT',
+                        style: headingStyle,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    SizedBox(height: 12 * paddingScale),
+                  ],
                   Text(
                     'Attabot v.1.2 cuenta con dos modos de uso:',
                     style: bodyStyle,
                   ),
                   SizedBox(height: 16 * paddingScale),
-                  Text('Manual', style: titleStyle),
-                  SizedBox(height: 6 * paddingScale),
-                  Text(
-                    'Permite la definición personalizada de los parámetros de movimiento (giros, desplazamientos y ciclos) según los requerimientos específicos de la secuencia de instrucciones.',
-                    style: bodyStyle,
-                  ),
-                  SizedBox(height: 16 * paddingScale),
-                  Text('Simplificado', style: titleStyle),
-                  SizedBox(height: 6 * paddingScale),
-                  Text(
-                    'Utiliza valores predeterminados y fijos para todos los movimientos. El entorno de ejecución se limita a los parámetros establecidos al inicio de la sesión.',
-                    style: bodyStyle,
-                  ),
+                  if (isLandscape)
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Manual', style: titleStyle),
+                              SizedBox(height: 6 * paddingScale),
+                              Text(manualDescription, style: bodyStyle),
+                            ],
+                          ),
+                        ),
+                        SizedBox(width: 18 * paddingScale),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Simplificado', style: titleStyle),
+                              SizedBox(height: 6 * paddingScale),
+                              Text(simplifiedDescription, style: bodyStyle),
+                            ],
+                          ),
+                        ),
+                      ],
+                    )
+                  else ...[
+                    Text('Manual', style: titleStyle),
+                    SizedBox(height: 6 * paddingScale),
+                    Text(manualDescription, style: bodyStyle),
+                    SizedBox(height: 16 * paddingScale),
+                    Text('Simplificado', style: titleStyle),
+                    SizedBox(height: 6 * paddingScale),
+                    Text(simplifiedDescription, style: bodyStyle),
+                  ],
                   SizedBox(height: 20 * paddingScale),
                   Text(
                     'Seleccione el modo de preferencia:',
                     style: bodyStyle,
                   ),
                   SizedBox(height: 16 * paddingScale),
-                  SizedBox(
-                    width: double.infinity,
-                    child: DefaultButtonFactory.getButton(
-                      text: 'Manual',
-                      textStyle: buttonTextStyle,
-                      color: Colors.transparent,
-                      borderColor: mediumBlueGray,
-                      fullWidthText: true,
-                      buttonType: ButtonType.primaryIcon,
-                      borderWidth: 4.0,
-                      borderRadius: 30,
-                      verticalPadding: 10,
-                      horizontalPadding: 14,
-                      onPressed: () => Navigator.of(context).pop(false),
+                  if (isLandscape)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: DefaultButtonFactory.getButton(
+                            text: 'Manual',
+                            textStyle: buttonTextStyle,
+                            color: Colors.transparent,
+                            borderColor: mediumBlueGray,
+                            fullWidthText: true,
+                            buttonType: ButtonType.primaryIcon,
+                            borderWidth: 4.0,
+                            borderRadius: 30,
+                            verticalPadding: 10,
+                            horizontalPadding: 14,
+                            onPressed: () => Navigator.of(context).pop(false),
+                          ),
+                        ),
+                        SizedBox(width: 12 * paddingScale),
+                        Expanded(
+                          child: DefaultButtonFactory.getButton(
+                            text: 'Simplificado',
+                            textStyle: buttonTextStyle,
+                            color: mediumBlueGray,
+                            borderColor: mediumBlueGray,
+                            fullWidthText: true,
+                            buttonType: ButtonType.primaryIcon,
+                            borderWidth: 4.0,
+                            borderRadius: 30,
+                            verticalPadding: 10,
+                            horizontalPadding: 14,
+                            onPressed: () => Navigator.of(context).pop(true),
+                          ),
+                        ),
+                      ],
+                    )
+                  else ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: DefaultButtonFactory.getButton(
+                        text: 'Manual',
+                        textStyle: buttonTextStyle,
+                        color: Colors.transparent,
+                        borderColor: mediumBlueGray,
+                        fullWidthText: true,
+                        buttonType: ButtonType.primaryIcon,
+                        borderWidth: 4.0,
+                        borderRadius: 30,
+                        verticalPadding: 10,
+                        horizontalPadding: 14,
+                        onPressed: () => Navigator.of(context).pop(false),
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 12 * paddingScale),
-                  SizedBox(
-                    width: double.infinity,
-                    child: DefaultButtonFactory.getButton(
-                      text: 'Simplificado',
-                      textStyle: buttonTextStyle,
-                      color: mediumBlueGray,
-                      borderColor: mediumBlueGray,
-                      fullWidthText: true,
-                      buttonType: ButtonType.primaryIcon,
-                      borderWidth: 4.0,
-                      borderRadius: 30,
-                      verticalPadding: 10,
-                      horizontalPadding: 14,
-                      onPressed: () => Navigator.of(context).pop(true),
+                    SizedBox(height: 12 * paddingScale),
+                    SizedBox(
+                      width: double.infinity,
+                      child: DefaultButtonFactory.getButton(
+                        text: 'Simplificado',
+                        textStyle: buttonTextStyle,
+                        color: mediumBlueGray,
+                        borderColor: mediumBlueGray,
+                        fullWidthText: true,
+                        buttonType: ButtonType.primaryIcon,
+                        borderWidth: 4.0,
+                        borderRadius: 30,
+                        verticalPadding: 10,
+                        horizontalPadding: 14,
+                        onPressed: () => Navigator.of(context).pop(true),
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:proyecto_tec/features/commands/enums/command_types.dart';
 import 'package:proyecto_tec/features/commands/models/command.dart';
 
-
 class CommandService extends ChangeNotifier {
   bool obstacleDetection = false;
   bool pencilActive = false;
@@ -11,11 +10,9 @@ class CommandService extends ChangeNotifier {
   bool simplifiedMode = false;
   bool simplifiedCycleActive = false;
 
-
   final List<Command> _commands = [];
   List<Command> get commandHistory => _commands;
 
-  
   void setSimplifiedMode(bool value) {
     if (simplifiedMode == value) return;
     simplifiedMode = value;
@@ -138,7 +135,9 @@ class CommandService extends ChangeNotifier {
 
   // Method to get the last command
   String getLastCommand() {
-    if (simplifiedCycleActive && _commands.isNotEmpty && _commands.length >= 2) {
+    if (simplifiedCycleActive &&
+        _commands.isNotEmpty &&
+        _commands.length >= 2) {
       return _commands[_commands.length - 2].toUiString();
     }
     if (_commands.isNotEmpty) {
@@ -161,13 +160,26 @@ class CommandService extends ChangeNotifier {
     bool cycle = false, detection = false, pencil = false, claw = false;
     for (final c in _commands) {
       switch (c.action) {
-        case CommandType.initCycle: cycle = true; break;
-        case CommandType.endCycle: cycle = false; break;
-        case CommandType.activateObjectDetection: detection = true; break;
-        case CommandType.deactivateObjectDetection: detection = false; break;
-        case CommandType.activateTool: pencil = true; break;
-        case CommandType.deactivateTool: pencil = false; break;
-        default: break;
+        case CommandType.initCycle:
+          cycle = true;
+          break;
+        case CommandType.endCycle:
+          cycle = false;
+          break;
+        case CommandType.activateObjectDetection:
+          detection = true;
+          break;
+        case CommandType.deactivateObjectDetection:
+          detection = false;
+          break;
+        case CommandType.activateTool:
+          pencil = true;
+          break;
+        case CommandType.deactivateTool:
+          pencil = false;
+          break;
+        default:
+          break;
       }
     }
     cycleActive = cycle;
@@ -213,52 +225,52 @@ class CommandService extends ChangeNotifier {
     commandsString += CommandType.commandHeader.botTranslation;
     for (Command command in _commands) {
       commandsString += command.toBotString();
-    }  
+    }
     commandsString += CommandType.commandFooter.botTranslation;
     return commandsString;
   }
 
 // ================================COMMANDS=====================================
-void _addCommandRespectingSimplifiedCycle(Command command) {
-  if (simplifiedMode && simplifiedCycleActive) {
-    final endCycleIndex = _commands.lastIndexWhere(
-      (c) => c.action == CommandType.endCycle,
-    );
+  void _addCommandRespectingSimplifiedCycle(Command command) {
+    if (simplifiedMode && simplifiedCycleActive) {
+      final endCycleIndex = _commands.lastIndexWhere(
+        (c) => c.action == CommandType.endCycle,
+      );
 
-    if (endCycleIndex != -1) {
-      _commands.insert(endCycleIndex, command);
+      if (endCycleIndex != -1) {
+        _commands.insert(endCycleIndex, command);
+      } else {
+        _commands.add(command);
+      }
     } else {
-      _commands.add(command); 
+      _commands.add(command);
     }
-  } else {
-    _commands.add(command);
+    notifyListeners();
   }
-  notifyListeners();
-}
 
-void moveForward(int distance) {
-  _addCommandRespectingSimplifiedCycle(
-    Command(CommandType.moveForward, distance),
-  );
-}
+  void moveForward(int distance) {
+    _addCommandRespectingSimplifiedCycle(
+      Command(CommandType.moveForward, distance),
+    );
+  }
 
-void moveBackward(int distance) {
-  _addCommandRespectingSimplifiedCycle(
-    Command(CommandType.moveBackward, distance),
-  );
-}
+  void moveBackward(int distance) {
+    _addCommandRespectingSimplifiedCycle(
+      Command(CommandType.moveBackward, distance),
+    );
+  }
 
-void rotateLeft(int degrees) {
-  _addCommandRespectingSimplifiedCycle(
-    Command(CommandType.rotateLeft, degrees),
-  );
-}
+  void rotateLeft(int degrees) {
+    _addCommandRespectingSimplifiedCycle(
+      Command(CommandType.rotateLeft, degrees),
+    );
+  }
 
-void rotateRight(int degrees) {
-  _addCommandRespectingSimplifiedCycle(
-    Command(CommandType.rotateRight, degrees),
-  );
-}
+  void rotateRight(int degrees) {
+    _addCommandRespectingSimplifiedCycle(
+      Command(CommandType.rotateRight, degrees),
+    );
+  }
 
   void initCycle(int cycles) {
     cycleActive = true;
@@ -283,9 +295,9 @@ void rotateRight(int degrees) {
 
   void activateObjectDetection() {
     obstacleDetection = true;
-    Command command = Command(CommandType.activateObjectDetection, null);
-    _commands.add(command);
-    notifyListeners();
+    _addCommandRespectingSimplifiedCycle(
+      Command(CommandType.activateObjectDetection, null),
+    );
   }
 
   void deactivateObjectDetection() {
@@ -297,9 +309,9 @@ void rotateRight(int degrees) {
 
   void activateTool() {
     pencilActive = true;
-    Command command = Command(CommandType.activateTool, null);
-    _commands.add(command);
-    notifyListeners();
+    _addCommandRespectingSimplifiedCycle(
+      Command(CommandType.activateTool, null),
+    );
   }
 
   void deactivateTool() {
