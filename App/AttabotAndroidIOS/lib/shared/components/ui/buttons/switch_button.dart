@@ -14,7 +14,7 @@ class ModeSwitch extends StatelessWidget {
     required this.onChanged,
     this.width = 390,
     this.height = 38,
-    this.borderRadius = 30,
+    this.borderRadius = 0,
   });
 
   @override
@@ -56,15 +56,23 @@ class ModeSwitch extends StatelessWidget {
                   child: GestureDetector(
                     onTap: () => onChanged(false),
                     child: Center(
-                      child: Text(
-                        "manual",
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w700,
-                          fontSize: height * 0.42,
-                          height: 1.07,
-                          letterSpacing: 0,
-                          color: neutralWhite,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            "panel de control - instrucciones",
+                            maxLines: 1,
+                            softWrap: false,
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w700,
+                              fontSize: height * 0.38,
+                              height: 1.07,
+                              letterSpacing: 0,
+                              color: neutralWhite,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -74,15 +82,23 @@ class ModeSwitch extends StatelessWidget {
                   child: GestureDetector(
                     onTap: () => onChanged(true),
                     child: Center(
-                      child: Text(
-                        "simplificada",
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w700,
-                          fontSize: height * 0.42,
-                          height: 1.07,
-                          letterSpacing: 0,
-                          color: neutralWhite,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            "instrucciones - simulador",
+                            maxLines: 1,
+                            softWrap: false,
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w700,
+                              fontSize: height * 0.38,
+                              height: 1.07,
+                              letterSpacing: 0,
+                              color: neutralWhite,
+                            ),
+                          ),
                         ),
                       ),
                     ),

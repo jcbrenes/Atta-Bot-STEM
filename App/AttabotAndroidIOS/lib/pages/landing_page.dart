@@ -12,6 +12,7 @@ import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manag
 import 'package:proyecto_tec/shared/features/navigation/services/navigation.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 import 'package:proyecto_tec/shared/features/navigation/services/split_nav.dart';
+import 'package:proyecto_tec/shared/components/ui/buttons/switch_button.dart';
 
 class LandingPage extends StatefulWidget {
   final bool initialSimplifiedMode;
@@ -34,11 +35,12 @@ class LandingPage extends StatefulWidget {
 class _LandingPageState extends State<LandingPage> {
   NavigationService navService = DependencyManager().getNavigationService();
   int _selectedIndex = 7;
+  bool _useAlternateLandscapeSplit = false;
   late final PageController _portraitPageController;
-  // Navigator key for the left pane (BotControlPage) in landscape
-  final GlobalKey<NavigatorState> _leftPaneNavKey = GlobalKey<NavigatorState>();
-  // Navigator key for the right pane (HistoryPage) in landscape
-  final GlobalKey<NavigatorState> _rightPaneNavKey =
+  // Navigator key for the left pane in landscape
+  GlobalKey<NavigatorState> _leftPaneNavKey = GlobalKey<NavigatorState>();
+  // Navigator key for the right pane in landscape
+  GlobalKey<NavigatorState> _rightPaneNavKey =
       GlobalKey<NavigatorState>();
   final List<NavigationDestination> destinations = [
     const NavigationDestination(
@@ -224,6 +226,8 @@ class _LandingPageState extends State<LandingPage> {
   Widget build(BuildContext context) {
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
+    final double landscapeSwitchWidth =
+      (MediaQuery.of(context).size.width * 0.42).clamp(260.0, 520.0).toDouble();
 
     return WillPopScope(
       onWillPop: _handleBackNavigation,
@@ -243,12 +247,59 @@ class _LandingPageState extends State<LandingPage> {
             appBar: isLandscape
                 ? AppBar(
                     title: const Text('Atta-Bot Educativo'),
-                    centerTitle: true,
+                    centerTitle: false,
                     titleTextStyle: const TextStyle(
                         color: neutralWhite,
                         fontSize: 18.0,
                         fontFamily: 'Poppins',
                         fontWeight: FontWeight.w700),
+                    titleSpacing: 0,
+                    automaticallyImplyLeading: false,
+                    leading: Builder(
+                      builder: (context) {
+                        final bool isTabletLandscape =
+                            MediaQuery.of(context).size.width >= 600;
+                        final double leftIconSize =
+                            isTabletLandscape ? 24.0 : 16.0;
+                        return IconButton(
+                          splashRadius: isTabletLandscape ? 30 : null,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isTabletLandscape ? 14 : 8,
+                          ),
+                          icon: Image.asset(
+                            'assets/button_icons/left_arrow.png',
+                            color: neutralWhite,
+                            height: leftIconSize,
+                            width: leftIconSize,
+                          ),
+                          color: neutralWhite,
+                          onPressed: () {
+                            _handleBackNavigation();
+                          },
+                        );
+                      },
+                    ),
+                    actions: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 12, right: 20),
+                        child: Center(
+                          child: ModeSwitch(
+                            isSimplified: _useAlternateLandscapeSplit,
+                            width: landscapeSwitchWidth,
+                            height: 30,
+                            borderRadius: 0,
+                            onChanged: (isAlternateMode) {
+                              setState(() {
+                                _useAlternateLandscapeSplit = isAlternateMode;
+                                _leftPaneNavKey = GlobalKey<NavigatorState>();
+                                _rightPaneNavKey = GlobalKey<NavigatorState>();
+                                SplitNav.rightPaneNavKey = _rightPaneNavKey;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
                     backgroundColor: Colors.transparent,
                   )
                 : AppBar(
@@ -417,19 +468,27 @@ class _LandingPageState extends State<LandingPage> {
   }
 
   Widget _buildLandscapeLayout() {
+    final Widget leftPane = _useAlternateLandscapeSplit
+        ? const HistoryPage(embedded: true)
+        : BotControlPage(
+            embedded: true,
+            simplifiedMode: widget.initialSimplifiedMode,
+            defaultDistance: widget.initialDistance,
+            defaultAngle: widget.initialAngle,
+            defaultCycle: widget.initialCycle,
+          );
+
+    final Widget rightPane = _useAlternateLandscapeSplit
+        ? const SimulatorPage(embedded: true)
+        : const HistoryPage(embedded: true);
+
     return Row(
       children: [
         Expanded(
           child: Navigator(
             key: _leftPaneNavKey,
             onGenerateRoute: (settings) => MaterialPageRoute(
-              builder: (_) => BotControlPage(
-                embedded: true,
-                simplifiedMode: widget.initialSimplifiedMode,
-                defaultDistance: widget.initialDistance,
-                defaultAngle: widget.initialAngle,
-                defaultCycle: widget.initialCycle,
-              ),
+              builder: (_) => leftPane,
             ),
           ),
         ),
@@ -438,7 +497,7 @@ class _LandingPageState extends State<LandingPage> {
           child: Navigator(
             key: _rightPaneNavKey,
             onGenerateRoute: (settings) => MaterialPageRoute(
-              builder: (_) => const HistoryPage(embedded: true),
+              builder: (_) => rightPane,
             ),
           ),
         ),
