@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/devcontainers/javascript-node:0-18-bullseye
+FROM mcr.microsoft.com/devcontainers/javascript-node:22
 
 # setup the location of the Scratch code
 WORKDIR /usr/app
@@ -8,21 +8,14 @@ RUN chown node:node /usr/app
 USER node
 
 # get the base Scratch code
-RUN git clone --depth=1 https://github.com/LLK/scratch-vm.git
-RUN git clone --depth=1 https://github.com/LLK/scratch-gui.git
+RUN git clone --depth=1 https://github.com/scratchfoundation/scratch-editor.git
 
-# build Scratch vm
-WORKDIR /usr/app/scratch-vm
+# build Scratch
+WORKDIR /usr/app/scratch-editor
 RUN npm install
-RUN npm ln
-
-# build Scratch gui
-WORKDIR /usr/app/scratch-gui
-RUN npm install
-RUN npm ln scratch-vm
 
 # location of the Scratch source code
-ENV SCRATCH_SRC_HOME=/usr/app
+ENV SCRATCH_SRC_HOME=/usr/app/scratch-editor
 
 # copy extension development files
 WORKDIR /usr/app

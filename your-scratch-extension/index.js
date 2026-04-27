@@ -14,6 +14,7 @@ class Scratch3YourExtension {
     getInfo () {
         return {
             // unique ID for your extension
+            // Must not contain a '.' character.
             id: 'yourScratchExtension',
 
             // name that will be displayed in the Scratch UI
@@ -22,12 +23,16 @@ class Scratch3YourExtension {
             // colours to use for your extension blocks
             color1: '#000099',
             color2: '#660066',
+            color3: '#a0a0a0',
 
             // icons to display
             blockIconURI: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAFCAAAAACyOJm3AAAAFklEQVQYV2P4DwMMEMgAI/+DEUIMBgAEWB7i7uidhAAAAABJRU5ErkJggg==',
             menuIconURI: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAFCAAAAACyOJm3AAAAFklEQVQYV2P4DwMMEMgAI/+DEUIMBgAEWB7i7uidhAAAAABJRU5ErkJggg==',
 
-            // your Scratch blocks
+            // link to documentation content for this extension.
+            docsURI: 'https://github.com/dalelane/scratch-extension-development',
+
+            // your Scratch blocks, in the order they will be displayed
             blocks: [
                 {
                     // name of the function where your block code lives
@@ -44,7 +49,7 @@ class Scratch3YourExtension {
                     text: 'My first block [MY_NUMBER] and [MY_STRING]',
 
                     // true if this block should end a stack
-                    terminal: false,
+                    isTerminal: false,
 
                     // where this block should be available for code - choose from:
                     //   TargetType.SPRITE - for code in sprites

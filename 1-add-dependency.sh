@@ -16,6 +16,6 @@ if [ ! -f "$SCRATCH_SRC_HOME/patched" ]; then
 fi
 
 echo "Adding new dependency"
-cd $SCRATCH_SRC_HOME/scratch-vm
+cd $SCRATCH_SRC_HOME/packages/scratch-vm
 npm install --save $MODULE
 

@@ -7,10 +7,6 @@ if [ -z "$SCRATCH_SRC_HOME" ]; then
     exit 1
 fi
 
-echo "BUILDING SCRATCH VM ..."
-cd $SCRATCH_SRC_HOME/scratch-vm
-NODE_OPTIONS='--openssl-legacy-provider' ./node_modules/.bin/webpack --bail
-
-echo "BUILDING SCRATCH GUI ..."
-cd $SCRATCH_SRC_HOME/scratch-gui
-NODE_OPTIONS='--openssl-legacy-provider' ./node_modules/.bin/webpack --bail
+echo "BUILDING SCRATCH ..."
+cd $SCRATCH_SRC_HOME
+npm run build

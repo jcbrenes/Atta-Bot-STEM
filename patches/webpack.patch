@@ -1,0 +1,30 @@
+diff --git a/packages/scratch-gui/webpack.config.js b/packages/scratch-gui/webpack.config.js
+index f675a2c8a..ceb8579a6 100644
+--- a/packages/scratch-gui/webpack.config.js
++++ b/packages/scratch-gui/webpack.config.js
+@@ -28,6 +28,9 @@ const cssModuleExceptions = [
+ 
+ const baseConfig = new ScratchWebpackConfigBuilder(
+     {
++        resolve: {
++            symlinks: false
++        },
+         rootPath: path.resolve(__dirname),
+         enableReact: true,
+         enableTs: true,
+diff --git a/packages/scratch-vm/webpack.config.js b/packages/scratch-vm/webpack.config.js
+index a9e697385..76749a9ab 100644
+--- a/packages/scratch-vm/webpack.config.js
++++ b/packages/scratch-vm/webpack.config.js
+@@ -6,7 +6,10 @@ const ScratchWebpackConfigBuilder = require('scratch-webpack-configuration');
+ 
+ const common = {
+     libraryName: 'scratch-vm',
+-    rootPath: path.resolve(__dirname)
++    rootPath: path.resolve(__dirname),
++    resolve: {
++        symlinks: false
++    }
+ };
+ 
+ const nodeBuilder = new ScratchWebpackConfigBuilder(common)

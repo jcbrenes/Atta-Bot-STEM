@@ -127,6 +127,7 @@ getInfo () {
     // colours to use for your extension blocks
     color1: '#000099',
     color2: '#660066',
+    color3: '#000000',
 
     // your Scratch blocks
     blocks: [
@@ -295,6 +296,7 @@ getInfo () {
     // colours to use for your extension blocks
     color1: '#000099',
     color2: '#660066',
+    color3: '#000000',
 
     // your Scratch blocks
     blocks: [
