@@ -31,11 +31,68 @@ class _SimulatorPageState extends State<SimulatorPage> {
   String currentInstruction = '';
   bool isPaused = false;
   bool isExecutingInstructions = false;
+  int stopSignal = 0;
+  int restartSignal = 0;
 
   void togglePause() {
+    if (!isExecutingInstructions && !isPaused) return;
+
     setState(() {
       isPaused = !isPaused;
     });
+  }
+
+  void stopSimulation() {
+    setState(() {
+      stopSignal++;
+      isPaused = false;
+      isExecutingInstructions = false;
+      currentInstruction = '';
+    });
+  }
+
+  void restartSimulation() {
+    setState(() {
+      restartSignal++;
+      isPaused = false;
+      isExecutingInstructions = true;
+      currentInstruction = '';
+    });
+  }
+
+  Widget _buildSimulationControlButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback? onPressed,
+  }) {
+    final isEnabled = onPressed != null;
+
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        color: isEnabled
+            ? Colors.white.withValues(alpha: 0.12)
+            : Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isEnabled
+              ? Colors.white.withValues(alpha: 0.35)
+              : Colors.white.withValues(alpha: 0.18),
+        ),
+      ),
+      child: IconButton(
+        onPressed: onPressed,
+        padding: EdgeInsets.zero,
+        tooltip: tooltip,
+        icon: Icon(
+          icon,
+          color:
+              isEnabled ? neutralWhite : neutralWhite.withValues(alpha: 0.45),
+          size: 20,
+        ),
+      ),
+    );
   }
 
   @override
@@ -194,40 +251,70 @@ class _SimulatorPageState extends State<SimulatorPage> {
                             ],
                           ),
                           const SizedBox(height: 12),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: (isExecutingInstructions
-                                        ? Colors.green
-                                        : Colors.red)
-                                    .withValues(alpha: 0.16),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: isExecutingInstructions
-                                      ? Colors.green
-                                      : Colors.red,
-                                  width: 1.5,
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: (isExecutingInstructions
+                                              ? Colors.green
+                                              : Colors.red)
+                                          .withValues(alpha: 0.16),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: isExecutingInstructions
+                                            ? Colors.green
+                                            : Colors.red,
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      isExecutingInstructions
+                                          ? 'Ciclo abierto'
+                                          : 'Ciclo cerrado',
+                                      style: TextStyle(
+                                        color: isExecutingInstructions
+                                            ? Colors.greenAccent
+                                            : const Color(0xFFFF8A80),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                        fontFamily: 'Poppins',
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
-                              child: Text(
-                                isExecutingInstructions
-                                    ? 'Ciclo abierto'
-                                    : 'Ciclo cerrado',
-                                style: TextStyle(
-                                  color: isExecutingInstructions
-                                      ? Colors.greenAccent
-                                      : const Color(0xFFFF8A80),
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  fontFamily: 'Poppins',
-                                ),
+                              const SizedBox(width: 12),
+                              _buildSimulationControlButton(
+                                icon: Icons.stop_rounded,
+                                tooltip: 'Detener',
+                                onPressed: isExecutingInstructions || isPaused
+                                    ? stopSimulation
+                                    : null,
                               ),
-                            ),
+                              const SizedBox(width: 8),
+                              _buildSimulationControlButton(
+                                icon: isPaused
+                                    ? Icons.play_arrow_rounded
+                                    : Icons.pause_rounded,
+                                tooltip: isPaused ? 'Reanudar' : 'Pausar',
+                                onPressed: isExecutingInstructions || isPaused
+                                    ? togglePause
+                                    : null,
+                              ),
+                              const SizedBox(width: 8),
+                              _buildSimulationControlButton(
+                                icon: Icons.restart_alt_rounded,
+                                tooltip: 'Reiniciar',
+                                onPressed: restartSimulation,
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -262,10 +349,15 @@ class _SimulatorPageState extends State<SimulatorPage> {
                                 if (mounted) {
                                   setState(() {
                                     isExecutingInstructions = isExecuting;
+                                    if (!isExecuting) {
+                                      isPaused = false;
+                                    }
                                   });
                                 }
                               });
                             },
+                            stopSignal: stopSignal,
+                            restartSignal: restartSignal,
                           ),
                         ),
                       ),

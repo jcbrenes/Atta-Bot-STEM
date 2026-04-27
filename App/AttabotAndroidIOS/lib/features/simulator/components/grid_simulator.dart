@@ -9,6 +9,8 @@ class SimulationArea extends StatefulWidget {
   final double height;
   final void Function(String)? onInstructionChange;
   final void Function(bool)? onExecutionStateChanged;
+  final int stopSignal;
+  final int restartSignal;
   final bool useImage;
   final String? botImagePath;
   final bool paused;
@@ -21,6 +23,8 @@ class SimulationArea extends StatefulWidget {
     this.height = 300,
     this.onInstructionChange,
     this.onExecutionStateChanged,
+    this.stopSignal = 0,
+    this.restartSignal = 0,
     this.useImage = false,
     this.botImagePath,
   });
@@ -46,13 +50,28 @@ class _SimulationAreaState extends State<SimulationArea> {
   static const double _tabletColumns = 10;
   static const double _tabletMinGridCellSize = 60;
   double _gridCellSize = _defaultGridCellSize;
+  int _runVersion = 0;
 
   @override
   void initState() {
     super.initState();
     previousRotation = rotation;
     previousWorldPosition = worldPosition;
-    _runInstructions();
+    _startRun();
+  }
+
+  @override
+  void didUpdateWidget(covariant SimulationArea oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.stopSignal != oldWidget.stopSignal) {
+      _stopRun();
+      return;
+    }
+
+    if (widget.restartSignal != oldWidget.restartSignal) {
+      _restartRun();
+    }
   }
 
   String _normalizeInstruction(String instruction) {
@@ -114,24 +133,91 @@ class _SimulationAreaState extends State<SimulationArea> {
     return output;
   }
 
-  Future<void> _runInstructions() async {
+  void _startRun() {
+    final runId = ++_runVersion;
+    _runInstructions(runId);
+  }
+
+  void _stopRun() {
+    _runVersion++;
+    widget.onInstructionChange?.call('');
+    widget.onExecutionStateChanged?.call(false);
+  }
+
+  void _restartRun() {
+    _runVersion++;
+    if (!mounted) return;
+
+    setState(() {
+      worldPosition = Offset.zero;
+      previousWorldPosition = Offset.zero;
+      rotation = 0;
+      previousRotation = 0;
+      obstacleDetectionActive = false;
+      penActive = false;
+      trailSegments.clear();
+      instructionMarkers.clear();
+      trailSegmentCount = 0;
+      instructionMarkerCount = 0;
+      selectedInstructionMarkerIndex = null;
+    });
+
+    widget.onInstructionChange?.call('');
+    _startRun();
+  }
+
+  bool _isRunActive(int runId) => mounted && runId == _runVersion;
+
+  Future<bool> _waitFor(
+    Duration duration,
+    int runId, {
+    bool allowPause = false,
+  }) async {
+    const tick = Duration(milliseconds: 50);
+    var elapsed = Duration.zero;
+
+    while (elapsed < duration) {
+      if (!_isRunActive(runId)) return false;
+
+      while (allowPause && widget.paused) {
+        if (!_isRunActive(runId)) return false;
+        await Future.delayed(tick);
+      }
+
+      final remaining = duration - elapsed;
+      final currentTick = remaining < tick ? remaining : tick;
+      await Future.delayed(currentTick);
+      elapsed += currentTick;
+    }
+
+    return _isRunActive(runId);
+  }
+
+  Future<void> _runInstructions(int runId) async {
     final expandedInstructions = _expandCycles(widget.instructions);
 
     if (expandedInstructions.isEmpty) {
+      if (!_isRunActive(runId)) return;
+      widget.onInstructionChange?.call('');
       widget.onExecutionStateChanged?.call(false);
       return;
     }
 
+    if (!_isRunActive(runId)) return;
     widget.onExecutionStateChanged?.call(true);
 
     for (final instruction in expandedInstructions) {
+      if (!_isRunActive(runId)) return;
       widget.onInstructionChange?.call(instruction);
 
-      while (widget.paused) {
-        await Future.delayed(const Duration(milliseconds: 100));
-      }
+      final canContinue = await _waitFor(
+        const Duration(milliseconds: 600),
+        runId,
+        allowPause: true,
+      );
+      if (!canContinue || !_isRunActive(runId)) return;
 
-      await Future.delayed(const Duration(milliseconds: 600));
+      bool stateChanged = false;
 
       setState(() {
         final inst = _normalizeInstruction(instruction);
@@ -142,6 +228,7 @@ class _SimulationAreaState extends State<SimulationArea> {
         String? instructionMarkerLabel;
 
         if (inst.contains("avanzar")) {
+          stateChanged = true;
           markInstructionStart = true;
           instructionMarkerLabel =
               "Avanzar ${_instructionValue(instruction)} cm";
@@ -151,6 +238,7 @@ class _SimulationAreaState extends State<SimulationArea> {
           );
           moved = true;
         } else if (inst.contains("retroceder")) {
+          stateChanged = true;
           markInstructionStart = true;
           instructionMarkerLabel =
               "Retroceder ${_instructionValue(instruction)} cm";
@@ -167,11 +255,13 @@ class _SimulationAreaState extends State<SimulationArea> {
             previousRotation = rotation;
 
             if (inst.contains("izquierda")) {
+              stateChanged = true;
               markInstructionStart = true;
               instructionMarkerLabel =
                   "Girar a la izquierda ${_formatDegrees(degrees)}°";
               rotation -= degrees;
             } else if (inst.contains("derecha")) {
+              stateChanged = true;
               markInstructionStart = true;
               instructionMarkerLabel =
                   "Girar a la derecha ${_formatDegrees(degrees)}°";
@@ -179,18 +269,22 @@ class _SimulationAreaState extends State<SimulationArea> {
             }
           }
         } else if (inst.contains("lapiz activado")) {
+          stateChanged = true;
           markInstructionStart = true;
           instructionMarkerLabel = "Lápiz activado";
           penActive = true;
         } else if (inst.contains("lapiz desactivado")) {
+          stateChanged = true;
           markInstructionStart = true;
           instructionMarkerLabel = "Lápiz desactivado";
           penActive = false;
         } else if (inst.contains("deteccion iniciada")) {
+          stateChanged = true;
           markInstructionStart = true;
           instructionMarkerLabel = "Detección de objetos activada";
           obstacleDetectionActive = true;
         } else if (inst.contains("deteccion finalizada")) {
+          stateChanged = true;
           markInstructionStart = true;
           instructionMarkerLabel = "Detección de objetos desactivada";
           obstacleDetectionActive = false;
@@ -204,9 +298,22 @@ class _SimulationAreaState extends State<SimulationArea> {
           _addTrailSegment(previousWorldPosition, worldPosition);
         }
       });
+
+      if (stateChanged) {
+        final completedAnimation = await _waitFor(
+          const Duration(milliseconds: 400),
+          runId,
+        );
+        if (!completedAnimation || !_isRunActive(runId)) return;
+      }
     }
 
-    await Future.delayed(const Duration(milliseconds: 400));
+    final finishedCleanly = await _waitFor(
+      const Duration(milliseconds: 50),
+      runId,
+    );
+    if (!finishedCleanly || !_isRunActive(runId)) return;
+
     widget.onExecutionStateChanged?.call(false);
   }
 
