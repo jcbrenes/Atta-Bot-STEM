@@ -8,6 +8,7 @@ class SimulationArea extends StatefulWidget {
   final double width;
   final double height;
   final void Function(String)? onInstructionChange;
+  final void Function(bool)? onExecutionStateChanged;
   final bool useImage;
   final String? botImagePath;
   final bool paused;
@@ -19,6 +20,7 @@ class SimulationArea extends StatefulWidget {
     this.width = 300,
     this.height = 300,
     this.onInstructionChange,
+    this.onExecutionStateChanged,
     this.useImage = false,
     this.botImagePath,
   });
@@ -115,6 +117,13 @@ class _SimulationAreaState extends State<SimulationArea> {
   Future<void> _runInstructions() async {
     final expandedInstructions = _expandCycles(widget.instructions);
 
+    if (expandedInstructions.isEmpty) {
+      widget.onExecutionStateChanged?.call(false);
+      return;
+    }
+
+    widget.onExecutionStateChanged?.call(true);
+
     for (final instruction in expandedInstructions) {
       widget.onInstructionChange?.call(instruction);
 
@@ -196,6 +205,9 @@ class _SimulationAreaState extends State<SimulationArea> {
         }
       });
     }
+
+    await Future.delayed(const Duration(milliseconds: 400));
+    widget.onExecutionStateChanged?.call(false);
   }
 
   double _radians(double degrees) => degrees * pi / 180;

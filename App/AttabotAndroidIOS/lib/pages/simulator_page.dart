@@ -30,6 +30,7 @@ class _SimulatorPageState extends State<SimulatorPage> {
   NavigationService navService = DependencyManager().getNavigationService();
   String currentInstruction = '';
   bool isPaused = false;
+  bool isExecutingInstructions = false;
 
   void togglePause() {
     setState(() {
@@ -192,6 +193,42 @@ class _SimulatorPageState extends State<SimulatorPage> {
                               ),
                             ],
                           ),
+                          const SizedBox(height: 12),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: (isExecutingInstructions
+                                        ? Colors.green
+                                        : Colors.red)
+                                    .withValues(alpha: 0.16),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: isExecutingInstructions
+                                      ? Colors.green
+                                      : Colors.red,
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Text(
+                                isExecutingInstructions
+                                    ? 'Ciclo abierto'
+                                    : 'Ciclo cerrado',
+                                style: TextStyle(
+                                  color: isExecutingInstructions
+                                      ? Colors.greenAccent
+                                      : const Color(0xFFFF8A80),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -216,6 +253,15 @@ class _SimulatorPageState extends State<SimulatorPage> {
                                 if (mounted) {
                                   setState(() {
                                     currentInstruction = instruction;
+                                  });
+                                }
+                              });
+                            },
+                            onExecutionStateChanged: (isExecuting) {
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (mounted) {
+                                  setState(() {
+                                    isExecutingInstructions = isExecuting;
                                   });
                                 }
                               });
