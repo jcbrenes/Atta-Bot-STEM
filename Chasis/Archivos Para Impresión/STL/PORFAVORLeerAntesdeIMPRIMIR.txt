@@ -1,0 +1,6 @@
+Revisar las orientaciones de impresión para asegurar calidad. El plano que se referencia en la imagen debería de ser el piso sobre el cuál se imprimirá cada pieza.
+
+También favor solicitar realizar las impresiones SIN BALSA, esto con el objetivo de asegurar calidad de acabado y no tener que lijar las piezas después. Ya se hicieron pruebas de impresión sin balsa y  ninguna de las piezas presentan algún inconveniente por ser de poca altura, así que hacer caso omiso si el operador sugiere colocarla.
+
+Redactado el 11/04/2026 - Aarón Valerín
+
