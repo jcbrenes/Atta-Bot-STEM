@@ -40,10 +40,10 @@ class _SimulationAreaState extends State<SimulationArea> {
   int instructionMarkerCount = 0;
   int? selectedInstructionMarkerIndex;
 
-  final double step = 30;
-  final double objectSize = 60;
-  final double gridCellSize = 30;
-  static const double _markerHitRadius = 14;
+  static const double _defaultGridCellSize = 30;
+  static const double _tabletColumns = 10;
+  static const double _tabletMinGridCellSize = 60;
+  double _gridCellSize = _defaultGridCellSize;
 
   @override
   void initState() {
@@ -137,8 +137,8 @@ class _SimulationAreaState extends State<SimulationArea> {
           instructionMarkerLabel =
               "Avanzar ${_instructionValue(instruction)} cm";
           worldPosition = worldPosition.translate(
-            step * cos(angle),
-            step * sin(angle),
+            _gridCellSize * cos(angle),
+            _gridCellSize * sin(angle),
           );
           moved = true;
         } else if (inst.contains("retroceder")) {
@@ -146,8 +146,8 @@ class _SimulationAreaState extends State<SimulationArea> {
           instructionMarkerLabel =
               "Retroceder ${_instructionValue(instruction)} cm";
           worldPosition = worldPosition.translate(
-            -step * cos(angle),
-            -step * sin(angle),
+            -_gridCellSize * cos(angle),
+            -_gridCellSize * sin(angle),
           );
           moved = true;
         } else if (inst.contains("girar")) {
@@ -229,6 +229,15 @@ class _SimulationAreaState extends State<SimulationArea> {
     return center + (world - cameraWorldPosition);
   }
 
+  bool _isTablet(BuildContext context) {
+    return MediaQuery.of(context).size.shortestSide >= 600;
+  }
+
+  double _gridCellSizeFor(BuildContext context, Size size) {
+    if (!_isTablet(context)) return _defaultGridCellSize;
+    return max(_tabletMinGridCellSize, size.width / _tabletColumns);
+  }
+
   int? _findTappedInstructionMarker(
     Offset tapPosition,
     Size size,
@@ -241,7 +250,7 @@ class _SimulationAreaState extends State<SimulationArea> {
         cameraWorldPosition,
       );
 
-      if ((tapPosition - markerPosition).distance <= _markerHitRadius) {
+      if ((tapPosition - markerPosition).distance <= _gridCellSize * 0.5) {
         return i;
       }
     }
@@ -273,6 +282,8 @@ class _SimulationAreaState extends State<SimulationArea> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final size = Size(constraints.maxWidth, constraints.maxHeight);
+        _gridCellSize = _gridCellSizeFor(context, size);
+        final objectSize = _gridCellSize * 2;
         final robotLeft = (size.width - objectSize) / 2;
         final robotTop = (size.height - objectSize) / 2;
         final gridLineColor = const Color(0xFF2E6CC8).withValues(alpha: 0.35);
@@ -301,7 +312,7 @@ class _SimulationAreaState extends State<SimulationArea> {
                         CustomPaint(
                           size: size,
                           painter: GridBackgroundPainter(
-                            cellSize: gridCellSize,
+                            cellSize: _gridCellSize,
                             offset: Offset(
                               -animatedWorldPosition.dx,
                               -animatedWorldPosition.dy,
