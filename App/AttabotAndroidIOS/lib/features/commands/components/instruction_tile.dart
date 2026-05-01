@@ -5,6 +5,7 @@ class InstructionTile extends StatelessWidget {
   final Color color;
   final String title;
   final Widget? trailing;
+  final VoidCallback? onTap;
   final double tilePadding;
   final int index;
 
@@ -13,6 +14,7 @@ class InstructionTile extends StatelessWidget {
     required this.color,
     required this.title,
     this.trailing,
+    this.onTap,
     required this.tilePadding,
     required this.index,
   });
@@ -81,6 +83,7 @@ class InstructionTile extends StatelessWidget {
               ],
             ),
             child: ListTile(
+              onTap: onTap,
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               title: Row(

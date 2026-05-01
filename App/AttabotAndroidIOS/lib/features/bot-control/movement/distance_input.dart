@@ -5,8 +5,13 @@ import 'package:proyecto_tec/shared/components/ui/buttons/default_button_factory
 
 class DistanceInput extends StatefulWidget {
   final Function(int) onSetDistance;
+  final int initialValue;
 
-  const DistanceInput({super.key, required this.onSetDistance});
+  const DistanceInput({
+    super.key,
+    required this.onSetDistance,
+    this.initialValue = 0,
+  });
 
   @override
   State<DistanceInput> createState() => _DistanceInputState();
@@ -18,12 +23,13 @@ class _DistanceInputState extends State<DistanceInput> {
     widget.onSetDistance(newValue);
   }
 
-  final TextEditingController _controller = TextEditingController(text: "0");
+  late final TextEditingController _controller;
   final FocusNode _focusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
+    _controller = TextEditingController(text: widget.initialValue.toString());
     _focusNode.addListener(() {
       if (_focusNode.hasFocus && _controller.text == "0") {
         _controller.clear();

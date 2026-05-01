@@ -7,10 +7,14 @@ import 'package:proyecto_tec/features/commands/services/command_service.dart';
 
 class Movement extends StatefulWidget {
   final String direction;
+  final int initialDistance;
+  final ValueChanged<int>? onConfirm;
 
   const Movement({
     super.key,
     required this.direction,
+    this.initialDistance = 0,
+    this.onConfirm,
   });
 
   @override
@@ -19,6 +23,12 @@ class Movement extends StatefulWidget {
 
 class _MovementState extends State<Movement> {
   int distance = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    distance = widget.initialDistance;
+  }
 
   void _setDistance(int newDistance) {
     setState(() {
@@ -46,6 +56,7 @@ class _MovementState extends State<Movement> {
         side: const BorderSide(color: neutralWhite, width: 4.0),
       ),
       content: DistanceInput(
+        initialValue: widget.initialDistance,
         onSetDistance: _setDistance,
       ),
       actions: [
@@ -63,9 +74,17 @@ class _MovementState extends State<Movement> {
                   fontSize: 14, fontFamily: "Poppins", color: neutralWhite)),
           onPressed: () {
             if (widget.direction == 'forward' && distance > 0) {
-              context.read<CommandService>().moveForward(distance);
+              if (widget.onConfirm != null) {
+                widget.onConfirm!(distance);
+              } else {
+                context.read<CommandService>().moveForward(distance);
+              }
             } else if (widget.direction == 'backward' && distance > 0) {
-              context.read<CommandService>().moveBackward(distance);
+              if (widget.onConfirm != null) {
+                widget.onConfirm!(distance);
+              } else {
+                context.read<CommandService>().moveBackward(distance);
+              }
             }
             Navigator.of(context).pop();
           },

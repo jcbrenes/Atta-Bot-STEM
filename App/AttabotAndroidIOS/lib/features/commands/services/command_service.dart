@@ -32,6 +32,11 @@ class CommandService extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateCommand(int index, Command command) {
+    _commands[index] = command;
+    notifyListeners();
+  }
+
   void removeCommand(int index) {
     Command command = _commands[index];
 

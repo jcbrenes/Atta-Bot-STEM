@@ -1,9 +1,13 @@
 import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog.dart';
 import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog_for_simplified.dart';
+import 'package:proyecto_tec/features/bot-control/movement/movement.dart';
+import 'package:proyecto_tec/features/bot-control/movement/rotation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_tec/features/commands/components/instruction_tile.dart';
 import 'package:proyecto_tec/features/commands/components/history_dropdown_menu.dart';
+import 'package:proyecto_tec/features/commands/enums/command_types.dart';
+import 'package:proyecto_tec/features/commands/models/command.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 
@@ -248,6 +252,54 @@ class _HistoryPageState extends State<HistoryPage> {
     );
   }
 
+  bool _isEditableCommand(Command command) {
+    return command.action == CommandType.moveForward ||
+        command.action == CommandType.moveBackward ||
+        command.action == CommandType.rotateLeft ||
+        command.action == CommandType.rotateRight;
+  }
+
+  void _editCommand(int index, Command command) {
+    if (!_isEditableCommand(command)) return;
+
+    if (command.action == CommandType.moveForward ||
+        command.action == CommandType.moveBackward) {
+      showDialog(
+        context: context,
+        builder: (dialogContext) {
+          return Movement(
+            direction: command.action == CommandType.moveForward
+                ? 'forward'
+                : 'backward',
+            initialDistance: command.value?.toInt() ?? 0,
+            onConfirm: (value) {
+              context
+                  .read<CommandService>()
+                  .updateCommand(index, Command(command.action, value));
+            },
+          );
+        },
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return Rotation(
+          direction:
+              command.action == CommandType.rotateRight ? 'right' : 'left',
+          initialAngle: command.value?.toInt() ?? 0,
+          onConfirm: (value) {
+            context
+                .read<CommandService>()
+                .updateCommand(index, Command(command.action, value));
+          },
+        );
+      },
+    );
+  }
+
   @override
   void dispose() {
     _historyScrollController.dispose();
@@ -300,8 +352,8 @@ class _HistoryPageState extends State<HistoryPage> {
                                       Text(
                                         'Aún no se han agregado instrucciones...',
                                         style: TextStyle(
-                                          color:
-                                              Colors.white.withValues(alpha: 0.3),
+                                          color: Colors.white
+                                              .withValues(alpha: 0.3),
                                           fontFamily: 'Poppins',
                                           fontWeight: FontWeight.w500,
                                           fontSize: 13,
@@ -315,6 +367,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                   thumbVisibility: true,
                                   controller: _historyScrollController,
                                   interactive: true,
+                                  thickness: 16.0,
                                   radius: const Radius.circular(10),
                                   thumbColor: neutralWhite,
                                   trackColor:
@@ -377,6 +430,17 @@ class _HistoryPageState extends State<HistoryPage> {
                                               .toUiString(),
                                           index,
                                         ),
+                                        onTap: !simplifiedMode &&
+                                                _isEditableCommand(
+                                                  historial
+                                                      .commandHistory[index],
+                                                )
+                                            ? () => _editCommand(
+                                                  index,
+                                                  historial
+                                                      .commandHistory[index],
+                                                )
+                                            : null,
                                         index: index,
                                       ),
                                     ),

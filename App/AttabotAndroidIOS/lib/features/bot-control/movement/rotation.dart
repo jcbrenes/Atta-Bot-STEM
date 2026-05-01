@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 import 'package:proyecto_tec/shared/components/ui/buttons/default_button_factory.dart';
@@ -6,9 +7,16 @@ import 'package:provider/provider.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
 
 class Rotation extends StatefulWidget {
-  const Rotation({super.key, required this.direction});
+  const Rotation({
+    super.key,
+    required this.direction,
+    this.initialAngle = 0,
+    this.onConfirm,
+  });
 
   final String direction;
+  final int initialAngle;
+  final ValueChanged<int>? onConfirm;
 
   @override
   State<Rotation> createState() => _RotationState();
@@ -17,11 +25,19 @@ class Rotation extends StatefulWidget {
 class _RotationState extends State<Rotation> {
   double _pointerValue = 0;
   late TextEditingController _controller;
+  late FocusNode _focusNode;
 
   @override
   void initState() {
     super.initState();
+    _pointerValue = widget.initialAngle.toDouble();
     _controller = TextEditingController(text: _pointerValue.toInt().toString());
+    _focusNode = FocusNode();
+    _focusNode.addListener(() {
+      if (_focusNode.hasFocus && _controller.text == "0") {
+        _controller.clear();
+      }
+    });
   }
 
   void onValueChanged(double value) {
@@ -29,6 +45,24 @@ class _RotationState extends State<Rotation> {
       _pointerValue = value.roundToDouble();
       _controller.text = _pointerValue.toInt().toString();
     });
+  }
+
+  void handleOnChanged(String value) {
+    int newValue = int.tryParse(value) ?? 0;
+    if (newValue > 359) {
+      newValue = 359;
+      _controller.text = newValue.toString();
+    }
+    setState(() {
+      _pointerValue = newValue.toDouble();
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    _controller.dispose();
+    super.dispose();
   }
 
   @override
@@ -59,21 +93,25 @@ class _RotationState extends State<Rotation> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-              DefaultButtonFactory.getButton(
-                color: secondaryIconOrange,
-                buttonType: ButtonType.secondaryIcon,
-                onPressed: () {
-                  setState(() {
-                    _pointerValue =
-                        (_pointerValue == 0) ? 359 : _pointerValue - 1;
-                  });
-                },
-                icon: IconType.remove,
-              ),
-              SizedBox(
-                height: 400,
-                width: 150,
-                child: SfRadialGauge(
+            DefaultButtonFactory.getButton(
+              color: secondaryIconOrange,
+              buttonType: ButtonType.secondaryIcon,
+              onPressed: () {
+                setState(() {
+                  _pointerValue =
+                      (_pointerValue == 0) ? 359 : _pointerValue - 1;
+                  _controller.text = _pointerValue.toInt().toString();
+                });
+              },
+              icon: IconType.remove,
+            ),
+            SizedBox(
+              height: 400,
+              width: 150,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  SfRadialGauge(
                     axes: <RadialAxis>[
                       RadialAxis(
                         showFirstLabel: false,
@@ -117,43 +155,65 @@ class _RotationState extends State<Rotation> {
                             onValueChanged: onValueChanged,
                           ),
                         ],
-                        annotations: [
-                          GaugeAnnotation(
-                              widget: Container(
-                            width: 70,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: neutralDarkBlueAD,
-                              borderRadius: BorderRadius.circular(100),
-                            ),
-                          )),
-                          GaugeAnnotation(
-                            widget: Text(
-                              '${_pointerValue.toInt()}°',
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: neutralWhite,
-                              ),
-                            ),
-                          ),
-                        ],
                       ),
                     ],
                   ),
+                  Container(
+                    width: 70,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: neutralDarkBlueAD,
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 70,
+                    child: TextFormField(
+                      controller: _controller,
+                      focusNode: _focusNode,
+                      textAlign: TextAlign.center,
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: neutralWhite,
+                        fontFamily: 'Poppins',
+                      ),
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        suffixText: "°",
+                        suffixStyle: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: neutralWhite,
+                          fontFamily: 'Poppins',
+                        ),
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      inputFormatters: [
+                        LengthLimitingTextInputFormatter(3),
+                        FilteringTextInputFormatter.digitsOnly,
+                      ],
+                      onChanged: handleOnChanged,
+                    ),
+                  ),
+                ],
               ),
-              DefaultButtonFactory.getButton(
-                color: secondaryIconOrange,
-                buttonType: ButtonType.secondaryIcon,
-                onPressed: () {
-                  setState(() {
-                    _pointerValue =
-                        (_pointerValue == 359) ? 0 : _pointerValue + 1;
-                  });
-                },
-                icon: IconType.add,
-              ),
-            ],
+            ),
+            DefaultButtonFactory.getButton(
+              color: secondaryIconOrange,
+              buttonType: ButtonType.secondaryIcon,
+              onPressed: () {
+                setState(() {
+                  _pointerValue =
+                      (_pointerValue == 359) ? 0 : _pointerValue + 1;
+                  _controller.text = _pointerValue.toInt().toString();
+                });
+              },
+              icon: IconType.add,
+            ),
+          ],
         ),
       ),
       actions: [
@@ -171,9 +231,21 @@ class _RotationState extends State<Rotation> {
                   fontSize: 14, fontFamily: "Poppins", color: neutralWhite)),
           onPressed: () {
             if (widget.direction == 'right' && _pointerValue > 0) {
-              context.read<CommandService>().rotateRight(_pointerValue.toInt());
+              if (widget.onConfirm != null) {
+                widget.onConfirm!(_pointerValue.toInt());
+              } else {
+                context
+                    .read<CommandService>()
+                    .rotateRight(_pointerValue.toInt());
+              }
             } else if (widget.direction == 'left' && _pointerValue > 0) {
-              context.read<CommandService>().rotateLeft(_pointerValue.toInt());
+              if (widget.onConfirm != null) {
+                widget.onConfirm!(_pointerValue.toInt());
+              } else {
+                context
+                    .read<CommandService>()
+                    .rotateLeft(_pointerValue.toInt());
+              }
             }
             Navigator.of(context).pop();
           },
