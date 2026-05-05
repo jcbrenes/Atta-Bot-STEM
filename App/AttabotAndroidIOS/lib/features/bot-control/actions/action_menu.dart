@@ -200,7 +200,7 @@ class _ActionMenuState extends State<ActionMenu> {
                 buttonType: ButtonType.primaryIcon,
                 onPressed: () async {
                   if (!btService.isConnected) {
-                    SimulatorBluetoothDialog.show(context);
+                    navService.goToBluetoothDevicesPage(context);
                     return;
                   }
                   if (context.read<CommandService>().commandHistory.isEmpty) {

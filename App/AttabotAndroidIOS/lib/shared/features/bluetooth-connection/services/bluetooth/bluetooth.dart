@@ -30,7 +30,7 @@ class FlutterBluePlusService implements BluetoothServiceInterface {
   bool get isConnected => _connectedDevice != null && writableCharacteristic != null;
 
   @override
-  BluetoothDevice? get connectedDevice => _connectedDevice!;
+  BluetoothDevice? get connectedDevice => _connectedDevice;
 
   @override
   Future<bool> initBluetooth() async {

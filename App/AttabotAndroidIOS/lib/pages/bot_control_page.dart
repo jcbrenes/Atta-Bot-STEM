@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:proyecto_tec/features/bot-control/actions/bot_control_header.dart';
 import 'package:proyecto_tec/features/bot-control/actions/action_menu.dart';
 import 'package:proyecto_tec/features/bot-control/actions/history_menu.dart';
 import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog.dart';
@@ -101,9 +102,9 @@ class _BotControlPageState extends State<BotControlPage> {
             ? (h * 0.24).clamp(220.0, 300.0).toDouble()
             : (h * 0.28).clamp(260.0, 360.0).toDouble();
         double tabletActionTopPadding =
-          isTabletPortrait ? (h * 0.105).clamp(84.0, 132.0).toDouble() : 0.0;
+            isTabletPortrait ? (h * 0.105).clamp(84.0, 132.0).toDouble() : 0.0;
         double tabletHistoryTopPadding =
-          isTabletPortrait ? (h * 0.055).clamp(36.0, 58.0).toDouble() : 0.0;
+            isTabletPortrait ? (h * 0.055).clamp(36.0, 58.0).toDouble() : 0.0;
 
         if (isTallPortrait) {
           return Padding(
@@ -113,7 +114,9 @@ class _BotControlPageState extends State<BotControlPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 76),
+                  const SizedBox(height: 28),
+                  const BotControlHeader(),
+                  const SizedBox(height: 18),
                   Transform.scale(
                     scale: uiScale,
                     alignment: Alignment.topCenter,
@@ -159,7 +162,9 @@ class _BotControlPageState extends State<BotControlPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 72),
+              const SizedBox(height: 28),
+              const BotControlHeader(),
+              const SizedBox(height: 20),
               MovementMenu(
                 simplifiedMode: widget.simplifiedMode,
                 defaultDistance: widget.defaultDistance,
@@ -192,7 +197,9 @@ class _BotControlPageState extends State<BotControlPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SizedBox(height: 30 + (h * 0.02)),
+            SizedBox(height: 12 + (h * 0.01)),
+            const BotControlHeader(),
+            SizedBox(height: h * 0.02),
             MovementMenu(
               simplifiedMode: widget.simplifiedMode,
               defaultDistance: widget.defaultDistance,
@@ -200,7 +207,7 @@ class _BotControlPageState extends State<BotControlPage> {
             ),
             SizedBox(height: h * 0.03),
             const ActionMenu(),
-            SizedBox(height: h * 0.05),
+            SizedBox(height: h * 0.08),
             SizedBox(
               height: (h * 0.32).clamp(180, 360),
               child: const HistoryMenu(),
