@@ -4,6 +4,9 @@ const TargetType = require('../../extension-support/target-type');
 
 class Scratch3YourExtension {
 
+    
+
+
     constructor (runtime) {
         // put any setup for your extension here
     }
@@ -336,9 +339,26 @@ class Scratch3YourExtension {
                     terminal: false,
                     filter: [ TargetType.SPRITE],
                     // arguments used in the block} 
+                }, // Fin envioBle
+
+
+// Bloques para Debug/desarrollo//******************************** 
+// */
+
+                {    // name of the function where your block code lives
+                    opcode: 'mensajeBLEBloque',
+                    blockType: BlockType.REPORTER,
+
+                    // label to display on the block
+                    text: 'string de comandos',
+
+                    // true if this block should end a stack
+                    terminal: false,
+                    filter: [ TargetType.SPRITE],
+                    // arguments used in the block} 
                 }, // Fin LapizActivado
 
-                
+  // fin blosque de debug/desarrollo***************************************              
             
             ],
             // Menús de selección
@@ -368,14 +388,30 @@ class Scratch3YourExtension {
     }
 // Lógica de la funciones que los botones llaman y la funcionalidad de la extensión
 
+    varModoTransmicion
+    varMensajeBle = 'ATINI'; 
+
     /**
      * implementation of the block with the opcode that matches this name
      *  this will be called when the block is used
      */
     AttaAvanzar ({distancia_cm}) {
-        // example implementation to return a string
-        //let commando = `AV${distancia_cm}`;
-        //return "Distancia es"+ distancia_cm;
+        
+        if (distancia_cm>0){
+            if (distancia_cm < 10) {
+                this.varMensajeBle = this.varMensajeBle + 'AV' + '00' + distancia_cm;
+            } else if (distancia_cm < 100) {
+                this.varMensajeBle = this.varMensajeBle + 'AV' + '0' + distancia_cm;
+            } else if (distancia_cm < 1000){
+                this.varMensajeBle = this.varMensajeBle + 'AV' + distancia_cm;
+            }          
+
+        }
+
+    };
+
+    mensajeBLEBloque (){
+        return this.varMensajeBle;
     };
 }
 
