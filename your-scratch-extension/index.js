@@ -15,10 +15,10 @@ class Scratch3YourExtension {
         return {
             // unique ID for your extension
             // Must not contain a '.' character.
-            id: 'yourScratchExtension',
+            id: 'AttaBotSTEM',
 
             // name that will be displayed in the Scratch UI
-            name: 'Demo',
+            name: 'AttaBot',
 
             // colours to use for your extension blocks
             color1: '#000099',
@@ -36,70 +36,347 @@ class Scratch3YourExtension {
             blocks: [
                 {
                     // name of the function where your block code lives
-                    opcode: 'myFirstBlock',
-
-                    // type of block - choose from:
-                    //   BlockType.REPORTER - returns a value, like "direction"
-                    //   BlockType.BOOLEAN - same as REPORTER but returns a true/false value
-                    //   BlockType.COMMAND - a normal command block, like "move {} steps"
-                    //   BlockType.HAT - starts a stack if its value changes from false to true ("edge triggered")
-                    blockType: BlockType.REPORTER,
+                    opcode: 'AttaAvanzar',
+                    blockType: BlockType.COMMAND,
 
                     // label to display on the block
-                    text: 'My first block [MY_NUMBER] and [MY_STRING]',
+                    text: 'Avanzar [distancia_cm]',
 
                     // true if this block should end a stack
-                    isTerminal: false,
-
-                    // where this block should be available for code - choose from:
-                    //   TargetType.SPRITE - for code in sprites
-                    //   TargetType.STAGE  - for code on the stage / backdrop
-                    // remove one of these if this block doesn't apply to both
-                    filter: [ TargetType.SPRITE, TargetType.STAGE ],
+                    terminal: false,
+                    filter: [ TargetType.SPRITE],
 
                     // arguments used in the block
                     arguments: {
-                        MY_NUMBER: {
-                            // default value before the user sets something
-                            defaultValue: 123,
-
-                            // type/shape of the parameter - choose from:
-                            //     ArgumentType.ANGLE - numeric value with an angle picker
-                            //     ArgumentType.BOOLEAN - true/false value
-                            //     ArgumentType.COLOR - numeric value with a colour picker
-                            //     ArgumentType.NUMBER - numeric value
-                            //     ArgumentType.STRING - text value
-                            //     ArgumentType.NOTE - midi music value with a piano picker
+                        distancia_cm: {
+                            defaultValue: 10,
                             type: ArgumentType.NUMBER
-                        },
-                        MY_STRING: {
-                            // default value before the user sets something
-                            defaultValue: 'hello',
-
-                            // type/shape of the parameter - choose from:
-                            //     ArgumentType.ANGLE - numeric value with an angle picker
-                            //     ArgumentType.BOOLEAN - true/false value
-                            //     ArgumentType.COLOR - numeric value with a colour picker
-                            //     ArgumentType.NUMBER - numeric value
-                            //     ArgumentType.STRING - text value
-                            //     ArgumentType.NOTE - midi music value with a piano picker
-                            type: ArgumentType.STRING
                         }
-                    }
+                    } 
+                }, // Fin AttaAvanzar
+                {
+                    // name of the function where your block code lives
+                    opcode: 'AttaRetroceder',
+                    blockType: BlockType.COMMAND,
+
+                    // label to display on the block
+                    text: 'Retroceder [distancia_cm]',
+
+                    // true if this block should end a stack
+                    terminal: false,
+                    filter: [ TargetType.SPRITE],
+
+                    // arguments used in the block
+                    arguments: {
+                        distancia_cm: {
+                            defaultValue: 10,
+                            type: ArgumentType.NUMBER
+                        }
+                    } 
+                }, // Fin AttaRetroceder         
+                
+                
+                {
+                    // name of the function where your block code lives
+                    opcode: 'AttaGirarIzquierda',
+                    blockType: BlockType.COMMAND,
+
+                    // label to display on the block
+                    text: 'Girar izquierda [angulo]°',
+
+                    // true if this block should end a stack
+                    terminal: false,
+                    filter: [ TargetType.SPRITE],
+
+                    // arguments used in the block
+                    arguments: {
+                        angulo: {
+                            defaultValue: 90,
+                            type: ArgumentType.ANGLE
+                        }
+                    } 
+                }, // Fin AttaGirarIzquierda    
+
+
+                {
+                    // name of the function where your block code lives
+                    opcode: 'AttaGirarDerecha',
+                    blockType: BlockType.COMMAND,
+
+                    // label to display on the block
+                    text: 'Girar derecha [angulo]°',
+
+                    // true if this block should end a stack
+                    terminal: false,
+                    filter: [ TargetType.SPRITE],
+
+                    // arguments used in the block
+                    arguments: {
+                        angulo: {
+                            defaultValue: 90,
+                            type: ArgumentType.ANGLE
+                        }
+                    } 
+                }, // Fin AttaGirarDerecha+
+
+                {// name of the function where your block code lives
+                    opcode: 'For',
+                    blockType: BlockType.LOOP,
+
+                    // label to display on the block
+                    text: 'Repetir [repeticiones] veces',
+
+                    // true if this block should end a stack
+                    terminal: false,
+                    filter: [ TargetType.SPRITE],
+
+                    // arguments used in the block
+                    arguments: {
+                        repeticiones: {
+                            defaultValue: 1,
+                            type: ArgumentType.NUMBER
+                        }
+                    } 
+                }, // Fin For
+
+
+                
+                {    // name of the function where your block code lives
+                    opcode: 'DeteccionIniciada',
+                    blockType: BlockType.COMMAND,
+
+                    // label to display on the block
+                    text: 'Iniciar detección de obstáculos',
+
+                    // true if this block should end a stack
+                    terminal: false,
+                    filter: [ TargetType.SPRITE],
+                    // arguments used in the block} 
+                }, // Fin DeteccionIniciada
+
+                {    // name of the function where your block code lives
+                    opcode: 'DeteccionFinalizada',
+                    blockType: BlockType.COMMAND,
+
+                    // label to display on the block
+                    text: 'Finalizar detección de obstáculos',
+
+                    // true if this block should end a stack
+                    terminal: false,
+                    filter: [ TargetType.SPRITE],
+                    // arguments used in the block} 
+                }, // Fin DeteccionFinalizada
+
+                {    // name of the function where your block code lives
+                    opcode: 'LapizActivado',
+                    blockType: BlockType.COMMAND,
+
+                    // label to display on the block
+                    text: 'Activar lápiz',
+
+                    // true if this block should end a stack
+                    terminal: false,
+                    filter: [ TargetType.SPRITE],
+                    // arguments used in the block} 
+                }, // Fin LapizActivado
+
+                {    // name of the function where your block code lives
+                    opcode: 'LapizDesactivado',
+                    blockType: BlockType.COMMAND,
+
+                    // label to display on the block
+                    text: 'Desactivar lápiz',
+
+                    // true if this block should end a stack
+                    terminal: false,
+                    filter: [ TargetType.SPRITE],
+                    // arguments used in the block} 
+                }, // Fin LapizDesactivado
+                
+
+
+                {    // name of the function where your block code lives
+                    opcode: 'IfInicio',
+                    blockType: BlockType.CONDITIONAL,
+                    branchCount: 2,
+
+                    // label to display on the block
+                    text: ['Si sensores [condicionSensorIzq] y [condicionSensorDer]', 'si no'],
+
+                    // true if this block should end a stack
+                    terminal: false,
+                    filter: [ TargetType.SPRITE],
+
+                    // arguments used in the block
+                    arguments: {
+                        condicionSensorIzq: {
+                            defaultValue:'Ninguna',
+                            type: ArgumentType.NUMBER,
+                            menu: 'menuCondiciones'
+                        },
+                        condicionSensorDer: {
+                            defaultValue:'Ninguna',
+                            type: ArgumentType.NUMBER,
+                            menu: 'menuCondiciones'
+                        }
+                    } 
+                }, // Fin IF
+
+                {    // name of the function where your block code lives
+                    opcode: 'ElseIfInicio',
+                    blockType: BlockType.CONDITIONAL,
+                    branchCount: 2,
+
+                    // label to display on the block
+                    text: ['Si no, si [condicionSensorIzq] y [condicionSensorDer]', 'si no'],
+
+                    // true if this block should end a stack
+                    terminal: false,
+                    filter: [ TargetType.SPRITE],
+
+                    // arguments used in the block
+                    arguments: {
+                        condicionSensorIzq: {
+                            defaultValue:'Ninguna',
+                            type: ArgumentType.NUMBER,
+                            menu: 'menuCondiciones'
+                        },
+                        condicionSensorDer: {
+                            defaultValue:'Ninguna',
+                            type: ArgumentType.NUMBER,
+                            menu: 'menuCondiciones'
+                        }
+                    } 
+                }, // Fin ElseIf
+
+
+                {  
+                    opcode: 'WhileInicio',
+                    blockType: BlockType.CONDITIONAL,
+                    branchCount: 1,
+
+                    // label to display on the block
+                    text: 'Mientras sensores [condicionSensorIzq] y [condicionSensorDer]',
+
+                    // true if this block should end a stack
+                    terminal: false,
+                    filter: [ TargetType.SPRITE],
+
+                    // arguments used in the block
+                    arguments: {
+                        condicionSensorIzq: {
+                            defaultValue:'Ninguna',
+                            type: ArgumentType.NUMBER,
+                            menu: 'menuCondiciones'
+                        },
+                        condicionSensorDer: {
+                            defaultValue:'Ninguna',
+                            type: ArgumentType.NUMBER,
+                            menu: 'menuCondiciones'
+                        }
+                    } 
+                }, // Fin While
+
+                {  
+                    opcode: 'WhileNotInicio',
+                    blockType: BlockType.CONDITIONAL,
+                    branchCount: 1,
+
+                    // label to display on the block
+                    text: 'Mientras sensores no [condicionSensorIzq] y [condicionSensorDer]',
+
+                    // true if this block should end a stack
+                    terminal: false,
+                    filter: [ TargetType.SPRITE],
+
+                    // arguments used in the block
+                    arguments: {
+                        condicionSensorIzq: {
+                            defaultValue:'Ninguna',
+                            type: ArgumentType.NUMBER,
+                            menu: 'menuCondiciones'
+                        },
+                        condicionSensorDer: {
+                            defaultValue:'Ninguna',
+                            type: ArgumentType.NUMBER,
+                            menu: 'menuCondiciones'
+                        }
+                    } 
+                }, // Fin While
+
+                {    // name of the function where your block code lives
+                    opcode: 'Herramienta',
+                    blockType: BlockType.COMMAND,
+
+                    // label to display on the block
+                    text: 'Herramienta [herramientaAccion]',
+
+                    // true if this block should end a stack
+                    terminal: false,
+                    filter: [ TargetType.SPRITE],
+
+                    // arguments used in the block
+                    arguments: {
+                        herramientaAccion: {
+                            defaultValue:'Ninguna',
+                            type: ArgumentType.NUMBER,
+                            menu: 'menuHerramientaAcciones'
+                        }
+                    } 
+                }, // Fin Herramienta
+
+                {    // name of the function where your block code lives
+                    opcode: 'envioBLE',
+                    blockType: BlockType.COMMAND,
+
+                    // label to display on the block
+                    text: 'Transmitir comandos al AttaBot',
+
+                    // true if this block should end a stack
+                    terminal: false,
+                    filter: [ TargetType.SPRITE],
+                    // arguments used in the block} 
+                }, // Fin LapizActivado
+
+                
+            
+            ],
+            // Menús de selección
+            menus: {
+                menuHerramientaAcciones: { 
+                            acceptReporters: true,
+                            items:[//Valores placeholder, poner los resultantes de la calibración del motor
+                            {text: 'Garra abrir', value: 1},
+                            {text: 'Garra cerrar', value: 2},
+                            {text: 'Grúa subir', value: 3},
+                            {text: 'Grúa bajar', value: 4},
+                            {text: 'Ninguna', value: 0}
+                            ]
+                        },
+
+                menuCondiciones: {
+                    items:
+                    [
+                    {text: 'blanco' , value: 1},
+                    {text: 'negro' , value: 0}
+                    ]
                 }
-            ]
+                
+
+            }
         };
     }
-
+// Lógica de la funciones que los botones llaman y la funcionalidad de la extensión
 
     /**
      * implementation of the block with the opcode that matches this name
      *  this will be called when the block is used
      */
-    myFirstBlock ({ MY_NUMBER, MY_STRING }) {
+    AttaAvanzar ({distancia_cm}) {
         // example implementation to return a string
-        return MY_STRING + ' : doubled would be ' + (MY_NUMBER * 2);
-    }
+        //let commando = `AV${distancia_cm}`;
+        //return "Distancia es"+ distancia_cm;
+    };
 }
 
 module.exports = Scratch3YourExtension;

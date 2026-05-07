@@ -17,11 +17,11 @@ index 276611ddc..2a436496c 100644
  
  export default [
 +    {
-+        name: 'Your Extension',
++        name: 'AttaBotSTEM',
 +        extensionId: 'yourScratchExtension',
 +        iconURL: yourExtensionIconURL,
 +        insetIconURL: yourExtensionInsetIconURL,
-+        description: 'Your custom Scratch extension',
++        description: 'Extensión de bloques para controlar el robot AttaBot',
 +        featured: true
 +    },
      {
