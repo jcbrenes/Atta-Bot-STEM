@@ -1,7 +1,7 @@
-diff --git a/packages/scratch-gui/src/lib/libraries/extensions/index.jsx b/packages/scratch-gui/src/lib/libraries/extensions/index.jsx
-index 276611ddc..2a436496c 100644
---- a/packages/scratch-gui/src/lib/libraries/extensions/index.jsx
-+++ b/packages/scratch-gui/src/lib/libraries/extensions/index.jsx
+diff --git a/src/lib/libraries/extensions/index.jsx b/src/lib/libraries/extensions/index.jsx
+index ba18b91..e316f38 100644
+--- a/src/lib/libraries/extensions/index.jsx
++++ b/src/lib/libraries/extensions/index.jsx
 @@ -1,6 +1,9 @@
  import React from 'react';
  import {FormattedMessage} from 'react-intl';
@@ -12,17 +12,18 @@ index 276611ddc..2a436496c 100644
  import musicIconURL from './music/music.png';
  import musicInsetIconURL from './music/music-small.svg';
  
-@@ -50,6 +53,14 @@ import faceSensingIconURL from './faceSensing/faceSensing.png';
- import faceSensingInsetIconURL from './faceSensing/faceSensing-small.svg';
+@@ -47,6 +50,15 @@ import gdxforConnectionIconURL from './gdxfor/gdxfor-illustration.svg';
+ import gdxforConnectionSmallIconURL from './gdxfor/gdxfor-small.svg';
  
  export default [
 +    {
-+        name: 'AttaBotSTEM',
++        name: 'Your Extension',
 +        extensionId: 'yourScratchExtension',
 +        iconURL: yourExtensionIconURL,
 +        insetIconURL: yourExtensionInsetIconURL,
-+        description: 'Extensión de bloques para controlar el robot AttaBot',
-+        featured: true
++        description: 'Your custom Scratch extension',
++        featured: true,
++        disabled: false
 +    },
      {
          name: (

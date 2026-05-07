@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 echo "Verifying location of Scratch source is known"
 if [ -z "$SCRATCH_SRC_HOME" ]; then
@@ -20,6 +21,7 @@ fi
 
 echo "Commit any changes"
 git add your-scratch-extension
+git add dependencies
 git commit -m "Update"
 git push origin master
 
@@ -44,7 +46,7 @@ else
 fi
 
 echo "Publishing the Scratch fork"
-cp -rf $SCRATCH_SRC_HOME/packages/scratch-gui/build/* ./scratch/.
+cp -rf $SCRATCH_SRC_HOME/scratch-gui/build/* ./scratch/.
 git add scratch
 git commit -m "Update"
 git push origin gh-pages
