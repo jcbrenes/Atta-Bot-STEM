@@ -42,6 +42,51 @@ class Scratch3YourExtension {
 
             // your Scratch blocks, in the order they will be displayed
             blocks: [
+
+// Bloques para Debug/desarrollo//******************************** 
+// */
+                {    // name of the function where your block code lives
+                    opcode: 'AttaMensajeBLE',
+                    blockType: BlockType.REPORTER,
+
+                    // label to display on the block
+                    text: 'string de comandos',
+
+                    // true if this block should end a stack
+                    terminal: false,
+                    filter: [ TargetType.SPRITE],
+                    // arguments used in the block} 
+                }, // Fin LapizActivado
+
+  // fin blosque de debug/desarrollo***************************************                    
+
+                {    // name of the function where your block code lives
+                    opcode: 'AttaComandoBLE',
+                    blockType: BlockType.LOOP,
+
+                    // label to display on the block
+                    text: 'Modo de transmisión de comandos al AttaBot',
+
+                    // true if this block should end a stack
+                    terminal: false,
+                    filter: [ TargetType.SPRITE],
+                    // arguments used in the block} 
+                }, // Fin envioBle
+
+                {    // name of the function where your block code lives
+                    opcode: 'AttaSimulacion',
+                    blockType: BlockType.LOOP,
+
+                    // label to display on the block
+                    text: 'Modo de simular comandos del AttaBot',
+
+                    // true if this block should end a stack
+                    terminal: false,
+                    filter: [ TargetType.SPRITE],
+                    // arguments used in the block} 
+                }, // Fin envioBle
+
+
                 {
                     // name of the function where your block code lives
                     opcode: 'AttaAvanzar',
@@ -147,28 +192,7 @@ class Scratch3YourExtension {
                     } 
                 }, // Fin For
 
-                {// name of the function where your block code lives
-                    opcode: 'repeat2',
-                    blockType: BlockType.LOOP,
-
-                    // label to display on the block
-                    text: 'Repetir2 [repeticiones] veces',
-
-                    // true if this block should end a stack
-                    terminal: false,
-                    filter: [ TargetType.SPRITE],
-
-                    // arguments used in the block
-                    arguments: {
-                        repeticiones: {
-                            defaultValue: 1,
-                            type: ArgumentType.NUMBER
-                        }
-                    } 
-                }, // Fin For
-
-
-                
+                               
                 {    // name of the function where your block code lives
                     opcode: 'AttaDeteccionIniciada',
                     blockType: BlockType.COMMAND,
@@ -353,63 +377,10 @@ class Scratch3YourExtension {
                     } 
                 }, // Fin Herramienta
 
-                {    // name of the function where your block code lives
-                    opcode: 'AttaComandoBLE',
-                    blockType: BlockType.COMMAND,
-
-                    // label to display on the block
-                    text: 'Modo de transmisión de comandos al AttaBot',
-
-                    // true if this block should end a stack
-                    terminal: false,
-                    filter: [ TargetType.SPRITE],
-                    // arguments used in the block} 
-                }, // Fin envioBle
-
-                {    // name of the function where your block code lives
-                    opcode: 'AttaSimulacion',
-                    blockType: BlockType.COMMAND,
-
-                    // label to display on the block
-                    text: 'Modo de simular comandos del AttaBot',
-
-                    // true if this block should end a stack
-                    terminal: false,
-                    filter: [ TargetType.SPRITE],
-                    // arguments used in the block} 
-                }, // Fin envioBle
-
-                {    // name of the function where your block code lives
-                    opcode: 'AttaEnvioBLE',
-                    blockType: BlockType.COMMAND,
-
-                    // label to display on the block
-                    text: 'Transmitir comandos al AttaBot',
-
-                    // true if this block should end a stack
-                    terminal: true,
-                    filter: [ TargetType.SPRITE],
-                    // arguments used in the block} 
-                }, // Fin envioBle
 
 
-// Bloques para Debug/desarrollo//******************************** 
-// */
 
-                {    // name of the function where your block code lives
-                    opcode: 'AttaMensajeBLE',
-                    blockType: BlockType.REPORTER,
-
-                    // label to display on the block
-                    text: 'string de comandos',
-
-                    // true if this block should end a stack
-                    terminal: false,
-                    filter: [ TargetType.SPRITE],
-                    // arguments used in the block} 
-                }, // Fin LapizActivado
-
-  // fin blosque de debug/desarrollo***************************************              
+          
             
             ],
             // Menús de selección
@@ -459,50 +430,52 @@ class Scratch3YourExtension {
 
     };
 
-    AttaRetroceder({distancia_cm}){
+    AttaRetroceder({distancia_cm},util){
         if(this.varModoTransmision){
             this.FormatearComando('RE', distancia_cm);
         }  else{
-            //comportamiento gráfico
+            const steps = -distancia_cm*10;
+            const radians = MathUtil.degToRad(90 - util.target.direction);
+            const dx = steps * Math.cos(radians);
+            const dy = steps * Math.sin(radians);
+            util.target.setXY(util.target.x + dx, util.target.y + dy);    //comportamiento gráfico
         }  
 
     };
 
-    AttaGirarIzquierda({angulo}){
+    AttaGirarIzquierda({angulo},util){
         if(this.varModoTransmision){
             this.FormatearComando('GI', angulo);
         }  else{
-            //comportamiento gráfico
+            util.target.setDirection(util.target.direction - angulo);//comportamiento gráfico
         }  
 
     };
 
-    AttaGirarDerecha({angulo}){
+    AttaGirarDerecha({angulo},util){
         if(this.varModoTransmision){
             this.FormatearComando('GD', angulo);
         }  else{
-            //comportamiento gráfico
+            util.target.setDirection(util.target.direction + angulo);//comportamiento gráfico
         } 
 
     };
 
     AttaFor ({repeticiones}, util){
         if(this.varModoTransmision){
-            this.varMensajeBle = this.varMensajeBle + 'CI' + repeticiones;
-            //yield* util.startBranch(1, true);
-            this.varMensajeBle += 'CIFIN';
+            if (typeof util.stackFrame.loopCounter === 'undefined') {
+                util.stackFrame.loopCounter = -1; //Primera ejecucion del bloque
+                this.FormatearComando('CI', repeticiones);
+                util.startBranch(1, true);
+            }else{ // segunda iteracion
+                this.varMensajeBle += 'CIFIN';
+            }            
             
         }  else{
             //comportamiento gráfico
-        } 
-
-    };
-
-    repeat2 () {
-        const times = 3;
-        // Initialize loop
+            // Initialize loop
         if (typeof util.stackFrame.loopCounter === 'undefined') {
-            util.stackFrame.loopCounter = times;
+            util.stackFrame.loopCounter = repeticiones;
         }
         // Only execute once per frame.
         // When the branch finishes, `repeat` will be executed again and
@@ -513,29 +486,38 @@ class Scratch3YourExtension {
         if (util.stackFrame.loopCounter >= 0) {
             util.startBranch(1, true);
         }
+        } //fin comportamiento gráfico      
+
     };
 
-    AttaDeteccionIniciada(){};
-    AttaDeteccionFinalizada(){};
-    AttaLapizActivado(){};
-    AttaIfInicio ({condicionSensorIzq}, {condicionSensorDer}){};
-    AttaWhileInicio ({condicionSensorIzq}, {condicionSensorDer}){};
-    AttaWhileNotInicio ({condicionSensorIzq}, {condicionSensorDer}){};
-    AttaHerramienta ({herramientaAccion}){};
 
-    AttaComandoBLE(){
-        this.varModoTransmision= true;
-        this.varMensajeBle='ATINI';
+
+    AttaDeteccionIniciada(util){};
+    AttaDeteccionFinalizada(util){};
+    AttaLapizActivado(util){};
+    AttaIfInicio ({condicionSensorIzq}, {condicionSensorDer},util){};
+    AttaWhileInicio ({condicionSensorIzq}, {condicionSensorDer},util){};
+    AttaWhileNotInicio ({condicionSensorIzq}, {condicionSensorDer},util){};
+    AttaHerramienta ({herramientaAccion},util){};
+
+    AttaComandoBLE(args,util){ 
+        if (typeof util.stackFrame.loopCounter === 'undefined') {
+                util.stackFrame.loopCounter = -1; //Primera ejecucion del bloque
+                this.varModoTransmision= true;      
+                this.varMensajeBle='ATINI';
+                util.startBranch(1, true);
+            }else{ // segunda iteracion
+                this.varMensajeBle += 'OBFIN';
+                //codigo de comunicacion BLE de Web BLUETOOTH
+            }
+
     };
 
     AttaSimulacion(){
         this.varModoTransmision= false;
     };
 
-    AttaEnvioBLE(){
-        this.varMensajeBle=this.varMensajeBle+'OBFIN';
-        //codigo de comunicacion BLE de Web BLUETOOTH
-    };
+
 
     AttaMensajeBLE (){
         return this.varMensajeBle;
