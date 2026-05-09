@@ -523,7 +523,7 @@ class Scratch3YourExtension {
                     branchCount: 2,
 
                     // label to display on the block
-                    text: ['Si sensores [condicionSensorIzq] y [condicionSensorDer]', 'si no'],
+                    text: ['Sixx sensores [condicionSensorIzq] y [condicionSensorDer]', 'si noxx'],
 
                     // true if this block should end a stack
                     terminal: false,
@@ -545,19 +545,19 @@ class Scratch3YourExtension {
                 }, // Fin IF
 
                 {    // name of the function where your block code lives
-                    opcode: 'ElseIfInicio',
+                    opcode: 'AttaElseIfInicio',
                     blockType: BlockType.CONDITIONAL,
                     branchCount: 2,
 
                     // label to display on the block
-                    text: ['Si no, si [condicionSensorIzq] y [condicionSensorDer]', 'si no'],
+                    text: ['Si sensores lele', 'Si no, si lala'],
 
                     // true if this block should end a stack
                     terminal: false,
                     filter: [ TargetType.SPRITE],
 
                     // arguments used in the block
-                    arguments: {
+ /*                  arguments: {
                         condicionSensorIzq: {
                             defaultValue:'Ninguna',
                             type: ArgumentType.NUMBER,
@@ -567,8 +567,18 @@ class Scratch3YourExtension {
                             defaultValue:'Ninguna',
                             type: ArgumentType.NUMBER,
                             menu: 'menuCondiciones'
+                        },
+                         condicionSensorIzqElse: {
+                            defaultValue:'Ninguna',
+                            type: ArgumentType.NUMBER,
+                            menu: 'menuCondiciones'
+                        },
+                        condicionSensorDerElse: {
+                            defaultValue:'Ninguna',
+                            type: ArgumentType.NUMBER,
+                            menu: 'menuCondiciones'
                         }
-                    } 
+                    } */
                 }, // Fin ElseIf
 
 
@@ -1273,9 +1283,43 @@ class Scratch3YourExtension {
 ////////////////////////// Fin Chanchada con el lapiz
 
 
+    AttaIfInicio (args,util){
+        if (this.varModoTransmision){     
+            this.varMensajeBle += 'IFprimero'+ '0' + args.condicionSensorIzq + args.condicionSensorDer;       
+            if (typeof util.stackFrame.loopCounter === 'undefined') {
+                    util.stackFrame.loopCounter = 1; //Primera ejecucion del bloque   
+                    this.varMensajeBle += 'IF'+ '0' + args.condicionSensorIzq + args.condicionSensorDer;
+                    util.startBranch(1, true);
+                }else if(util.stackFrame.loopCounter === 1){ // segunda iteracion: else
+                    this.varMensajeBle += 'EL999';
+                    util.stackFrame.loopCounter = -1;
+                    util.startBranch(2, true);                    
+                }else{ //tercera iteracion> If fin
+                    this.varMensajeBle += 'IFFIN';
+                }
 
+        } else { // comportamiento gráfico
+            
+        } 
+    };
 
-    AttaIfInicio ({condicionSensorIzq}, {condicionSensorDer},util){};
+    AttaElseiFInicio (args,util){
+        if (this.varModoTransmision){            
+            if (typeof util.stackFrame.loopCounter === 'undefined') {
+                    util.stackFrame.loopCounter = 1; //Primera ejecucion del bloque   
+                    this.varMensajeBle += 'IF'+ '0' + condicionSensorIzq + condicionSensorDer;
+                    util.startBranch(1, true);
+                }else if(util.stackFrame.loopCounter === 1){ // segunda iteracion: else
+                    this.varMensajeBle += 'FIN';
+                    
+                }else{ //tercera iteracion> If fin
+
+                }
+
+        } else { // comportamiento gráfico
+            
+        } 
+    };
     AttaWhileInicio ({condicionSensorIzq}, {condicionSensorDer},util){};
     AttaWhileNotInicio ({condicionSensorIzq}, {condicionSensorDer},util){};
     AttaHerramienta ({herramientaAccion},util){};
