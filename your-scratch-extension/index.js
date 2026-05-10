@@ -524,7 +524,7 @@ class Scratch3YourExtension {
                     branchCount: 1,
 
                     // label to display on the block
-                    text: ['Si sensores [condicionSensorIzq] y [condicionSensorDer]'],
+                    text: ['Si sensores [colorSensorIzquierdo] [condicionSensorIzq]  y [colorSensorDerecho][condicionSensorDer][colorBlanco][colorNegro]'],
 
                     // true if this block should end a stack
                     terminal: false,
@@ -541,7 +541,29 @@ class Scratch3YourExtension {
                             defaultValue:'0',
                             type: ArgumentType.NUMBER,
                             menu: 'menuCondiciones'
+                        },
+                        colorSensorIzquierdo: {
+                            defaultValue:'#80FF00',
+                            type: ArgumentType.COLOR,
+                            
+                        },
+                        colorSensorDerecho: {
+                            defaultValue:'#FF0000',
+                            type: ArgumentType.COLOR,
+                            
+                        },
+                        colorBlanco: {
+                            defaultValue:'#FFFFFF',
+                            type: ArgumentType.COLOR,
+                            
+                        },
+                        colorNegro: {
+                            defaultValue:'#000000',
+                            type: ArgumentType.COLOR,
+                            
                         }
+                        
+                        
                     } 
                 }, // Fin IF
 
@@ -937,7 +959,7 @@ class Scratch3YourExtension {
         if(this.varModoTransmision){
             this.FormatearComando('AV', distancia_cm);
         }  else{
-            const steps = distancia_cm*10;
+            const steps = distancia_cm;
             const radians = MathUtil.degToRad(90 - util.target.direction);
             const dx = steps * Math.cos(radians);
             const dy = steps * Math.sin(radians);
@@ -950,7 +972,7 @@ class Scratch3YourExtension {
         if(this.varModoTransmision){
             this.FormatearComando('RE', distancia_cm);
         }  else{
-            const steps = -distancia_cm*10;
+            const steps = -distancia_cm;
             const radians = MathUtil.degToRad(90 - util.target.direction);
             const dx = steps * Math.cos(radians);
             const dy = steps * Math.sin(radians);
@@ -963,7 +985,7 @@ class Scratch3YourExtension {
         if(this.varModoTransmision){
             this.FormatearComando('GI', angulo);
         }  else{
-            util.target.setDirection(util.target.direction - angulo);//comportamiento gráfico
+            util.target.setDirection(util.target.direction - Cast.toNumber(angulo));//comportamiento gráfico
         }  
 
     };
@@ -972,7 +994,7 @@ class Scratch3YourExtension {
         if(this.varModoTransmision){
             this.FormatearComando('GD', angulo);
         }  else{
-            util.target.setDirection(util.target.direction + angulo);//comportamiento gráfico
+            util.target.setDirection(util.target.direction + Cast.toNumber(angulo));//comportamiento gráfico
         } 
 
     };
@@ -1322,37 +1344,60 @@ class Scratch3YourExtension {
                 }
 
         } else { // comportamiento gráfico
-            const colorSensorIzquierdo = 'rgb(0, 255, 0)'; //mask
-            const colorSensorDerecho = 'rgb(0, 255, 255)'; 
-            const colorBlanco = 'rgb(255, 255, 255)'; // target 
-            const colorNegro = 'rgb(0, 0, 0)';
+            
+            // Convertir a RGB arrays  
+            const colorSensorIzquierdo = Cast.toRgbColorList(args.colorSensorIzquierdo) ;              
+            const colorSensorDerecho = Cast.toRgbColorList(args.colorSensorDerecho) ;              
+            const colorBlanco = Cast.toRgbColorList(args.colorBlanco);              
+            const colorNegro = Cast.toRgbColorList(args.colorNegro); 
+            let colorFondoIzquierdo;
+            let colorFondoDerecho;
+            console.log('colorSensorIzquierdo')
+            console.log(colorSensorIzquierdo)
+            console.log('colorSensorDerecho')
+            console.log(colorSensorDerecho)
             /*
             En la GUI al dibujar Scratch usa escala HSV normalizada para los colores. Normaliza cada valor entre 0-100
-            por lo tanto estos colores para deteccion de los sensores simples en rbg equivalen en la escala de Scratch en:
-                    verdeizq celesteder blanco  negro
-            Color:      30  50          0       0
+            por lo tanto estos colores para deteccion de los sensores simples en hexadecimal equivalen en la escala de Scratch en:
+                    VerdeIzq RojoeDer blanco  negro
+            Color:      25  0           0       0
             Saturacion: 100 100         0       0
-            Brillo:     100 100         10      0
+            Brillo:     100 100         100     0
 
-            ******Esta es la formula matematica de HSV normal a HSV de scratch. De RBG a HSV normal hay calculadoras en linea
+            ******Esta es la formula matematica de HSV normal a HSV de scratch. De RBG/hexadecimal a HSV normal hay calculadoras en linea
                 color = (hsv.h / 360) * 100;  
                 saturation = hsv.s * 100;  
                 brightness = hsv.v * 100;
             */
             if(args.condicionSensorIzq === 1){
-                const colorFondoIzquierdo = colorBlanco;
+                 colorFondoIzquierdo = colorBlanco;
+                 console.log('if true')
             }else{
-                const colorFondoIzquierdo = colorNegro;
+                 colorFondoIzquierdo = colorNegro;
+                 console.log('if false')
             };
 
             if(args.condicionSensorDer === 1){
-                const colorFondoDerecho = colorBlanco;
+                 colorFondoDerecho = colorBlanco;
             }else{
-                const colorFondoDerecho = colorNegro;
+                 colorFondoDerecho = colorNegro;
             };
 
-            const boolSensorIzquierdo = util.target.colorIsTouchingColor(colorSensorIzquierdo, colorFondoIzquierdo);
-            const boolSensorDerecho = util.target.colorIsTouchingColor(colorSensorDerecho, colorFondoDerecho);
+            console.log('colorFondoIzquierdo')
+            console.log(colorFondoIzquierdo)
+            console.log('colorFondoDerecho')
+            console.log(colorFondoDerecho)
+
+            let boolSensorIzquierdo = util.target.colorIsTouchingColor(colorFondoIzquierdo, colorSensorIzquierdo);
+            let boolSensorDerecho = util.target.colorIsTouchingColor(colorFondoDerecho, colorSensorDerecho);
+            //let boolSensorIzquierdo = util.target.colorIsTouchingColor(colorSensorIzquierdo, colorFondoIzquierdo);  
+            //let boolSensorDerecho = util.target.colorIsTouchingColor(colorSensorDerecho, colorFondoDerecho);
+
+            console.log('boolSensorIzquierdo')
+            console.log(boolSensorIzquierdo)
+            console.log('boolSensorDerecho')
+            console.log(boolSensorDerecho)
+            
             if (boolSensorIzquierdo && boolSensorDerecho ) {
                 util.startBranch(1, false);
             }
