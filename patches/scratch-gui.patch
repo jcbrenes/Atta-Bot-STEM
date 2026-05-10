@@ -18,7 +18,7 @@ index ba18b91..e316f38 100644
  export default [
 +    {
 +        name: 'AttaScratch',
-+        extensionId: 'yourScratchExtension',
++        extensionId: 'AttaBotSTEM',
 +        iconURL: yourExtensionIconURL,
 +        insetIconURL: yourExtensionInsetIconURL,
 +        description: 'Extensión para el AttaBot-STEM',
