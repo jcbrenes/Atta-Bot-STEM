@@ -39,7 +39,10 @@ const ColorParam = {
 
 // Chanchada con el lapiz FINAL
 class Scratch3YourExtension {
-
+    
+    static get EXTENSION_ID () {  
+        return 'AttaBotSTEM';  
+    }  
     
 
 
@@ -515,15 +518,13 @@ class Scratch3YourExtension {
                     // arguments used in the block} 
                 }, // Fin LapizDesactivado
                 
-
-
                 {    // name of the function where your block code lives
-                    opcode: 'AttaIfInicio',
+                    opcode: 'AttaIf',
                     blockType: BlockType.CONDITIONAL,
-                    branchCount: 2,
+                    branchCount: 1,
 
                     // label to display on the block
-                    text: ['Sixx sensores [condicionSensorIzq] y [condicionSensorDer]', 'si noxx'],
+                    text: ['Si sensores [condicionSensorIzq] y [condicionSensorDer]'],
 
                     // true if this block should end a stack
                     terminal: false,
@@ -532,12 +533,12 @@ class Scratch3YourExtension {
                     // arguments used in the block
                     arguments: {
                         condicionSensorIzq: {
-                            defaultValue:'Ninguna',
+                            defaultValue:'0',
                             type: ArgumentType.NUMBER,
                             menu: 'menuCondiciones'
                         },
                         condicionSensorDer: {
-                            defaultValue:'Ninguna',
+                            defaultValue:'0',
                             type: ArgumentType.NUMBER,
                             menu: 'menuCondiciones'
                         }
@@ -545,45 +546,72 @@ class Scratch3YourExtension {
                 }, // Fin IF
 
                 {    // name of the function where your block code lives
-                    opcode: 'AttaElseIfInicio',
+                    opcode: 'AttaIfElse',
                     blockType: BlockType.CONDITIONAL,
                     branchCount: 2,
 
                     // label to display on the block
-                    text: ['Si sensores lele', 'Si no, si lala'],
+                    text: ['Si sensores [condicionSensorIzq] y [condicionSensorDer]', 'si no'],
 
                     // true if this block should end a stack
                     terminal: false,
                     filter: [ TargetType.SPRITE],
 
                     // arguments used in the block
- /*                  arguments: {
+                    arguments: {
                         condicionSensorIzq: {
-                            defaultValue:'Ninguna',
+                            defaultValue:'0',
                             type: ArgumentType.NUMBER,
                             menu: 'menuCondiciones'
                         },
                         condicionSensorDer: {
-                            defaultValue:'Ninguna',
+                            defaultValue:'0',
+                            type: ArgumentType.NUMBER,
+                            menu: 'menuCondiciones'
+                        }
+                    } 
+                }, // Fin IFElse
+
+                {    // name of the function where your block code lives
+                    opcode: 'AttaIFElseIF',
+                    blockType: BlockType.CONDITIONAL,
+                    branchCount: 2,
+
+                    // label to display on the block
+                    text: ['Si sensores [condicionSensorIzq] y [condicionSensorDer]','Si no, si sensores [condicionSensorIzqElse] y [condicionSensorDerElse]',],
+
+                    // true if this block should end a stack
+                    terminal: false,
+                    filter: [ TargetType.SPRITE],
+
+                    // arguments used in the block
+               arguments: {
+                        condicionSensorIzq: {
+                            defaultValue:'0',
+                            type: ArgumentType.NUMBER,
+                            menu: 'menuCondiciones'
+                        },
+                        condicionSensorDer: {
+                            defaultValue:'0',
                             type: ArgumentType.NUMBER,
                             menu: 'menuCondiciones'
                         },
                          condicionSensorIzqElse: {
-                            defaultValue:'Ninguna',
+                            defaultValue:'0',
                             type: ArgumentType.NUMBER,
                             menu: 'menuCondiciones'
                         },
                         condicionSensorDerElse: {
-                            defaultValue:'Ninguna',
+                            defaultValue:'0',
                             type: ArgumentType.NUMBER,
                             menu: 'menuCondiciones'
                         }
-                    } */
-                }, // Fin ElseIf
+                    } 
+                }, // Fin IfElseIf
 
 
                 {  
-                    opcode: 'AttaWhileInicio',
+                    opcode: 'AttaWhile',
                     blockType: BlockType.CONDITIONAL,
                     branchCount: 1,
 
@@ -597,12 +625,12 @@ class Scratch3YourExtension {
                     // arguments used in the block
                     arguments: {
                         condicionSensorIzq: {
-                            defaultValue:'Ninguna',
+                            defaultValue:'0',
                             type: ArgumentType.NUMBER,
                             menu: 'menuCondiciones'
                         },
                         condicionSensorDer: {
-                            defaultValue:'Ninguna',
+                            defaultValue:'0',
                             type: ArgumentType.NUMBER,
                             menu: 'menuCondiciones'
                         }
@@ -610,7 +638,7 @@ class Scratch3YourExtension {
                 }, // Fin While
 
                 {  
-                    opcode: 'AttaWhileNotInicio',
+                    opcode: 'AttaWhileNot',
                     blockType: BlockType.CONDITIONAL,
                     branchCount: 1,
 
@@ -624,12 +652,12 @@ class Scratch3YourExtension {
                     // arguments used in the block
                     arguments: {
                         condicionSensorIzq: {
-                            defaultValue:'Ninguna',
+                            defaultValue:'0',
                             type: ArgumentType.NUMBER,
                             menu: 'menuCondiciones'
                         },
                         condicionSensorDer: {
-                            defaultValue:'Ninguna',
+                            defaultValue:'0',
                             type: ArgumentType.NUMBER,
                             menu: 'menuCondiciones'
                         }
@@ -650,7 +678,7 @@ class Scratch3YourExtension {
                     // arguments used in the block
                     arguments: {
                         herramientaAccion: {
-                            defaultValue:'Ninguna',
+                            defaultValue:'0',
                             type: ArgumentType.NUMBER,
                             menu: 'menuHerramientaAcciones'
                         }
@@ -996,7 +1024,7 @@ class Scratch3YourExtension {
     };
     AttaLapizActivado(args,util){
         if (this.varModoTransmision){
-            this.varMensajeBle += 'OBFIN'
+            this.varMensajeBle += 'HEINI'
         } else { // comportamiento gráfico
             this.penDown (args, util)
     
@@ -1005,7 +1033,7 @@ class Scratch3YourExtension {
 
        AttaLapizDesactivado(args,util){
         if (this.varModoTransmision){
-            this.varMensajeBle += 'OBFIN'
+            this.varMensajeBle += 'HEFIN'
         } else { // comportamiento gráfico
             this.penUp (args, util)
         } 
@@ -1283,9 +1311,59 @@ class Scratch3YourExtension {
 ////////////////////////// Fin Chanchada con el lapiz
 
 
-    AttaIfInicio (args,util){
-        if (this.varModoTransmision){     
-            this.varMensajeBle += 'IFprimero'+ '0' + args.condicionSensorIzq + args.condicionSensorDer;       
+    AttaIf(args,util){
+        if (this.varModoTransmision){         
+            if (typeof util.stackFrame.loopCounter === 'undefined') {
+                    util.stackFrame.loopCounter = -1; //Primera ejecucion del bloque   
+                    this.varMensajeBle += 'IF'+ '0' + args.condicionSensorIzq + args.condicionSensorDer;
+                    util.startBranch(1, true);                  
+                }else{ //tercera iteracion> If fin
+                    this.varMensajeBle += 'IFFIN';
+                }
+
+        } else { // comportamiento gráfico
+            const colorSensorIzquierdo = 'rgb(0, 255, 0)'; //mask
+            const colorSensorDerecho = 'rgb(0, 255, 255)'; 
+            const colorBlanco = 'rgb(255, 255, 255)'; // target 
+            const colorNegro = 'rgb(0, 0, 0)';
+            /*
+            En la GUI al dibujar Scratch usa escala HSV normalizada para los colores. Normaliza cada valor entre 0-100
+            por lo tanto estos colores para deteccion de los sensores simples en rbg equivalen en la escala de Scratch en:
+                    verdeizq celesteder blanco  negro
+            Color:      30  50          0       0
+            Saturacion: 100 100         0       0
+            Brillo:     100 100         10      0
+
+            ******Esta es la formula matematica de HSV normal a HSV de scratch. De RBG a HSV normal hay calculadoras en linea
+                color = (hsv.h / 360) * 100;  
+                saturation = hsv.s * 100;  
+                brightness = hsv.v * 100;
+            */
+            if(args.condicionSensorIzq === 1){
+                const colorFondoIzquierdo = colorBlanco;
+            }else{
+                const colorFondoIzquierdo = colorNegro;
+            };
+
+            if(args.condicionSensorDer === 1){
+                const colorFondoDerecho = colorBlanco;
+            }else{
+                const colorFondoDerecho = colorNegro;
+            };
+
+            const boolSensorIzquierdo = util.target.colorIsTouchingColor(colorSensorIzquierdo, colorFondoIzquierdo);
+            const boolSensorDerecho = util.target.colorIsTouchingColor(colorSensorDerecho, colorFondoDerecho);
+            if (boolSensorIzquierdo && boolSensorDerecho ) {
+                util.startBranch(1, false);
+            }
+            
+        } 
+    };
+
+
+
+    AttaIfElse(args,util){
+        if (this.varModoTransmision){         
             if (typeof util.stackFrame.loopCounter === 'undefined') {
                     util.stackFrame.loopCounter = 1; //Primera ejecucion del bloque   
                     this.varMensajeBle += 'IF'+ '0' + args.condicionSensorIzq + args.condicionSensorDer;
@@ -1303,25 +1381,26 @@ class Scratch3YourExtension {
         } 
     };
 
-    AttaElseiFInicio (args,util){
-        if (this.varModoTransmision){            
+    AttaIFElseIF (args,util){
+        if (this.varModoTransmision){         
             if (typeof util.stackFrame.loopCounter === 'undefined') {
                     util.stackFrame.loopCounter = 1; //Primera ejecucion del bloque   
-                    this.varMensajeBle += 'IF'+ '0' + condicionSensorIzq + condicionSensorDer;
+                    this.varMensajeBle += 'IF'+ '0' + args.condicionSensorIzq + args.condicionSensorDer;
                     util.startBranch(1, true);
                 }else if(util.stackFrame.loopCounter === 1){ // segunda iteracion: else
-                    this.varMensajeBle += 'FIN';
-                    
+                    this.varMensajeBle += 'EL0' + args.condicionSensorIzqElse + args.condicionSensorDerElse;
+                    util.stackFrame.loopCounter = -1;
+                    util.startBranch(2, true);                    
                 }else{ //tercera iteracion> If fin
-
+                    this.varMensajeBle += 'IFFIN';
                 }
 
         } else { // comportamiento gráfico
             
         } 
     };
-    AttaWhileInicio ({condicionSensorIzq}, {condicionSensorDer},util){};
-    AttaWhileNotInicio ({condicionSensorIzq}, {condicionSensorDer},util){};
+    AttaWhile (args,util){};
+    AttaWhileNot (args,util){};
     AttaHerramienta ({herramientaAccion},util){};
 
     AttaComandoBLE(args,util){ 

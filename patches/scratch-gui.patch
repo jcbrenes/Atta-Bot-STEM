@@ -17,11 +17,11 @@ index ba18b91..e316f38 100644
  
  export default [
 +    {
-+        name: 'Your Extension',
++        name: 'AttaScratch',
 +        extensionId: 'yourScratchExtension',
 +        iconURL: yourExtensionIconURL,
 +        insetIconURL: yourExtensionInsetIconURL,
-+        description: 'Your custom Scratch extension',
++        description: 'Extensión para el AttaBot-STEM',
 +        featured: true,
 +        disabled: false
 +    },
