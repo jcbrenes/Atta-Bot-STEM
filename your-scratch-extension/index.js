@@ -360,6 +360,27 @@ class Scratch3YourExtension {
                 }, // Fin envioBle
 
 
+                { // name of the function where your block code lives
+                    opcode: 'AttaEnvioBLE',
+                    blockType: BlockType.COMMAND,
+
+                    // label to display on the block
+                    text: 'Transmitir por BLE [mensajeBle]',
+
+                    // true if this block should end a stack
+                    terminal: true,
+                    filter: [ TargetType.SPRITE],
+
+                    // arguments used in the block
+                    arguments: {
+                        mensajeBle: {
+                            defaultValue: '',
+                            type: ArgumentType.STRING
+                        }
+                    }
+                }, // Fin envioBle 
+
+
                 {
                     // name of the function where your block code lives
                     opcode: 'AttaAvanzar',
@@ -524,7 +545,7 @@ class Scratch3YourExtension {
                     branchCount: 1,
 
                     // label to display on the block
-                    text: ['Si sensores [colorSensorIzquierdo] [condicionSensorIzq]  y [colorSensorDerecho][condicionSensorDer][colorBlanco][colorNegro]'],
+                    text: ['Si sensores [colorSensorIzquierdo] [condicionSensorIzq] y [colorSensorDerecho][condicionSensorDer][colorBlanco][colorNegro]'],
 
                     // true if this block should end a stack
                     terminal: false,
@@ -573,7 +594,8 @@ class Scratch3YourExtension {
                     branchCount: 2,
 
                     // label to display on the block
-                    text: ['Si sensores [condicionSensorIzq] y [condicionSensorDer]', 'si no'],
+                    text: ['Si sensores [colorSensorIzquierdo] [condicionSensorIzq] y [colorSensorDerecho][condicionSensorDer][colorBlanco][colorNegro]', 
+                        'si no'],
 
                     // true if this block should end a stack
                     terminal: false,
@@ -590,17 +612,38 @@ class Scratch3YourExtension {
                             defaultValue:'0',
                             type: ArgumentType.NUMBER,
                             menu: 'menuCondiciones'
-                        }
+                        },
+                        colorSensorIzquierdo: {
+                            defaultValue:'#80FF00',
+                            type: ArgumentType.COLOR,
+                            
+                        },
+                        colorSensorDerecho: {
+                            defaultValue:'#FF0000',
+                            type: ArgumentType.COLOR,
+                            
+                        },
+                        colorBlanco: {
+                            defaultValue:'#FFFFFF',
+                            type: ArgumentType.COLOR,
+                            
+                        },
+                        colorNegro: {
+                            defaultValue:'#000000',
+                            type: ArgumentType.COLOR,
+                            
+                        }                        
                     } 
                 }, // Fin IFElse
 
                 {    // name of the function where your block code lives
-                    opcode: 'AttaIFElseIF',
+                    opcode: 'AttaIfElseIf',
                     blockType: BlockType.CONDITIONAL,
                     branchCount: 2,
 
                     // label to display on the block
-                    text: ['Si sensores [condicionSensorIzq] y [condicionSensorDer]','Si no, si sensores [condicionSensorIzqElse] y [condicionSensorDerElse]',],
+                    text: ['Si sensores [colorSensorIzquierdo] [condicionSensorIzq] y [colorSensorDerecho][condicionSensorDer][colorBlanco][colorNegro]',
+                        'Si no, si sensores [condicionSensorIzqElse] y [condicionSensorDerElse]'],
 
                     // true if this block should end a stack
                     terminal: false,
@@ -627,9 +670,89 @@ class Scratch3YourExtension {
                             defaultValue:'0',
                             type: ArgumentType.NUMBER,
                             menu: 'menuCondiciones'
-                        }
+                        },
+                        colorSensorIzquierdo: {
+                            defaultValue:'#80FF00',
+                            type: ArgumentType.COLOR,
+                            
+                        },
+                        colorSensorDerecho: {
+                            defaultValue:'#FF0000',
+                            type: ArgumentType.COLOR,
+                            
+                        },
+                        colorBlanco: {
+                            defaultValue:'#FFFFFF',
+                            type: ArgumentType.COLOR,
+                            
+                        },
+                        colorNegro: {
+                            defaultValue:'#000000',
+                            type: ArgumentType.COLOR,
+                            
+                        }                        
                     } 
                 }, // Fin IfElseIf
+
+
+ {    // name of the function where your block code lives
+                    opcode: 'AttaIfElseIfElse',
+                    blockType: BlockType.CONDITIONAL,
+                    branchCount: 3,
+
+                    // label to display on the block
+                    text: ['Si sensores [colorSensorIzquierdo] [condicionSensorIzq] y [colorSensorDerecho][condicionSensorDer][colorBlanco][colorNegro]',
+                        'Si no, si sensores [condicionSensorIzqElse] y [condicionSensorDerElse]',
+                        'Si no'],
+
+                    // true if this block should end a stack
+                    terminal: false,
+                    filter: [ TargetType.SPRITE],
+
+                    // arguments used in the block
+               arguments: {
+                        condicionSensorIzq: {
+                            defaultValue:'0',
+                            type: ArgumentType.NUMBER,
+                            menu: 'menuCondiciones'
+                        },
+                        condicionSensorDer: {
+                            defaultValue:'0',
+                            type: ArgumentType.NUMBER,
+                            menu: 'menuCondiciones'
+                        },
+                         condicionSensorIzqElse: {
+                            defaultValue:'0',
+                            type: ArgumentType.NUMBER,
+                            menu: 'menuCondiciones'
+                        },
+                        condicionSensorDerElse: {
+                            defaultValue:'0',
+                            type: ArgumentType.NUMBER,
+                            menu: 'menuCondiciones'
+                        },
+                        colorSensorIzquierdo: {
+                            defaultValue:'#80FF00',
+                            type: ArgumentType.COLOR,
+                            
+                        },
+                        colorSensorDerecho: {
+                            defaultValue:'#FF0000',
+                            type: ArgumentType.COLOR,
+                            
+                        },
+                        colorBlanco: {
+                            defaultValue:'#FFFFFF',
+                            type: ArgumentType.COLOR,
+                            
+                        },
+                        colorNegro: {
+                            defaultValue:'#000000',
+                            type: ArgumentType.COLOR,
+                            
+                        }                        
+                    } 
+                }, // Fin IfElseIfElse               
 
 
                 {  
@@ -638,7 +761,7 @@ class Scratch3YourExtension {
                     branchCount: 1,
 
                     // label to display on the block
-                    text: 'Mientras sensores [condicionSensorIzq] y [condicionSensorDer]',
+                    text: ['Mientras sensores [colorSensorIzquierdo] [condicionSensorIzq] y [colorSensorDerecho][condicionSensorDer][colorBlanco][colorNegro]'],
 
                     // true if this block should end a stack
                     terminal: false,
@@ -655,7 +778,27 @@ class Scratch3YourExtension {
                             defaultValue:'0',
                             type: ArgumentType.NUMBER,
                             menu: 'menuCondiciones'
-                        }
+                        },
+                        colorSensorIzquierdo: {
+                            defaultValue:'#80FF00',
+                            type: ArgumentType.COLOR,
+                            
+                        },
+                        colorSensorDerecho: {
+                            defaultValue:'#FF0000',
+                            type: ArgumentType.COLOR,
+                            
+                        },
+                        colorBlanco: {
+                            defaultValue:'#FFFFFF',
+                            type: ArgumentType.COLOR,
+                            
+                        },
+                        colorNegro: {
+                            defaultValue:'#000000',
+                            type: ArgumentType.COLOR,
+                            
+                        }                         
                     } 
                 }, // Fin While
 
@@ -665,7 +808,7 @@ class Scratch3YourExtension {
                     branchCount: 1,
 
                     // label to display on the block
-                    text: 'Mientras sensores no [condicionSensorIzq] y [condicionSensorDer]',
+                    text: 'Mientras sensores no [colorSensorIzquierdo] [condicionSensorIzq] y [colorSensorDerecho][condicionSensorDer][colorBlanco][colorNegro]',
 
                     // true if this block should end a stack
                     terminal: false,
@@ -682,7 +825,27 @@ class Scratch3YourExtension {
                             defaultValue:'0',
                             type: ArgumentType.NUMBER,
                             menu: 'menuCondiciones'
-                        }
+                        },
+                        colorSensorIzquierdo: {
+                            defaultValue:'#80FF00',
+                            type: ArgumentType.COLOR,
+                            
+                        },
+                        colorSensorDerecho: {
+                            defaultValue:'#FF0000',
+                            type: ArgumentType.COLOR,
+                            
+                        },
+                        colorBlanco: {
+                            defaultValue:'#FFFFFF',
+                            type: ArgumentType.COLOR,
+                            
+                        },
+                        colorNegro: {
+                            defaultValue:'#000000',
+                            type: ArgumentType.COLOR,
+                            
+                        }     
                     } 
                 }, // Fin While
 
@@ -1350,8 +1513,10 @@ class Scratch3YourExtension {
             const colorSensorDerecho = Cast.toRgbColorList(args.colorSensorDerecho) ;              
             const colorBlanco = Cast.toRgbColorList(args.colorBlanco);              
             const colorNegro = Cast.toRgbColorList(args.colorNegro); 
+            const esBlanco=1;
             let colorFondoIzquierdo;
             let colorFondoDerecho;
+            
             console.log('colorSensorIzquierdo')
             console.log(colorSensorIzquierdo)
             console.log('colorSensorDerecho')
@@ -1369,7 +1534,7 @@ class Scratch3YourExtension {
                 saturation = hsv.s * 100;  
                 brightness = hsv.v * 100;
             */
-            if(args.condicionSensorIzq === 1){
+            if(args.condicionSensorIzq === esBlanco){
                  colorFondoIzquierdo = colorBlanco;
                  console.log('if true')
             }else{
@@ -1377,7 +1542,7 @@ class Scratch3YourExtension {
                  console.log('if false')
             };
 
-            if(args.condicionSensorDer === 1){
+            if(args.condicionSensorDer === esBlanco){
                  colorFondoDerecho = colorBlanco;
             }else{
                  colorFondoDerecho = colorNegro;
@@ -1407,26 +1572,7 @@ class Scratch3YourExtension {
 
 
 
-    AttaIfElse(args,util){
-        if (this.varModoTransmision){         
-            if (typeof util.stackFrame.loopCounter === 'undefined') {
-                    util.stackFrame.loopCounter = 1; //Primera ejecucion del bloque   
-                    this.varMensajeBle += 'IF'+ '0' + args.condicionSensorIzq + args.condicionSensorDer;
-                    util.startBranch(1, true);
-                }else if(util.stackFrame.loopCounter === 1){ // segunda iteracion: else
-                    this.varMensajeBle += 'EL999';
-                    util.stackFrame.loopCounter = -1;
-                    util.startBranch(2, true);                    
-                }else{ //tercera iteracion> If fin
-                    this.varMensajeBle += 'IFFIN';
-                }
-
-        } else { // comportamiento gráfico
-            
-        } 
-    };
-
-    AttaIFElseIF (args,util){
+    AttaIfElseIf(args,util){
         if (this.varModoTransmision){         
             if (typeof util.stackFrame.loopCounter === 'undefined') {
                     util.stackFrame.loopCounter = 1; //Primera ejecucion del bloque   
@@ -1441,12 +1587,292 @@ class Scratch3YourExtension {
                 }
 
         } else { // comportamiento gráfico
+            // Convertir a RGB arrays  
+            const colorSensorIzquierdo = Cast.toRgbColorList(args.colorSensorIzquierdo) ;              
+            const colorSensorDerecho = Cast.toRgbColorList(args.colorSensorDerecho) ;                         
+            const colorBlanco = Cast.toRgbColorList(args.colorBlanco);              
+            const colorNegro = Cast.toRgbColorList(args.colorNegro); 
+            const esBlanco=1;
+            let colorFondoIzquierdo;
+            let colorFondoDerecho;
+            let colorFondoIzquierdoElse;
+            let colorFondoDerechoElse;
+            //Asignar selecion de lógica de usuario IF
+            if(args.condicionSensorIzq === esBlanco){
+                 colorFondoIzquierdo = colorBlanco;   
+            }else{
+                 colorFondoIzquierdo = colorNegro;    
+            };
+
+            if(args.condicionSensorDer === esBlanco){
+                 colorFondoDerecho = colorBlanco;
+            }else{
+                 colorFondoDerecho = colorNegro;
+            };
+
+            //Asignar selecion de lógica de usuario ELSEIF
+            if(args.condicionSensorIzqElse === esBlanco){
+                 colorFondoIzquierdoElse = colorBlanco;
+                 
+            }else{
+                 colorFondoIzquierdoElse = colorNegro;
+            };
+
+            if(args.condicionSensorDerElse === esBlanco){
+                 colorFondoDerechoElse = colorBlanco;
+            }else{
+                 colorFondoDerechoElse = colorNegro;
+            };
+
+        // Bifurcaión
+            let boolSensorIzquierdo = util.target.colorIsTouchingColor(colorFondoIzquierdo, colorSensorIzquierdo);
+            let boolSensorDerecho = util.target.colorIsTouchingColor(colorFondoDerecho, colorSensorDerecho);
+            let boolSensorIzquierdoElse = util.target.colorIsTouchingColor(colorFondoIzquierdoElse, colorSensorIzquierdo);
+            let boolSensorDerechoElse = util.target.colorIsTouchingColor(colorFondoDerechoElse, colorSensorDerecho);
+
+            if (boolSensorIzquierdo && boolSensorDerecho ) {
+                util.startBranch(1, false);
+            }else if (boolSensorIzquierdoElse && boolSensorDerechoElse ){
+                util.startBranch(2, false);
+            }
+
+        } 
+    };
+
+ AttaIfElseIfElse(args,util){
+        if (this.varModoTransmision){         
+            if (typeof util.stackFrame.loopCounter === 'undefined') {
+                    util.stackFrame.loopCounter = 1; //Primera ejecucion del bloque   
+                    this.varMensajeBle += 'IF'+ '0' + args.condicionSensorIzq + args.condicionSensorDer;
+                    util.startBranch(1, true);
+                } else if(util.stackFrame.loopCounter === 1){ // segunda iteracion: else
+                    this.varMensajeBle += 'EL0' + args.condicionSensorIzqElse + args.condicionSensorDerElse;
+                    util.stackFrame.loopCounter = 2;
+                    util.startBranch(2, true);        
+                 } else if(util.stackFrame.loopCounter === 2){ // tercera iteracion: else
+                    this.varMensajeBle += 'EL999';
+                    util.stackFrame.loopCounter = -1;
+                    util.startBranch(3, true);                                       
+                } else { //cuarta iteracion> If fin
+                    this.varMensajeBle += 'IFFIN';
+                }
+
+        } else { // comportamiento gráfico
+            // Convertir a RGB arrays  
+            const colorSensorIzquierdo = Cast.toRgbColorList(args.colorSensorIzquierdo) ;              
+            const colorSensorDerecho = Cast.toRgbColorList(args.colorSensorDerecho) ;                         
+            const colorBlanco = Cast.toRgbColorList(args.colorBlanco);              
+            const colorNegro = Cast.toRgbColorList(args.colorNegro); 
+            const esBlanco=1;
+            let colorFondoIzquierdo;
+            let colorFondoDerecho;
+            let colorFondoIzquierdoElse;
+            let colorFondoDerechoElse;
+            //Asignar selecion de lógica de usuario IF
+            if(args.condicionSensorIzq === esBlanco){
+                 colorFondoIzquierdo = colorBlanco;   
+            }else{
+                 colorFondoIzquierdo = colorNegro;    
+            };
+
+            if(args.condicionSensorDer === esBlanco){
+                 colorFondoDerecho = colorBlanco;
+            }else{
+                 colorFondoDerecho = colorNegro;
+            };
+
+            //Asignar selecion de lógica de usuario ELSEIF
+            if(args.condicionSensorIzqElse === esBlanco){
+                 colorFondoIzquierdoElse = colorBlanco;
+                 
+            }else{
+                 colorFondoIzquierdoElse = colorNegro;
+            };
+
+            if(args.condicionSensorDerElse === esBlanco){
+                 colorFondoDerechoElse = colorBlanco;
+            }else{
+                 colorFondoDerechoElse = colorNegro;
+            };
+
+        // Bifurcaión
+            let boolSensorIzquierdo = util.target.colorIsTouchingColor(colorFondoIzquierdo, colorSensorIzquierdo);
+            let boolSensorDerecho = util.target.colorIsTouchingColor(colorFondoDerecho, colorSensorDerecho);
+            let boolSensorIzquierdoElse = util.target.colorIsTouchingColor(colorFondoIzquierdoElse, colorSensorIzquierdo);
+            let boolSensorDerechoElse = util.target.colorIsTouchingColor(colorFondoDerechoElse, colorSensorDerecho);
+
+            if (boolSensorIzquierdo && boolSensorDerecho ) {
+                util.startBranch(1, false);
+            }else if (boolSensorIzquierdoElse && boolSensorDerechoElse ){
+                util.startBranch(2, false);
+            } else {
+                util.startBranch(3, false);
+            }
+
+        } 
+    };
+
+    AttaIfElse (args,util){
+        if (this.varModoTransmision){         
+            if (typeof util.stackFrame.loopCounter === 'undefined') {
+                    util.stackFrame.loopCounter = 1; //Primera ejecucion del bloque   
+                    this.varMensajeBle += 'IF'+ '0' + args.condicionSensorIzq + args.condicionSensorDer;
+                    util.startBranch(1, true);
+                }else if(util.stackFrame.loopCounter === 1){ // segunda iteracion: else
+                    this.varMensajeBle += 'EL999';
+                    util.stackFrame.loopCounter = -1;
+                    util.startBranch(2, true);                    
+                }else{ //tercera iteracion> If fin
+                    this.varMensajeBle += 'IFFIN';
+                }                
+
+        } else { // comportamiento gráfico
+            // Convertir a RGB arrays  
+            const colorSensorIzquierdo = Cast.toRgbColorList(args.colorSensorIzquierdo) ;              
+            const colorSensorDerecho = Cast.toRgbColorList(args.colorSensorDerecho) ;              
+            const colorBlanco = Cast.toRgbColorList(args.colorBlanco);              
+            const colorNegro = Cast.toRgbColorList(args.colorNegro); 
+            const esBlanco=1;
+            let colorFondoIzquierdo;
+            let colorFondoDerecho;            
+             //Asignar selecion de lógica de usuario IF
+            if(args.condicionSensorIzq === esBlanco){
+                 colorFondoIzquierdo = colorBlanco;   
+            }else{
+                 colorFondoIzquierdo = colorNegro;    
+            };
+
+            if(args.condicionSensorDer === esBlanco){
+                 colorFondoDerecho = colorBlanco;
+            }else{
+                 colorFondoDerecho = colorNegro;
+            };
+            // bifurcación
+            let boolSensorIzquierdo = util.target.colorIsTouchingColor(colorFondoIzquierdo, colorSensorIzquierdo);
+            let boolSensorDerecho = util.target.colorIsTouchingColor(colorFondoDerecho, colorSensorDerecho);  
+            if (boolSensorIzquierdo && boolSensorDerecho ) {
+                util.startBranch(1, false);
+            } else {
+                util.startBranch(2, false);
+            }                                
+        } 
+    };
+    AttaWhile (args,util){
+        if (this.varModoTransmision){         
+            if (typeof util.stackFrame.loopCounter === 'undefined') {
+                    util.stackFrame.loopCounter = -1; //Primera ejecucion del bloque   
+                    this.varMensajeBle += 'WH'+ '0' + args.condicionSensorIzq + args.condicionSensorDer;
+                    util.startBranch(1, true);                  
+                }else{ //segunda iteracion> If fin
+                    this.varMensajeBle += 'WHFIN';
+                }
+
+        } else { // comportamiento gráfico
+            
+            // Convertir a RGB arrays  
+            const colorSensorIzquierdo = Cast.toRgbColorList(args.colorSensorIzquierdo) ;              
+            const colorSensorDerecho = Cast.toRgbColorList(args.colorSensorDerecho) ;              
+            const colorBlanco = Cast.toRgbColorList(args.colorBlanco);              
+            const colorNegro = Cast.toRgbColorList(args.colorNegro); 
+            const esBlanco=1;
+            let colorFondoIzquierdo;
+            let colorFondoDerecho;
+            /*
+            En la GUI al dibujar Scratch usa escala HSV normalizada para los colores. Normaliza cada valor entre 0-100
+            por lo tanto estos colores para deteccion de los sensores simples en hexadecimal equivalen en la escala de Scratch en:
+                    VerdeIzq RojoeDer blanco  negro
+            Color:      25  0           0       0
+            Saturacion: 100 100         0       0
+            Brillo:     100 100         100     0
+
+            ******Esta es la formula matematica de HSV normal a HSV de scratch. De RBG/hexadecimal a HSV normal hay calculadoras en linea
+                color = (hsv.h / 360) * 100;  
+                saturation = hsv.s * 100;  
+                brightness = hsv.v * 100;
+            */
+            if(args.condicionSensorIzq === esBlanco){
+                 colorFondoIzquierdo = colorBlanco;
+                 console.log('if true')
+            }else{
+                 colorFondoIzquierdo = colorNegro;
+                 console.log('if false')
+            };
+
+            if(args.condicionSensorDer === esBlanco){
+                 colorFondoDerecho = colorBlanco;
+            }else{
+                 colorFondoDerecho = colorNegro;
+            };
+
+            let boolSensorIzquierdo = util.target.colorIsTouchingColor(colorFondoIzquierdo, colorSensorIzquierdo);
+            let boolSensorDerecho = util.target.colorIsTouchingColor(colorFondoDerecho, colorSensorDerecho);
+            //let boolSensorIzquierdo = util.target.colorIsTouchingColor(colorSensorIzquierdo, colorFondoIzquierdo);  
+            //let boolSensorDerecho = util.target.colorIsTouchingColor(colorSensorDerecho, colorFondoDerecho);
+
+            if (boolSensorIzquierdo && boolSensorDerecho ) {
+                util.startBranch(1, true);
+            }
             
         } 
     };
-    AttaWhile (args,util){};
-    AttaWhileNot (args,util){};
-    AttaHerramienta ({herramientaAccion},util){};
+    AttaWhileNot (args,util){
+        if (this.varModoTransmision){         
+            if (typeof util.stackFrame.loopCounter === 'undefined') {
+                    util.stackFrame.loopCounter = -1; //Primera ejecucion del bloque   
+                    this.varMensajeBle += 'WH'+ '1' + args.condicionSensorIzq + args.condicionSensorDer;
+                    util.startBranch(1, true);                  
+                }else{ //segunda iteracion> If fin
+                    this.varMensajeBle += 'WHFIN';
+                }
+
+        } else { // comportamiento gráfico
+            
+            // Convertir a RGB arrays  
+            const colorSensorIzquierdo = Cast.toRgbColorList(args.colorSensorIzquierdo) ;              
+            const colorSensorDerecho = Cast.toRgbColorList(args.colorSensorDerecho) ;              
+            const colorBlanco = Cast.toRgbColorList(args.colorBlanco);              
+            const colorNegro = Cast.toRgbColorList(args.colorNegro); 
+            const esBlanco=1;
+            let colorFondoIzquierdo;
+            let colorFondoDerecho;
+          
+            /*
+            En la GUI al dibujar Scratch usa escala HSV normalizada para los colores. Normaliza cada valor entre 0-100
+            por lo tanto estos colores para deteccion de los sensores simples en hexadecimal equivalen en la escala de Scratch en:
+                    VerdeIzq RojoeDer blanco  negro
+            Color:      25  0           0       0
+            Saturacion: 100 100         0       0
+            Brillo:     100 100         100     0
+
+            ******Esta es la formula matematica de HSV normal a HSV de scratch. De RBG/hexadecimal a HSV normal hay calculadoras en linea
+                color = (hsv.h / 360) * 100;  
+                saturation = hsv.s * 100;  
+                brightness = hsv.v * 100;
+            */
+            if(args.condicionSensorIzq === esBlanco){
+                 colorFondoIzquierdo = colorBlanco;
+            }else{
+                 colorFondoIzquierdo = colorNegro;
+            };
+
+            if(args.condicionSensorDer === esBlanco){
+                 colorFondoDerecho = colorBlanco;
+            }else{
+                 colorFondoDerecho = colorNegro;
+            };
+
+            let boolSensorIzquierdo = util.target.colorIsTouchingColor(colorFondoIzquierdo, colorSensorIzquierdo);
+            let boolSensorDerecho = util.target.colorIsTouchingColor(colorFondoDerecho, colorSensorDerecho);
+            //let boolSensorIzquierdo = util.target.colorIsTouchingColor(colorSensorIzquierdo, colorFondoIzquierdo);  
+            //let boolSensorDerecho = util.target.colorIsTouchingColor(colorSensorDerecho, colorFondoDerecho);
+            
+            if (!(boolSensorIzquierdo && boolSensorDerecho )) {
+                util.startBranch(1, true);
+            }
+            
+        } 
+    };
+    AttaHerramienta (args,util){};
 
     AttaComandoBLE(args,util){ 
         if (typeof util.stackFrame.loopCounter === 'undefined') {
@@ -1455,10 +1881,15 @@ class Scratch3YourExtension {
                 this.varMensajeBle='ATINI';
                 util.startBranch(1, true);
             }else{ // segunda iteracion
-                this.varMensajeBle += 'OBFIN';
-                //codigo de comunicacion BLE de Web BLUETOOTH
+                this.varMensajeBle += 'ATFIN';                
             }
 
+    };
+
+    AttaEnvioBLE(args,util){
+        if (this.varModoTransmision){
+        //codigo de comunicacion BLE de Web BLUETOOTH
+        }
     };
 
     AttaSimulacion(){
