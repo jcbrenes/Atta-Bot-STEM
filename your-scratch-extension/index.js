@@ -336,7 +336,20 @@ class Scratch3YourExtension {
                     terminal: false,
                     filter: [ TargetType.SPRITE],
                     // arguments used in the block} 
-                }, // Fin LapizActivado
+                }, // Fin MensajeBLE
+
+                {    // name of the function where your block code lives
+                    opcode: 'AttaReconectar',
+                    blockType: BlockType.COMMAND,
+
+                    // label to display on the block
+                    text: 'Reconectar AttaBot',
+
+                    // true if this block should end a stack
+                    terminal: false,
+                    filter: [ TargetType.SPRITE],
+                    // arguments used in the block} 
+                }, // Fin Reconectar
 
   // fin blosque de debug/desarrollo***************************************                    
 
@@ -1906,6 +1919,10 @@ class Scratch3YourExtension {
         //codigo de comunicacion BLE de Web BLUETOOTH
           escribirMensajeBLE(args.mensajeBle)
         }
+    };
+
+    AttaReconectar(args,util){
+        obtenerDispositivo();
     };
 
     AttaSimulacion(){
