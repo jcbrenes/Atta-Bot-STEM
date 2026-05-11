@@ -14,6 +14,13 @@ const formatMessage = require('format-message');
 const RenderedTarget = require('../../sprites/rendered-target');
 const log = require('../../util/log');
 const StageLayering = require('../../engine/stage-layering');
+//BLE
+const SERVICIO_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
+const CARACTERISTICA_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
+require('regenerator-runtime/runtime'); 
+// Variable para guardar la referencia al dispositivo ya emparejado
+let dispositivoBLE = null;
+//BLE
 
 
 const ColorParam = {
@@ -374,7 +381,7 @@ class Scratch3YourExtension {
                     // arguments used in the block
                     arguments: {
                         mensajeBle: {
-                            defaultValue: '',
+                            defaultValue: ' ',
                             type: ArgumentType.STRING
                         }
                     }
@@ -387,7 +394,7 @@ class Scratch3YourExtension {
                     blockType: BlockType.COMMAND,
 
                     // label to display on the block
-                    text: 'Avanzar [distancia_cm]',
+                    text: 'Avanzar [distancia_cm] cm',
 
                     // true if this block should end a stack
                     terminal: false,
@@ -407,7 +414,7 @@ class Scratch3YourExtension {
                     blockType: BlockType.COMMAND,
 
                     // label to display on the block
-                    text: 'Retroceder [distancia_cm]',
+                    text: 'Retroceder [distancia_cm] cm',
 
                     // true if this block should end a stack
                     terminal: false,
@@ -1081,11 +1088,11 @@ class Scratch3YourExtension {
             menus: {
                 menuHerramientaAcciones: { 
                             acceptReporters: true,
-                            items:[//Valores placeholder, poner los resultantes de la calibración del motor
-                            {text: 'Garra abrir', value: 1},
-                            {text: 'Garra cerrar', value: 2},
-                            {text: 'Grúa subir', value: 3},
-                            {text: 'Grúa bajar', value: 4},
+                            items:[//Valores 1xx accion rotacion positiva, 0xx accion rotacion negativa
+                            {text: 'Garra abrir', value: 101},
+                            {text: 'Garra cerrar', value: 1},
+                            {text: 'Grúa subir', value: 102},
+                            {text: 'Grúa bajar', value: 2},
                             {text: 'Ninguna', value: 0}
                             ]
                         },
@@ -1502,7 +1509,7 @@ class Scratch3YourExtension {
                     util.stackFrame.loopCounter = -1; //Primera ejecucion del bloque   
                     this.varMensajeBle += 'IF'+ '0' + args.condicionSensorIzq + args.condicionSensorDer;
                     util.startBranch(1, true);                  
-                }else{ //tercera iteracion> If fin
+                } else { //segunda iteracion> If fin
                     this.varMensajeBle += 'IFFIN';
                 }
 
@@ -1536,10 +1543,10 @@ class Scratch3YourExtension {
             */
             if(args.condicionSensorIzq === esBlanco){
                  colorFondoIzquierdo = colorBlanco;
-                 console.log('if true')
+                 console.log('selección: Blanco')
             }else{
                  colorFondoIzquierdo = colorNegro;
-                 console.log('if false')
+                 console.log('if selección: Negro')
             };
 
             if(args.condicionSensorDer === esBlanco){
@@ -1872,7 +1879,15 @@ class Scratch3YourExtension {
             
         } 
     };
-    AttaHerramienta (args,util){};
+    AttaHerramienta (args,util){
+        if (this.varModoTransmision){
+            this.FormatearComando('HE',args.herramientaAccion)
+        } else {
+            //Cambio de Sprite a trajes con herramientas
+            // Algun tipo de interaccion con los otros sprites?
+
+        } // Fin modo grafico
+    };
 
     AttaComandoBLE(args,util){ 
         if (typeof util.stackFrame.loopCounter === 'undefined') {
@@ -1889,6 +1904,7 @@ class Scratch3YourExtension {
     AttaEnvioBLE(args,util){
         if (this.varModoTransmision){
         //codigo de comunicacion BLE de Web BLUETOOTH
+          escribirMensajeBLE(args.mensajeBle)
         }
     };
 
@@ -1916,6 +1932,52 @@ class Scratch3YourExtension {
 
     };
 
+
 }
+
+
+    // FuncionBLE Inicio 
+
+async function obtenerDispositivo() {
+  if (dispositivoBLE) {
+    // Ya tenemos el objeto de una conexión anterior (en esta sesión)
+    return dispositivoBLE;
+  }
+  // Primera vez: mostrar diálogo y guardar referencia
+  dispositivoBLE = await navigator.bluetooth.requestDevice({
+    filters: [{ services: [SERVICIO_UUID] }],
+  });
+  return dispositivoBLE;
+}
+    async function escribirMensajeBLE(varMensajeBLE) {
+if (!navigator.bluetooth) {
+    alert("Web Bluetooth no está soportado en este navegador.");
+    return;
+  }
+
+  try {
+    // 1. Solicitar el dispositivo (con filtro para evitar el diálogo si ya tiene permiso)
+    const dispositivo = await obtenerDispositivo();
+
+    // 2. Conectar al servidor GATT
+    const servidor = await dispositivo.gatt.connect();
+
+    // 3. Obtener el servicio y la característica
+    const servicio = await servidor.getPrimaryService(SERVICIO_UUID);
+    const caracteristica = await servicio.getCharacteristic(CARACTERISTICA_UUID);
+
+    // 4. Codificar y escribir el mensaje
+    const codificador = new TextEncoder();
+    const datos = codificador.encode(varMensajeBLE);
+    await caracteristica.writeValue(datos);
+    
+    console.log("Mensaje escrito correctamente:", varMensajeBLE);
+  } catch (error) {
+    console.error("Error en la comunicación BLE:", error);
+  }
+        
+    };
+
+    //FuncionBLE FInal  
 
 module.exports = Scratch3YourExtension;
