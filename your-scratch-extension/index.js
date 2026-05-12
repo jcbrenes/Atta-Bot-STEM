@@ -1958,14 +1958,14 @@ class Scratch3YourExtension {
         obtenerDispositivo();
     };
 
-    AttaSimulacion(){
+    AttaSimulacion(args,util){
         this.varModoTransmision= false;
         util.startBranch(1, false); //eliminar y pasar a command luego
     };
 
 
 
-    AttaMensajeBLE (){
+    AttaMensajeBLE (args,util){
         return this.varMensajeBle;
     };
 
