@@ -1896,7 +1896,41 @@ class Scratch3YourExtension {
         if (this.varModoTransmision){
             this.FormatearComando('HE',args.herramientaAccion)
         } else {
+            // asignacion de traje según menú de selección y orden esperado en el Sprite
+            const trajeGarraAbierta=1;
+            const trajeGarraCerrada=2;
+            const trajeGruaArriba=3;
+            const trajeGruaAbajo=4;
+            const trajeBase=0;
+            let traje;
+            const garraAbrir=101;
+            const garraCerrar=1;
+            const gruaSubir=102;
+            const gruaBajar=2;
+            const ninguna=0;
+            //Valor de case es el asignado por el menú/comandos
+            switch(args.herramientaAccion) {
+                case garraAbrir:                  
+                    traje=trajeGarraAbierta;
+                    break;
+                case garraCerrar:
+                    traje=trajeGarraCerrada;
+                    break;
+                case gruaSubir:
+                    traje=trajeGruaArriba;
+                    break;
+                case gruaBajar:
+                    traje=trajeGruaAbajo;
+                    break;
+                case ninguna:
+                    traje=trajeBase;
+                    break;                    
+                default:
+                    traje=trajeBase;
+        // código a ejecutar si ningún caso coincide
+}
             //Cambio de Sprite a trajes con herramientas
+            util.target.setCostume(traje);
             // Algun tipo de interaccion con los otros sprites?
 
         } // Fin modo grafico
@@ -1927,6 +1961,7 @@ class Scratch3YourExtension {
 
     AttaSimulacion(){
         this.varModoTransmision= false;
+        util.startBranch(1, false); //eliminar y pasar a command luego
     };
 
 
