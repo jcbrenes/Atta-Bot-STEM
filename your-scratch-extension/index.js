@@ -1927,7 +1927,6 @@ class Scratch3YourExtension {
                     break;                    
                 default:
                     traje=trajeBase;
-        // código a ejecutar si ningún caso coincide
 }
             //Cambio de Sprite a trajes con herramientas
             util.target.setCostume(traje);
