@@ -20,7 +20,7 @@ const CARACTERISTICA_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
 require('regenerator-runtime/runtime'); 
 // Variable para guardar la referencia al dispositivo ya emparejado
 let dispositivoBLE = null;
-//BLE
+//BLE 
 
 
 const ColorParam = {
