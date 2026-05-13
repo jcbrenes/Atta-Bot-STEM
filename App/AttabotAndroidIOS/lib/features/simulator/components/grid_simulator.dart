@@ -43,8 +43,10 @@ class _SimulationAreaState extends State<SimulationArea> {
   bool obstacleDetectionActive = false;
   bool penActive = false;
   final List<_TrailSegment> trailSegments = [];
+  final List<Offset> cycleBoundaryMarkers = [];
   final List<_InstructionMarker> instructionMarkers = [];
   int trailSegmentCount = 0;
+  int cycleBoundaryMarkerCount = 0;
   int instructionMarkerCount = 0;
   int? selectedInstructionMarkerIndex;
 
@@ -135,7 +137,16 @@ class _SimulationAreaState extends State<SimulationArea> {
         );
 
         for (int r = 0; r < repeatCount; r++) {
-          output.addAll(block);
+          for (int index = 0; index < block.length; index++) {
+            output.add(
+              block[index].copyWith(
+                startsCycleIteration:
+                    block[index].startsCycleIteration || index == 0,
+                endsCycleIteration: block[index].endsCycleIteration ||
+                    index == block.length - 1,
+              ),
+            );
+          }
         }
 
         i = j;
@@ -176,8 +187,10 @@ class _SimulationAreaState extends State<SimulationArea> {
       obstacleDetectionActive = false;
       penActive = false;
       trailSegments.clear();
+      cycleBoundaryMarkers.clear();
       instructionMarkers.clear();
       trailSegmentCount = 0;
+      cycleBoundaryMarkerCount = 0;
       instructionMarkerCount = 0;
       selectedInstructionMarkerIndex = null;
       _currentMovementAnimationDuration = _defaultAnimationDuration;
@@ -251,9 +264,14 @@ class _SimulationAreaState extends State<SimulationArea> {
         final inst = _normalizeInstruction(instruction);
         double angle = _radians(rotation - 90);
         previousWorldPosition = worldPosition;
+        final instructionStartPosition = previousWorldPosition;
         bool moved = false;
         bool markInstructionStart = false;
         String? instructionMarkerLabel;
+
+        if (expandedInstruction.startsCycleIteration) {
+          _addCycleBoundaryMarker(instructionStartPosition);
+        }
 
         if (inst.contains("avanzar")) {
           stateChanged = true;
@@ -333,7 +351,15 @@ class _SimulationAreaState extends State<SimulationArea> {
         }
 
         if (moved) {
-          _addTrailSegment(previousWorldPosition, worldPosition);
+          _addTrailSegment(
+            previousWorldPosition,
+            worldPosition,
+            penWasActive: penActive,
+          );
+        }
+
+        if (expandedInstruction.endsCycleIteration) {
+          _addCycleBoundaryMarker(worldPosition);
         }
       });
 
@@ -403,6 +429,17 @@ class _SimulationAreaState extends State<SimulationArea> {
     instructionMarkerCount++;
   }
 
+  void _addCycleBoundaryMarker(Offset position) {
+    for (final marker in cycleBoundaryMarkers) {
+      if ((marker - position).distance < 0.01) {
+        return;
+      }
+    }
+
+    cycleBoundaryMarkers.add(position);
+    cycleBoundaryMarkerCount++;
+  }
+
   Offset _worldToScreen(Offset world, Size size, Offset cameraWorldPosition) {
     final center = Offset(size.width / 2, size.height / 2);
     return center + (world - cameraWorldPosition);
@@ -443,14 +480,18 @@ class _SimulationAreaState extends State<SimulationArea> {
         .toList();
   }
 
-  void _addTrailSegment(Offset start, Offset end) {
+  void _addTrailSegment(
+    Offset start,
+    Offset end, {
+    required bool penWasActive,
+  }) {
     if (start == end) return;
 
     trailSegments.add(
       _TrailSegment(
         start: start,
         end: end,
-        color: penActive ? secondaryPurple : primaryBlue,
+        penActive: penWasActive,
       ),
     );
     trailSegmentCount++;
@@ -505,6 +546,8 @@ class _SimulationAreaState extends State<SimulationArea> {
                           painter: _PenTrailPainter(
                             segments: trailSegments,
                             segmentCount: trailSegmentCount,
+                            cycleBoundaryMarkers: cycleBoundaryMarkers,
+                            cycleBoundaryMarkerCount: cycleBoundaryMarkerCount,
                             markers: instructionMarkers,
                             markerCount: instructionMarkerCount,
                             worldPosition: animatedWorldPosition,
@@ -595,11 +638,29 @@ class _SimulationAreaState extends State<SimulationArea> {
 class _ExpandedInstruction {
   final String text;
   final bool isInsideCycle;
+  final bool startsCycleIteration;
+  final bool endsCycleIteration;
 
   const _ExpandedInstruction({
     required this.text,
     required this.isInsideCycle,
+    this.startsCycleIteration = false,
+    this.endsCycleIteration = false,
   });
+
+  _ExpandedInstruction copyWith({
+    String? text,
+    bool? isInsideCycle,
+    bool? startsCycleIteration,
+    bool? endsCycleIteration,
+  }) {
+    return _ExpandedInstruction(
+      text: text ?? this.text,
+      isInsideCycle: isInsideCycle ?? this.isInsideCycle,
+      startsCycleIteration: startsCycleIteration ?? this.startsCycleIteration,
+      endsCycleIteration: endsCycleIteration ?? this.endsCycleIteration,
+    );
+  }
 }
 
 class GridBackgroundPainter extends CustomPainter {
@@ -649,13 +710,15 @@ class GridBackgroundPainter extends CustomPainter {
 class _TrailSegment {
   final Offset start;
   final Offset end;
-  final Color color;
+  final bool penActive;
 
   const _TrailSegment({
     required this.start,
     required this.end,
-    required this.color,
+    required this.penActive,
   });
+
+  Color get color => penActive ? secondaryPurple : primaryBlue;
 }
 
 class _InstructionMarker {
@@ -755,11 +818,16 @@ class _InstructionMarkerTooltip extends StatelessWidget {
 
 class _PenTrailPainter extends CustomPainter {
   static const double _strokeWidth = 3;
-  static const double _markerRadius = 4;
+  static const double _endpointRadius = 4;
+  static const double _cycleBoundaryRadius = 6.5;
   static const double _overlapDistance = 0.01;
+  static const double _dashLength = 10;
+  static const double _dashGap = 6;
 
   final List<_TrailSegment> segments;
   final int segmentCount;
+  final List<Offset> cycleBoundaryMarkers;
+  final int cycleBoundaryMarkerCount;
   final List<_InstructionMarker> markers;
   final int markerCount;
   final Offset worldPosition;
@@ -768,6 +836,8 @@ class _PenTrailPainter extends CustomPainter {
   _PenTrailPainter({
     required this.segments,
     required this.segmentCount,
+    required this.cycleBoundaryMarkers,
+    required this.cycleBoundaryMarkerCount,
     required this.markers,
     required this.markerCount,
     required this.worldPosition,
@@ -777,6 +847,90 @@ class _PenTrailPainter extends CustomPainter {
   Offset _toScreen(Offset world, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     return center + (world - worldPosition);
+  }
+
+  bool _hasCycleBoundary(Offset position) {
+    return cycleBoundaryMarkers.any(
+      (marker) => (marker - position).distance < _overlapDistance,
+    );
+  }
+
+  void _drawDashedLine(
+    Canvas canvas,
+    Offset start,
+    Offset end,
+    Paint paint,
+  ) {
+    final delta = end - start;
+    final distance = delta.distance;
+    if (distance == 0) return;
+
+    final direction = delta / distance;
+    double currentDistance = 0;
+
+    while (currentDistance < distance) {
+      final segmentStart = start + (direction * currentDistance);
+      final segmentEnd =
+          start + (direction * min(currentDistance + _dashLength, distance));
+      canvas.drawLine(segmentStart, segmentEnd, paint);
+      currentDistance += _dashLength + _dashGap;
+    }
+  }
+
+  void _drawSegmentEndpoint(
+    Canvas canvas,
+    Size size,
+    Offset worldPoint,
+    Color color,
+  ) {
+    final screenPoint = _toScreen(worldPoint, size);
+    final fillPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
+    final borderPaint = Paint()
+      ..color = neutralWhite
+      ..strokeWidth = 1.4
+      ..style = PaintingStyle.stroke
+      ..isAntiAlias = true;
+
+    canvas.drawCircle(screenPoint, _endpointRadius, fillPaint);
+    canvas.drawCircle(screenPoint, _endpointRadius, borderPaint);
+
+    if (_hasCycleBoundary(worldPoint)) {
+      final cycleFillPaint = Paint()
+        ..color = secondaryGreen.withValues(alpha: 0.18)
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
+      final cycleBorderPaint = Paint()
+        ..color = secondaryGreen
+        ..strokeWidth = 2
+        ..style = PaintingStyle.stroke
+        ..isAntiAlias = true;
+
+      canvas.drawCircle(screenPoint, _cycleBoundaryRadius, cycleFillPaint);
+      canvas.drawCircle(screenPoint, _cycleBoundaryRadius, cycleBorderPaint);
+    }
+  }
+
+  void _drawStandaloneCycleBoundary(
+    Canvas canvas,
+    Size size,
+    Offset worldPoint,
+  ) {
+    final screenPoint = _toScreen(worldPoint, size);
+    final fillPaint = Paint()
+      ..color = secondaryGreen.withValues(alpha: 0.18)
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
+    final borderPaint = Paint()
+      ..color = secondaryGreen
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke
+      ..isAntiAlias = true;
+
+    canvas.drawCircle(screenPoint, _cycleBoundaryRadius, fillPaint);
+    canvas.drawCircle(screenPoint, _cycleBoundaryRadius, borderPaint);
   }
 
   @override
@@ -790,15 +944,34 @@ class _PenTrailPainter extends CustomPainter {
 
     for (int i = 0; i < segments.length; i++) {
       final segment = segments[i];
-      final end = i == segments.length - 1 && segment.end == targetWorldPosition
-          ? worldPosition
-          : segment.end;
+      final endWorldPosition =
+          i == segments.length - 1 && segment.end == targetWorldPosition
+              ? worldPosition
+              : segment.end;
+      final start = _toScreen(segment.start, size);
+      final end = _toScreen(endWorldPosition, size);
       trailPaint.color = segment.color;
-      canvas.drawLine(
-        _toScreen(segment.start, size),
-        _toScreen(end, size),
-        trailPaint,
+
+      if (segment.penActive) {
+        canvas.drawLine(start, end, trailPaint);
+      } else {
+        _drawDashedLine(canvas, start, end, trailPaint);
+      }
+
+      _drawSegmentEndpoint(canvas, size, segment.start, segment.color);
+      _drawSegmentEndpoint(canvas, size, segment.end, segment.color);
+    }
+
+    for (final cycleBoundaryMarker in cycleBoundaryMarkers) {
+      final isSegmentEndpoint = segments.any(
+        (segment) =>
+            (segment.start - cycleBoundaryMarker).distance < _overlapDistance ||
+            (segment.end - cycleBoundaryMarker).distance < _overlapDistance,
       );
+
+      if (!isSegmentEndpoint) {
+        _drawStandaloneCycleBoundary(canvas, size, cycleBoundaryMarker);
+      }
     }
 
     final markerPaint = Paint()
@@ -825,7 +998,7 @@ class _PenTrailPainter extends CustomPainter {
       final screenPosition = _toScreen(marker.position, size);
       canvas.drawCircle(
         screenPosition,
-        _markerRadius,
+        _endpointRadius,
         markerPaint,
       );
 
@@ -871,6 +1044,7 @@ class _PenTrailPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _PenTrailPainter oldDelegate) {
     return oldDelegate.segmentCount != segmentCount ||
+        oldDelegate.cycleBoundaryMarkerCount != cycleBoundaryMarkerCount ||
         oldDelegate.markerCount != markerCount ||
         oldDelegate.worldPosition != worldPosition ||
         oldDelegate.targetWorldPosition != targetWorldPosition;

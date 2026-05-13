@@ -35,6 +35,17 @@ class _SimulatorPageState extends State<SimulatorPage> {
   int stopSignal = 0;
   int restartSignal = 0;
 
+  bool _hasOpenCycleLabel(String instruction) {
+    return instruction.toLowerCase().contains('ciclo abierto');
+  }
+
+  void _closeCycleStatus() {
+    isExecutingCycleInstruction = false;
+    if (_hasOpenCycleLabel(currentInstruction)) {
+      currentInstruction = 'Ciclo cerrado';
+    }
+  }
+
   void togglePause() {
     if (!isExecutingInstructions && !isPaused) return;
 
@@ -48,8 +59,12 @@ class _SimulatorPageState extends State<SimulatorPage> {
       stopSignal++;
       isPaused = false;
       isExecutingInstructions = false;
-      isExecutingCycleInstruction = false;
-      currentInstruction = '';
+      if (_hasOpenCycleLabel(currentInstruction)) {
+        _closeCycleStatus();
+      } else {
+        currentInstruction = '';
+        isExecutingCycleInstruction = false;
+      }
     });
   }
 
@@ -376,7 +391,7 @@ class _SimulatorPageState extends State<SimulatorPage> {
                                     isExecutingInstructions = isExecuting;
                                     if (!isExecuting) {
                                       isPaused = false;
-                                      isExecutingCycleInstruction = false;
+                                      _closeCycleStatus();
                                     }
                                   });
                                 }
