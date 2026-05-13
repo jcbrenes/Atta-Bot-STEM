@@ -2170,7 +2170,7 @@ class Scratch3YourExtension {
                 break;                  
 
 
-            } // fin switch
+            } // fin switch 
 
 
             //creacion de bloques
