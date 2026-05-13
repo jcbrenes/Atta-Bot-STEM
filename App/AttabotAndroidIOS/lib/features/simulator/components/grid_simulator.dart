@@ -528,48 +528,58 @@ class _SimulationAreaState extends State<SimulationArea> {
                     width: size.width,
                     height: size.height,
                     child: Stack(
+                      clipBehavior: Clip.none,
                       children: [
-                        CustomPaint(
-                          size: size,
-                          painter: GridBackgroundPainter(
-                            cellSize: _gridCellSize,
-                            offset: Offset(
-                              -animatedWorldPosition.dx,
-                              -animatedWorldPosition.dy,
-                            ),
-                            lineColor: gridLineColor,
-                            backgroundColor: Colors.white,
-                          ),
-                        ),
-                        CustomPaint(
-                          size: size,
-                          painter: _PenTrailPainter(
-                            segments: trailSegments,
-                            segmentCount: trailSegmentCount,
-                            cycleBoundaryMarkers: cycleBoundaryMarkers,
-                            cycleBoundaryMarkerCount: cycleBoundaryMarkerCount,
-                            markers: instructionMarkers,
-                            markerCount: instructionMarkerCount,
-                            worldPosition: animatedWorldPosition,
-                            targetWorldPosition: worldPosition,
-                          ),
-                        ),
-                        GestureDetector(
-                          behavior: HitTestBehavior.translucent,
-                          onTapDown: (details) {
-                            final markerIndex = _findTappedInstructionMarker(
-                              details.localPosition,
-                              size,
-                              animatedWorldPosition,
-                            );
+                        ClipRect(
+                          child: Stack(
+                            children: [
+                              CustomPaint(
+                                size: size,
+                                painter: GridBackgroundPainter(
+                                  cellSize: _gridCellSize,
+                                  offset: Offset(
+                                    -animatedWorldPosition.dx,
+                                    -animatedWorldPosition.dy,
+                                  ),
+                                  lineColor: gridLineColor,
+                                  backgroundColor: Colors.white,
+                                ),
+                              ),
+                              CustomPaint(
+                                size: size,
+                                painter: _PenTrailPainter(
+                                  segments: trailSegments,
+                                  segmentCount: trailSegmentCount,
+                                  cycleBoundaryMarkers: cycleBoundaryMarkers,
+                                  cycleBoundaryMarkerCount:
+                                      cycleBoundaryMarkerCount,
+                                  markers: instructionMarkers,
+                                  markerCount: instructionMarkerCount,
+                                  worldPosition: animatedWorldPosition,
+                                  targetWorldPosition: worldPosition,
+                                ),
+                              ),
+                              GestureDetector(
+                                behavior: HitTestBehavior.translucent,
+                                onTapDown: (details) {
+                                  final markerIndex =
+                                      _findTappedInstructionMarker(
+                                    details.localPosition,
+                                    size,
+                                    animatedWorldPosition,
+                                  );
 
-                            setState(() {
-                              selectedInstructionMarkerIndex = markerIndex;
-                            });
-                          },
-                          child: SizedBox(
-                            width: size.width,
-                            height: size.height,
+                                  setState(() {
+                                    selectedInstructionMarkerIndex =
+                                        markerIndex;
+                                  });
+                                },
+                                child: SizedBox(
+                                  width: size.width,
+                                  height: size.height,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         if (selectedInstructionMarkerIndex != null &&
