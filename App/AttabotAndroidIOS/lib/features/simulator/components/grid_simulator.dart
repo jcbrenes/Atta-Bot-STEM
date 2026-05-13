@@ -9,6 +9,7 @@ class SimulationArea extends StatefulWidget {
   final double height;
   final void Function(String)? onInstructionChange;
   final void Function(bool)? onExecutionStateChanged;
+  final void Function(bool)? onCycleExecutionStateChanged;
   final int stopSignal;
   final int restartSignal;
   final bool useImage;
@@ -23,6 +24,7 @@ class SimulationArea extends StatefulWidget {
     this.height = 300,
     this.onInstructionChange,
     this.onExecutionStateChanged,
+    this.onCycleExecutionStateChanged,
     this.stopSignal = 0,
     this.restartSignal = 0,
     this.useImage = false,
@@ -50,8 +52,13 @@ class _SimulationAreaState extends State<SimulationArea> {
   static const double _tabletColumns = 10;
   static const double _tabletMinGridCellSize = 60;
   static const double _centimetersPerGridCell = 20;
+  static const int _movementMillisecondsPerGridCell = 400;
+  static const int _rotationMillisecondsPer90Degrees = 300;
+  static const Duration _defaultAnimationDuration = Duration(milliseconds: 400);
   double _gridCellSize = _defaultGridCellSize;
   int _runVersion = 0;
+  Duration _currentMovementAnimationDuration = _defaultAnimationDuration;
+  Duration _currentRotationAnimationDuration = _defaultAnimationDuration;
 
   @override
   void initState() {
@@ -94,8 +101,11 @@ class _SimulationAreaState extends State<SimulationArea> {
     return normalized;
   }
 
-  List<String> _expandCycles(List<String> instructions) {
-    List<String> output = [];
+  List<_ExpandedInstruction> _expandCycles(
+    List<String> instructions, {
+    int cycleDepth = 0,
+  }) {
+    List<_ExpandedInstruction> output = [];
     int i = 0;
 
     while (i < instructions.length) {
@@ -119,7 +129,10 @@ class _SimulationAreaState extends State<SimulationArea> {
           j++;
         }
 
-        final block = _expandCycles(instructions.sublist(i + 1, j - 1));
+        final block = _expandCycles(
+          instructions.sublist(i + 1, j - 1),
+          cycleDepth: cycleDepth + 1,
+        );
 
         for (int r = 0; r < repeatCount; r++) {
           output.addAll(block);
@@ -127,7 +140,12 @@ class _SimulationAreaState extends State<SimulationArea> {
 
         i = j;
       } else {
-        output.add(line);
+        output.add(
+          _ExpandedInstruction(
+            text: line,
+            isInsideCycle: cycleDepth > 0,
+          ),
+        );
         i++;
       }
     }
@@ -143,6 +161,7 @@ class _SimulationAreaState extends State<SimulationArea> {
     _runVersion++;
     widget.onInstructionChange?.call('');
     widget.onExecutionStateChanged?.call(false);
+    widget.onCycleExecutionStateChanged?.call(false);
   }
 
   void _restartRun() {
@@ -161,9 +180,12 @@ class _SimulationAreaState extends State<SimulationArea> {
       trailSegmentCount = 0;
       instructionMarkerCount = 0;
       selectedInstructionMarkerIndex = null;
+      _currentMovementAnimationDuration = _defaultAnimationDuration;
+      _currentRotationAnimationDuration = _defaultAnimationDuration;
     });
 
     widget.onInstructionChange?.call('');
+    widget.onCycleExecutionStateChanged?.call(false);
     _startRun();
   }
 
@@ -201,15 +223,19 @@ class _SimulationAreaState extends State<SimulationArea> {
       if (!_isRunActive(runId)) return;
       widget.onInstructionChange?.call('');
       widget.onExecutionStateChanged?.call(false);
+      widget.onCycleExecutionStateChanged?.call(false);
       return;
     }
 
     if (!_isRunActive(runId)) return;
     widget.onExecutionStateChanged?.call(true);
 
-    for (final instruction in expandedInstructions) {
+    for (final expandedInstruction in expandedInstructions) {
+      final instruction = expandedInstruction.text;
       if (!_isRunActive(runId)) return;
       widget.onInstructionChange?.call(instruction);
+      widget.onCycleExecutionStateChanged
+          ?.call(expandedInstruction.isInsideCycle);
 
       final canContinue = await _waitFor(
         const Duration(milliseconds: 600),
@@ -219,6 +245,7 @@ class _SimulationAreaState extends State<SimulationArea> {
       if (!canContinue || !_isRunActive(runId)) return;
 
       bool stateChanged = false;
+      var animationDuration = _defaultAnimationDuration;
 
       setState(() {
         final inst = _normalizeInstruction(instruction);
@@ -233,6 +260,8 @@ class _SimulationAreaState extends State<SimulationArea> {
           markInstructionStart = true;
           instructionMarkerLabel =
               "Avanzar ${_instructionValue(instruction)} cm";
+          animationDuration = _movementAnimationDuration(instruction);
+          _currentMovementAnimationDuration = animationDuration;
           final distanceInPixels =
               _gridCellSize * _instructionGridUnits(instruction);
           worldPosition = worldPosition.translate(
@@ -245,6 +274,8 @@ class _SimulationAreaState extends State<SimulationArea> {
           markInstructionStart = true;
           instructionMarkerLabel =
               "Retroceder ${_instructionValue(instruction)} cm";
+          animationDuration = _movementAnimationDuration(instruction);
+          _currentMovementAnimationDuration = animationDuration;
           final distanceInPixels =
               _gridCellSize * _instructionGridUnits(instruction);
           worldPosition = worldPosition.translate(
@@ -258,6 +289,8 @@ class _SimulationAreaState extends State<SimulationArea> {
           if (match != null) {
             final degrees = double.parse(match.group(1)!);
             previousRotation = rotation;
+            animationDuration = _rotationAnimationDuration(degrees);
+            _currentRotationAnimationDuration = animationDuration;
 
             if (inst.contains("izquierda")) {
               stateChanged = true;
@@ -305,10 +338,7 @@ class _SimulationAreaState extends State<SimulationArea> {
       });
 
       if (stateChanged) {
-        final completedAnimation = await _waitFor(
-          const Duration(milliseconds: 400),
-          runId,
-        );
+        final completedAnimation = await _waitFor(animationDuration, runId);
         if (!completedAnimation || !_isRunActive(runId)) return;
       }
     }
@@ -319,6 +349,8 @@ class _SimulationAreaState extends State<SimulationArea> {
     );
     if (!finishedCleanly || !_isRunActive(runId)) return;
 
+    widget.onInstructionChange?.call('Ciclo cerrado');
+    widget.onCycleExecutionStateChanged?.call(false);
     widget.onExecutionStateChanged?.call(false);
   }
 
@@ -346,6 +378,19 @@ class _SimulationAreaState extends State<SimulationArea> {
     if (value == null) return 1;
 
     return value / _centimetersPerGridCell;
+  }
+
+  Duration _movementAnimationDuration(String instruction) {
+    final gridUnits = _instructionGridUnits(instruction);
+    final milliseconds =
+        max(1, (gridUnits * _movementMillisecondsPerGridCell).round());
+    return Duration(milliseconds: milliseconds);
+  }
+
+  Duration _rotationAnimationDuration(double degrees) {
+    final milliseconds =
+        max(1, ((degrees / 90) * _rotationMillisecondsPer90Degrees).round());
+    return Duration(milliseconds: milliseconds);
   }
 
   void _addInstructionMarker(Offset position, String label) {
@@ -436,7 +481,7 @@ class _SimulationAreaState extends State<SimulationArea> {
                   begin: previousWorldPosition,
                   end: worldPosition,
                 ),
-                duration: const Duration(milliseconds: 400),
+                duration: _currentMovementAnimationDuration,
                 builder: (context, animatedWorldPosition, child) {
                   return SizedBox(
                     width: size.width,
@@ -513,7 +558,7 @@ class _SimulationAreaState extends State<SimulationArea> {
                     begin: previousRotation,
                     end: rotation,
                   ),
-                  duration: const Duration(milliseconds: 400),
+                  duration: _currentRotationAnimationDuration,
                   builder: (context, angleDegrees, child) {
                     return Transform.rotate(
                       angle: _radians(angleDegrees),
@@ -545,6 +590,16 @@ class _SimulationAreaState extends State<SimulationArea> {
       },
     );
   }
+}
+
+class _ExpandedInstruction {
+  final String text;
+  final bool isInsideCycle;
+
+  const _ExpandedInstruction({
+    required this.text,
+    required this.isInsideCycle,
+  });
 }
 
 class GridBackgroundPainter extends CustomPainter {

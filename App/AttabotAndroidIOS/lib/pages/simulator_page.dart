@@ -31,6 +31,7 @@ class _SimulatorPageState extends State<SimulatorPage> {
   String currentInstruction = '';
   bool isPaused = false;
   bool isExecutingInstructions = false;
+  bool isExecutingCycleInstruction = false;
   int stopSignal = 0;
   int restartSignal = 0;
 
@@ -47,6 +48,7 @@ class _SimulatorPageState extends State<SimulatorPage> {
       stopSignal++;
       isPaused = false;
       isExecutingInstructions = false;
+      isExecutingCycleInstruction = false;
       currentInstruction = '';
     });
   }
@@ -285,24 +287,24 @@ class _SimulatorPageState extends State<SimulatorPage> {
                                       vertical: 8,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: (isExecutingInstructions
+                                      color: (isExecutingCycleInstruction
                                               ? Colors.green
                                               : Colors.red)
                                           .withValues(alpha: 0.16),
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
-                                        color: isExecutingInstructions
+                                        color: isExecutingCycleInstruction
                                             ? Colors.green
                                             : Colors.red,
                                         width: 1.5,
                                       ),
                                     ),
                                     child: Text(
-                                      isExecutingInstructions
+                                      isExecutingCycleInstruction
                                           ? 'Ciclo abierto'
                                           : 'Ciclo cerrado',
                                       style: TextStyle(
-                                        color: isExecutingInstructions
+                                        color: isExecutingCycleInstruction
                                             ? Colors.greenAccent
                                             : const Color(0xFFFF8A80),
                                         fontSize: 14,
@@ -374,7 +376,18 @@ class _SimulatorPageState extends State<SimulatorPage> {
                                     isExecutingInstructions = isExecuting;
                                     if (!isExecuting) {
                                       isPaused = false;
+                                      isExecutingCycleInstruction = false;
                                     }
+                                  });
+                                }
+                              });
+                            },
+                            onCycleExecutionStateChanged: (isExecutingCycle) {
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (mounted) {
+                                  setState(() {
+                                    isExecutingCycleInstruction =
+                                        isExecutingCycle;
                                   });
                                 }
                               });
