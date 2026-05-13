@@ -14,6 +14,9 @@ const formatMessage = require('format-message');
 const RenderedTarget = require('../../sprites/rendered-target');
 const log = require('../../util/log');
 const StageLayering = require('../../engine/stage-layering');
+// Importar bloques
+const uid = require('../../util/uid'); // o cualquier generador de IDs únicos    
+const idExtension='AttaBotSTEM' ;
 //BLE
 const SERVICIO_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
 const CARACTERISTICA_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
@@ -48,7 +51,7 @@ const ColorParam = {
 class Scratch3YourExtension {
     
     static get EXTENSION_ID () {  
-        return 'AttaBotSTEM';  
+        return idExtension;  
     }  
     
 
@@ -303,7 +306,7 @@ class Scratch3YourExtension {
         return {
             // unique ID for your extension
             // Must not contain a '.' character.
-            id: 'AttaBotSTEM',
+            id: idExtension,
 
             // name that will be displayed in the Scratch UI
             name: 'AttaBot',
@@ -1099,7 +1102,7 @@ class Scratch3YourExtension {
                     blockType: BlockType.COMMAND,
 
                     // label to display on the block
-                    text: 'Exportar [StringComando] a [nombreArchivo].dat',
+                    text: 'Exportar [stringComando] a [nombreArchivo].dat',
 
                     // true if this block should end a stack
                     terminal: true,
@@ -1107,7 +1110,7 @@ class Scratch3YourExtension {
 
                     // arguments used in the block
                     arguments: {
-                        StringComando: {
+                        stringComando: {
                             defaultValue: ' ',
                             type: ArgumentType.STRING
                         },
@@ -1115,6 +1118,29 @@ class Scratch3YourExtension {
                             defaultValue: 'comandos',
                             type: ArgumentType.STRING
                         }
+                    } 
+                }, // Fin Exportar2BOTString 
+
+                {
+                    // name of the function where your block code lives
+                    opcode: 'AttaImportarDeBOTString',
+                    blockType: BlockType.HAT,
+                    isEdgeActivated: false, //para que no se active solo
+
+                    // label to display on the block
+                    text: 'Importar de la APP',
+
+                    // true if this block should end a stack
+                    terminal: true,
+                    filter: [ TargetType.SPRITE],
+
+                    // arguments used in the block
+                    arguments: {
+                        stringComando: {
+                            defaultValue: 'AV099',
+                            type: ArgumentType.STRING
+                        }
+                        
                     } 
                 }, // Fin Exportar2BOTString 
 
@@ -2013,7 +2039,7 @@ class Scratch3YourExtension {
     };
 
     AttaExportar2BOTString(args, util){
-        const stringComandoCompleto= args.StringComando;
+        const stringComandoCompleto= args.stringComando;
         const largoComando =5;
         let stringComandoIndividual;
         let BotString = "[";
@@ -2050,7 +2076,205 @@ class Scratch3YourExtension {
     // Limpiar
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-}
+} // FIn utilizades para guardar a .dat
+
+// Inicio Importar de .dat
+    async AttaImportarDeBOTString(args,util){
+        const arrayStringImportado = await procesarArchivo();
+        let idBloqueActual = util.thread.peekStack();
+        let idBloqueNuevo = uid();  
+        let comandoExtraido;
+        let instruccionExtraido;
+        let valorExtraido;
+        // variables a identificar
+        let opcodeIdentificado ='AttaAvanzar';        
+        let valorIdentificado = 55;
+        let nombreArgumentoIdentificado = 'distancia_cm';      
+        //
+        let opcodeCompleto;
+        // ubicacion de bifurcaiones
+        let salidaBifurcacion = [];
+        let indiceBifurcacion=0;
+        // flujo de bifurcaiones
+        let esFor = false;
+        let esPrimeroEnRama = false;
+        let esFinBifurcacion = false;
+        let tieneInput =true;
+        
+
+        for (let i = 0; i < arrayStringImportado.length; i++) {
+            comandoExtraido = arrayStringImportado[i];
+            instruccionExtraido = comandoExtraido.slice(0,2);
+            valorExtraido = comandoExtraido.slice(2,5);
+            valorIdentificado = Cast.toNumber(valorExtraido);
+            console.log(valorExtraido);
+            console.log(valorIdentificado)
+            switch (instruccionExtraido){
+                case 'AV':
+                    opcodeIdentificado ='AttaAvanzar';                   
+                    nombreArgumentoIdentificado = 'distancia_cm'; 
+                break;
+
+                case 'RE':
+                    opcodeIdentificado ='AttaRetroceder';                    
+                    nombreArgumentoIdentificado = 'distancia_cm'; 
+                break;
+
+                case 'GI':
+                    opcodeIdentificado ='AttaGirarIzquierda';                    
+                    nombreArgumentoIdentificado = 'angulo'; 
+                break;
+
+                case 'GD':
+                    opcodeIdentificado ='AttaGirarDerecha';                    
+                    nombreArgumentoIdentificado = 'angulo'; 
+                break;                    
+                
+                case 'CI':
+                    if(!(valorExtraido==='FIN')){                    
+                        opcodeIdentificado ='AttaFor';                    
+                        nombreArgumentoIdentificado = 'repeticiones'; 
+                        salidaBifurcacion[indiceBifurcacion]=idBloqueNuevo;
+                        indiceBifurcacion++;
+                        esFor = true;    
+                    } else {
+                        esFinBifurcacion = true;
+                        indiceBifurcacion--;
+                    };
+                break;   
+
+                case 'HE':
+                    nombreArgumentoIdentificado = '';
+                    if(valorExtraido==='INI'){
+                        opcodeIdentificado ='AttaLapizActivado';
+                        tieneInput = false;
+                    }else if (valorExtraido==='FIN'){
+                        opcodeIdentificado ='AttaLapizDesactivado';
+                        tieneInput = false;
+                    } else{
+                        opcodeIdentificado ='AttaHerramienta';
+                        nombreArgumentoIdentificado = 'herramientaAccion';
+                    };                                        
+                     
+                break;   
+
+                case 'OB':
+                    if(valorExtraido==='INI'){
+                        opcodeIdentificado ='AttaDeteccionIniciada';
+                        tieneInput = false;
+                    }else{
+                        opcodeIdentificado ='AttaDeteccionFinalizada';
+                        tieneInput = false;
+                    }                                        
+                    nombreArgumentoIdentificado = ''; 
+                break;                  
+
+
+            } // fin switch
+
+
+            //creacion de bloques
+            if (!(esFinBifurcacion)){
+                opcodeCompleto =  idExtension + '_'+ opcodeIdentificado;
+                if (tieneInput){
+                    this.crearBloqueDe1Input(opcodeCompleto,nombreArgumentoIdentificado,valorIdentificado,idBloqueActual,idBloqueNuevo,esFor,util);
+                } else {
+                    this.crearBloqueDeSinInput(opcodeCompleto,idBloqueActual,idBloqueNuevo,util);
+                    tieneInput=true;
+                };
+
+                
+                this.añadirBloquesAlStack(idBloqueActual,idBloqueNuevo,esPrimeroEnRama,util);
+                idBloqueActual = idBloqueNuevo;
+                idBloqueNuevo =  uid();
+            }else{
+                esFinBifurcacion = false;
+                idBloqueActual = salidaBifurcacion[indiceBifurcacion];
+            };
+
+            if(esPrimeroEnRama){
+                esPrimeroEnRama=false;
+            };
+
+            if(esFor){
+                esFor = false;
+                esPrimeroEnRama = true;
+            };            
+            
+        } // fin for 
+ 
+
+    }; // Fin AttaImportarDeBOTString
+
+    crearBloqueDe1Input(opcodeCompleto,nombreArgumentoIdentificado,valorIdentificado,idBloqueActual,idBloqueNuevo,esFor,util){
+        const shadowId = uid();
+        const inputsIdentificados={};
+             // 1. Crear el shadow block (el valor numerico)  
+        util.target.blocks.createBlock({  
+            id: shadowId,  
+            opcode: 'math_number',  
+            inputs: {},  
+            fields: {  
+                NUM: { name: 'NUM', value: valorIdentificado }  
+            },  
+            next: null,  
+            topLevel: false,  
+            parent: idBloqueNuevo,  
+            shadow: true  
+        });  
+
+        // 2. Crear el bloque en el contenedor del target 
+        // inputs según bloque identificado
+        inputsIdentificados[nombreArgumentoIdentificado]={name: nombreArgumentoIdentificado, block: shadowId, shadow: shadowId };
+        if (esFor){
+           inputsIdentificados['SUBSTACK'] = { name: 'SUBSTACK', block: null, shadow: null };            
+        };
+        util.target.blocks.createBlock({  
+            id: idBloqueNuevo,  
+            opcode: opcodeCompleto,  
+            inputs: inputsIdentificados,  
+            fields: {},  
+            next: null,  
+            topLevel: false,  
+            parent: idBloqueActual,  
+            shadow: false  
+        });  
+    };
+
+    crearBloqueDeSinInput(opcodeCompleto,idBloqueActual,idBloqueNuevo,util){
+        util.target.blocks.createBlock({  
+            id: idBloqueNuevo,  
+            opcode: opcodeCompleto,  
+            inputs: {},  
+            fields: {},  
+            next: null,  
+            topLevel: false,  
+            parent: idBloqueActual,  
+            shadow: false  
+        });  
+    };
+
+    añadirBloquesAlStack(idBloqueActual,idBloqueNuevo,esPrimeroEnRama,util){
+        // 2. Modificar el `next` del bloque actual para apuntar al nuevo  
+        if(!esPrimeroEnRama){
+            util.target.blocks._blocks[idBloqueActual].next = idBloqueNuevo;  
+        }else{
+            util.target.blocks._blocks[idBloqueActual].inputs.SUBSTACK.block = idBloqueNuevo; 
+        };
+        
+        util.target.blocks.resetCache();  
+        // Forzar actualización visual del editor  
+        util.runtime.emit('BLOCKS_NEED_UPDATE');
+    };
+
+
+    /**
+ * Solicita un archivo .dat que contiene un array JSON y devuelve el array parseado.
+ * @returns {Promise<string[]>} Promesa que resuelve con el array de cadenas.
+ */
+
+
+    
 
 
 }
@@ -2099,5 +2323,62 @@ if (!navigator.bluetooth) {
     };
 
     //FuncionBLE FInal  
+
+    //Pedir y abrir archivos INICIO
+
+function leerArrayDesdeDat() {
+  return new Promise((resolve, reject) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.dat';
+    input.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (!file) {
+        reject(new Error('No se seleccionó ningún archivo.'));
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const contenido = e.target.result;
+          const datos = JSON.parse(contenido);
+          if (!Array.isArray(datos)) {
+            throw new Error('El archivo no contiene un array JSON.');
+          }
+          resolve(datos);
+        } catch (err) {
+          reject(new Error('Error al parsear JSON: ' + err.message));
+        }
+      };
+      reader.onerror = () => reject(new Error('Error al leer el archivo.'));
+      reader.readAsText(file, 'UTF-8');
+    }); input.click()
+     });
+}
+
+async function procesarArchivo() {
+    try {
+        // ¡Esto se ejecuta como si fuera síncrono! Pero sin bloquear la interfaz.
+        const array = await leerArrayDesdeDat();
+        
+        // Ahora ya tenemos el array, como si hubiéramos llamado a una función normal
+        console.log('Array obtenido:', array);
+        
+        // Recorrer cada entrada (como for(auto& item : array) en C++)
+        for (let i = 0; i < array.length; i++) {
+        console.log(`Entrada ${i}: ${array[i]} (longitud: ${array[i].length})`);
+        }
+               
+        // Aquí puedes hacer más procesamiento...
+        return array; // Si quieres devolver algo
+        
+    } catch (error) {
+        // Esto atrapa cualquier reject() de la promesa o throw
+        console.error('Error:', error.message);
+    }
+}
+
+    //Pedir y abrir archivos FINAL
 
 module.exports = Scratch3YourExtension;
