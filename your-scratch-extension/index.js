@@ -2023,7 +2023,7 @@ class Scratch3YourExtension {
 
         BotString = BotString.slice(0,-1) +"]";
         const nombreArchivo = args.nombreArchivo + '.dat'
-        this.guardarArchivo(BotString, nombreArchivo);
+        this.guardarArchivo(BotString, nombreArchivo); 
     };
 
 
