@@ -1110,6 +1110,10 @@ class Scratch3YourExtension {
                         StringComando: {
                             defaultValue: ' ',
                             type: ArgumentType.STRING
+                        },
+                        nombreArchivo: {
+                            defaultValue: 'comandos',
+                            type: ArgumentType.STRING
                         }
                     } 
                 }, // Fin Exportar2BOTString 
