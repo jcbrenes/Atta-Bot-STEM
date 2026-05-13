@@ -368,7 +368,7 @@ class Scratch3YourExtension {
                     filter: [ TargetType.SPRITE],
                     // arguments used in the block} 
                 }, // Fin envioBle
-
+/*
                 {    // name of the function where your block code lives
                     opcode: 'AttaSimulacion',
                     blockType: BlockType.LOOP,
@@ -381,7 +381,7 @@ class Scratch3YourExtension {
                     filter: [ TargetType.SPRITE],
                     // arguments used in the block} 
                 }, // Fin envioBle
-
+*/
 
                 { // name of the function where your block code lives
                     opcode: 'AttaEnvioBLE',
@@ -1995,27 +1995,25 @@ class Scratch3YourExtension {
                 this.varMensajeBle='ATINI';
                 util.startBranch(1, true);
             }else{ // segunda iteracion
-                this.varMensajeBle += 'ATFIN';                
+                this.varMensajeBle += 'ATFIN';
+                this.varModoTransmision= false;                
             }
 
     };
 
     AttaEnvioBLE(args,util){
-        if (this.varModoTransmision){
-        //codigo de comunicacion BLE de Web BLUETOOTH
-          escribirMensajeBLE(args.mensajeBle)
-        }
+          escribirMensajeBLE(args.mensajeBle);        
     };
 
     AttaReconectar(args,util){
         obtenerDispositivo();
     };
-
+/*
     AttaSimulacion(args,util){
         this.varModoTransmision= false;
         util.startBranch(1, false); //eliminar y pasar a command luego
     };
-
+*/
 
 
     AttaMensajeBLE (args,util){
@@ -2220,7 +2218,7 @@ class Scratch3YourExtension {
             next: null,  
             topLevel: false,  
             parent: idBloqueNuevo,  
-            shadow: true  
+            shadow: true   
         });  
 
         // 2. Crear el bloque en el contenedor del target 
