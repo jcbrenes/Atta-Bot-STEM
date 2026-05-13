@@ -891,6 +891,8 @@ class Scratch3YourExtension {
                 }, // Fin Herramienta
 
 
+
+
 // Chanchada con el lapiz Inicio////////////////////
 {
                     opcode: 'clear',
@@ -1085,11 +1087,32 @@ class Scratch3YourExtension {
                         }
                     },
                     hideFromPalette: true
-                }
+                },
 
 
 
 // Chanchada con el lapiz Fin////////////////////
+
+                {
+                    // name of the function where your block code lives
+                    opcode: 'AttaExportar2BOTString',
+                    blockType: BlockType.COMMAND,
+
+                    // label to display on the block
+                    text: 'Exportar [StringComando] a [nombreArchivo].dat',
+
+                    // true if this block should end a stack
+                    terminal: true,
+                    filter: [ TargetType.SPRITE],
+
+                    // arguments used in the block
+                    arguments: {
+                        StringComando: {
+                            defaultValue: ' ',
+                            type: ArgumentType.STRING
+                        }
+                    } 
+                }, // Fin Exportar2BOTString 
 
 
 
@@ -1969,6 +1992,8 @@ class Scratch3YourExtension {
         return this.varMensajeBle;
     };
 
+    //utilidades
+
     FormatearComando(strComando, intValor){
         if (intValor>0){
                 if (intValor < 10) {
@@ -1982,6 +2007,46 @@ class Scratch3YourExtension {
             } 
 
     };
+
+    AttaExportar2BOTString(args, util){
+        const stringComandoCompleto= args.StringComando;
+        const largoComando =5;
+        let stringComandoIndividual;
+        let BotString = "[";
+        
+
+        // Recorrer el string en bloques de 5 caracteres
+        for (let i = largoComando; i < (stringComandoCompleto.length-largoComando); i += largoComando) {
+            stringComandoIndividual = stringComandoCompleto.substr(i, largoComando);
+            BotString += '"'+ stringComandoIndividual + '"' + ',';            
+        }
+
+        BotString = BotString.slice(0,-1) +"]";
+        const nombreArchivo = args.nombreArchivo + '.dat'
+        this.guardarArchivo(BotString, nombreArchivo);
+    };
+
+
+    guardarArchivo(contenido, nombreArchivo) {
+    // Crear blob con el contenido
+    const blob = new Blob([contenido], { type: 'application/octet-stream' });
+    
+    // Crear URL temporal
+    const url = URL.createObjectURL(blob);
+    
+    // Crear enlace de descarga
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nombreArchivo; // 'comandos.dat'
+    
+    // Simular click
+    document.body.appendChild(a);
+    a.click();
+    
+    // Limpiar
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
 
 
 }
