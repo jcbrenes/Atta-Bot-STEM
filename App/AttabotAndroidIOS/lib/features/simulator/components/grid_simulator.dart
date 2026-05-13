@@ -49,6 +49,7 @@ class _SimulationAreaState extends State<SimulationArea> {
   static const double _defaultGridCellSize = 30;
   static const double _tabletColumns = 10;
   static const double _tabletMinGridCellSize = 60;
+  static const double _centimetersPerGridCell = 20;
   double _gridCellSize = _defaultGridCellSize;
   int _runVersion = 0;
 
@@ -232,9 +233,11 @@ class _SimulationAreaState extends State<SimulationArea> {
           markInstructionStart = true;
           instructionMarkerLabel =
               "Avanzar ${_instructionValue(instruction)} cm";
+          final distanceInPixels =
+              _gridCellSize * _instructionGridUnits(instruction);
           worldPosition = worldPosition.translate(
-            _gridCellSize * cos(angle),
-            _gridCellSize * sin(angle),
+            distanceInPixels * cos(angle),
+            distanceInPixels * sin(angle),
           );
           moved = true;
         } else if (inst.contains("retroceder")) {
@@ -242,9 +245,11 @@ class _SimulationAreaState extends State<SimulationArea> {
           markInstructionStart = true;
           instructionMarkerLabel =
               "Retroceder ${_instructionValue(instruction)} cm";
+          final distanceInPixels =
+              _gridCellSize * _instructionGridUnits(instruction);
           worldPosition = worldPosition.translate(
-            -_gridCellSize * cos(angle),
-            -_gridCellSize * sin(angle),
+            -distanceInPixels * cos(angle),
+            -distanceInPixels * sin(angle),
           );
           moved = true;
         } else if (inst.contains("girar")) {
@@ -331,6 +336,16 @@ class _SimulationAreaState extends State<SimulationArea> {
   String _formatDegrees(double degrees) {
     if (degrees % 1 == 0) return degrees.toInt().toString();
     return degrees.toStringAsFixed(1);
+  }
+
+  double _instructionGridUnits(String instruction) {
+    final match = RegExp(r'(\d+(?:[\.,]\d+)?)').firstMatch(instruction);
+    if (match == null) return 1;
+
+    final value = double.tryParse(match.group(1)!.replaceAll(',', '.'));
+    if (value == null) return 1;
+
+    return value / _centimetersPerGridCell;
   }
 
   void _addInstructionMarker(Offset position, String label) {

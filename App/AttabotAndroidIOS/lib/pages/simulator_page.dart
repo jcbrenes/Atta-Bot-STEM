@@ -186,6 +186,29 @@ class _SimulatorPageState extends State<SimulatorPage> {
                             ),
                           ),
                           const SizedBox(height: 10),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.18),
+                              ),
+                            ),
+                            child: const Text(
+                              'Escala del simulador: 1 cuadro = 20 x 20 cm',
+                              style: TextStyle(
+                                color: neutralWhite,
+                                fontSize: 12,
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
                           Row(
                             children: [
                               const Text(
