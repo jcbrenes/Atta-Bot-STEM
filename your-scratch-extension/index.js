@@ -59,6 +59,14 @@ class Scratch3YourExtension {
     constructor (runtime) {
         // put any setup for your extension here
 
+        // obtener URIS de las imagenes
+
+
+
+
+
+        // Fin URIS
+
 // Chanchada con el lapiz INICIO /////////////////////////////////////
 /**
          * The runtime instantiating this block package.
@@ -312,7 +320,7 @@ class Scratch3YourExtension {
             name: 'AttaBot',
 
             // colours to use for your extension blocks
-            color1: '#000099',
+            color1: '#152A51',
             color2: '#660066',
             color3: '#a0a0a0',
 
@@ -410,7 +418,7 @@ class Scratch3YourExtension {
                     blockType: BlockType.COMMAND,
 
                     // label to display on the block
-                    text: 'Avanzar [distancia_cm] cm',
+                    text: '[Logo]Avanzar [distancia_cm] cm',
 
                     // true if this block should end a stack
                     terminal: false,
@@ -421,7 +429,11 @@ class Scratch3YourExtension {
                         distancia_cm: {
                             defaultValue: 10,
                             type: ArgumentType.NUMBER
-                        }
+                        },
+                    Logo: {
+                    type: ArgumentType.IMAGE,
+                    dataURI: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADgAAAA4CAYAAACohjseAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAOdEVYdFNvZnR3YXJlAEZpZ21hnrGWYwAAA0ZJREFUeAHtmj9oE1EYwL/3Uu9ytqYpikWwtrjoILYFQVGodhG7aOtgnTQO6mShUMdOOgqCbp1SnaqDWoeqS4vQgi620A5dNCH+KyhJa+VCau/5vsOT3MslJcndmRfvB4G7d7njfnzv3p/vPQICP3T9FCGknwA5x087oMZhABkKZJ5QiGuKMi5eJ9ZBmrGoktu4C4zFQF4SmwSGI6r61CowBf/ITXO5LqgDKA3FNKXBjKYpuK7rcULoZagfMjlmdLdoWoLgN0cJnc6/uvhVh9FXX2Au+RNqnbaoAoOHo3DzZKutnLchM9vDSi8Ro5fK5ODI/WWQjcHOFrh3dq+tLKcqLbwBop35hUOTH0FGJhbSMJew17hQNttP+Udoa1hkqJbFmE2u2865WweFOicQlJ1AUHYawCcOtYbhzIEIpFY3zCbdL3wRRLknl/ZDJBwyz0+0N/rW33peRUU5xGnU4RWeCjrJWaDk7dN7wGs8E2xr3gbxC+2OchZXj+4qGCS7jSeCKIeRw5H+Voz07PZU0nXBcuQsvJR0VbASOQuvJF0TLCa3lt2EqeW1gv+LUxvEC0lXBEtF7gbv7zBDIBJ7nITFlWxBuduSVQtGVFpUbmgyBS8cooes8sief/C+qCR2I25QtWDfweaichMLmZL3lpK85VIfWbUgduYioy8/bylngZKxR0kzF5RPc4n+sxyqFhx7+932cnder5hl5YD3Dzz8UPAcN6h6sG29HEYytZrjDUq24udgNq+Pzzgwqm7lhlyZTeDLiVWsUqaKNEqVEszoZScQlJ1AUHYCQdkJBGUnEHSDJWG+t+Qww/cKXwRxAD325pt5jIPyoeefwC98W3zBXRv485vgG5SdQFB2/gtBW34vorqTrvsX7BPys4SQDCVA5vMLrx/bCTKCywfH+dJ4PoyxeWoYv57lF470tMI1vjApE7h8gIutQoY9sUPTZkg6zaKKlnsHwvZlzEvOJtah1sEM+EW+jiGuJFNKYrjF2dwQ67RnVGYYsJmmcLgXj81WFEPJmHEFhAZHRlCuUVUHrPO/3USTpsUpM7q56DhICO6+53LDGDlsPa1y4vRnXdc7NgzaRahR85vUQ4SkNxlbwFrodP03PBQx1b9JHHIAAAAASUVORK5CYII=',
+					}
                     } 
                 }, // Fin AttaAvanzar
                 {
@@ -2378,5 +2390,10 @@ async function procesarArchivo() {
 }
 
     //Pedir y abrir archivos FINAL
+
+
+    // Hacer imagenes a URI
+
+
 
 module.exports = Scratch3YourExtension;
