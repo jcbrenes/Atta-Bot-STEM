@@ -326,7 +326,7 @@ class Scratch3YourExtension {
 
 
 
-    //chachada con lapiz final
+    //chachada con lapiz final 
 
     getInfo () {
         return {
