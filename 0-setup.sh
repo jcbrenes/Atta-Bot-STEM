@@ -36,5 +36,14 @@ cd src/lib/libraries/extensions/yourextension
 ln -s $DIR/your-extension-background.png your-extension-background.png
 ln -s $DIR/your-extension-icon.png your-extension-icon.png
 
+# Volver a la raíz de scratch-gui
+cd "$SCRATCH_SRC_HOME/scratch-gui"
+
+# Asegurar que existe la carpeta default-project
+mkdir -p src/lib/default-project
+
+# Crear enlace simbólico para la plantilla
+ln -s $DIR/plantilla.sb3 src/lib/default-project/plantilla.sb3
+
 echo "Marking the Scratch source as customized"
 touch $SCRATCH_SRC_HOME/patched
