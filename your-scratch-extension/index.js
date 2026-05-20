@@ -22,7 +22,7 @@ const SERVICIO_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
 const CARACTERISTICA_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
 let dispositivoBLE = null;
 require('regenerator-runtime/runtime'); 
-// Variable para guardar la referencia al dispositivo ya emparejado
+// Variable para guardar la referencia al dispositivo ya emparejado 
 
 // DataURI para cada bloque // son los logos de los bloques
 // URIs se generan con herramientas como https://datauri.ai/ (no es una AI, solo es el dominio de la app)
