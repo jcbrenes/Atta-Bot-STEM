@@ -5,16 +5,16 @@ index ba18b91..e316f38 100644
 @@ -1,6 +1,9 @@
  import React from 'react';
  import {FormattedMessage} from 'react-intl';
-
+ 
 +import yourExtensionInsetIconURL from './yourextension/your-extension-icon.png';
 +import yourExtensionIconURL from './yourextension/your-extension-background.png';
 +
  import musicIconURL from './music/music.png';
  import musicInsetIconURL from './music/music-small.svg';
-
+ 
 @@ -47,6 +50,15 @@ import gdxforConnectionIconURL from './gdxfor/gdxfor-illustration.svg';
  import gdxforConnectionSmallIconURL from './gdxfor/gdxfor-small.svg';
-
+ 
  export default [
 +    {
 +        name: 'AttaScratch',
