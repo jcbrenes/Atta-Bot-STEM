@@ -30,7 +30,7 @@ index ba18b91..e316f38 100644
              <FormattedMessage
 --- a/src/lib/default-project/index.js
 +++ b/src/lib/default-project/index.js
-@@ -1,52 +1,14 @@
+@@ -1,54 +1,14 @@
 -import projectData from './project-data';
 -
  /* eslint-disable import/no-unresolved */
