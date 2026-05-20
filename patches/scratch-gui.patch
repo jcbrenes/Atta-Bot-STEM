@@ -41,7 +41,7 @@ index a1b2c3d..e4f5g6h 100644
 -import backdrop from '!raw-loader!./cd21514d0531fdffb22204e0ec5ed84a.svg?';
 -import costume1 from '!raw-loader!./bcf454acf82e4504149f7ffe07081dbc.svg?';
 -import costume2 from '!raw-loader!./0fb9be3e8397c983338cb71dc84d0b25.svg?';
-+import plantillaData from '!arraybuffer-loader!./yourextension/plantilla.sb3';
++import plantillaData from '!arraybuffer-loader!./plantilla.sb3?';
  /* eslint-enable import/no-unresolved */
  
 -const defaultProject = translator => {
