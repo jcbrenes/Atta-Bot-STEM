@@ -30,6 +30,24 @@ ln -s $DIR/dependencies/package-lock.json .
 cd $SCRATCH_SRC_HOME/scratch-gui
 git apply $DIR/patches/scratch-gui.patch
 
+
+# Reemplazar index.js del proyecto por defecto directamente  
+cat > "$SCRATCH_SRC_HOME/scratch-gui/src/lib/default-project/index.js" << 'EOF'  
+/* eslint-disable import/no-unresolved */  
+import plantillaData from '!arraybuffer-loader!./plantilla.sb3?';  
+/* eslint-enable import/no-unresolved */  
+  
+// eslint-disable-next-line no-unused-vars  
+const defaultProject = _translator => [{  
+    id: 0,  
+    assetType: 'Project',  
+    dataFormat: 'JSON',  
+    data: new Uint8Array(plantillaData)  
+}];  
+  
+export default defaultProject;  
+EOF
+
 echo "Copying in the Scratch extension files"
 mkdir -p src/lib/libraries/extensions/yourextension
 cd src/lib/libraries/extensions/yourextension
