@@ -355,8 +355,8 @@ class Scratch3YourExtension {
             color3: '#a0a0a0',
 
             // icons to display
-            blockIconURI: URIIconoBloques,
-            menuIconURI: URIIconoExtension,
+            //blockIconURI: URIIconoBloques,
+            //menuIconURI: URIIconoExtension,
 
             // link to documentation content for this extension.
             docsURI: 'https://github.com/dalelane/scratch-extension-development',
