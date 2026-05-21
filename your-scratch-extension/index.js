@@ -7,13 +7,37 @@ const Cast = require('../../util/cast');
 const MathUtil = require('../../util/math-util');
 const Timer = require('../../util/timer');
 //const util = require('../../engine/block-utility');
-// Chanchada con el lapiz INICIO
+// Copia de const de PEN INICIO
 const Clone = require('../../util/clone');
 const Color = require('../../util/color');
 const formatMessage = require('format-message');
 const RenderedTarget = require('../../sprites/rendered-target');
 const log = require('../../util/log');
 const StageLayering = require('../../engine/stage-layering');
+
+const ColorParam = {
+    COLOR: 'color',
+    SATURATION: 'saturation',
+    BRIGHTNESS: 'brightness',
+    TRANSPARENCY: 'transparency'
+};
+
+/**
+ * @typedef {object} PenState - the pen state associated with a particular target.
+ * @property {Boolean} penDown - tracks whether the pen should draw for this target.
+ * @property {number} color - the current color (hue) of the pen.
+ * @property {PenAttributes} penAttributes - cached pen attributes for the renderer. This is the authoritative value for
+ *   diameter but not for pen color.
+ */
+
+/**
+ * Host for the Pen-related blocks in Scratch 3.0
+ * @param {Runtime} runtime - the runtime instantiating this block package.
+ * @constructor
+ */
+
+// Fin de const PEN
+
 // Importar bloques
 const uid = require('../../util/uid'); // o cualquier generador de IDs únicos    
 const idExtension='AttaBotSTEM' ;
@@ -48,30 +72,16 @@ const URIHerramienta = URILapizActivado  ;
 const URIExportar2BOTString =  URIMensajeBLE ;
 const URIImportarDeBOTString = URIMensajeBLE  ; 
 
+const URIIconoExtension = URIIconoBloques;
+const URIIconoBloques = 'data:image/png;base64,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';
 // fin de URIs
 
-const ColorParam = {
-    COLOR: 'color',
-    SATURATION: 'saturation',
-    BRIGHTNESS: 'brightness',
-    TRANSPARENCY: 'transparency'
-};
-
 /**
- * @typedef {object} PenState - the pen state associated with a particular target.
- * @property {Boolean} penDown - tracks whether the pen should draw for this target.
- * @property {number} color - the current color (hue) of the pen.
- * @property {PenAttributes} penAttributes - cached pen attributes for the renderer. This is the authoritative value for
- *   diameter but not for pen color.
+ * Clase de extension de Scratch. las extensiones son tratadas como un objeto de una clase. La clase retorna el id de la extensión para la codificación de archivos de guardado .sb3
+ * en el método de GetInfo retorna todas las características de los bloques contenidos en la extensión.
+ * Incluye los métodos que ahcen match con los OPcode de los bloques para la ejecución de los bloques respectivos. El opcode es a cual método llama el bloque al ejecutarse. 
  */
 
-/**
- * Host for the Pen-related blocks in Scratch 3.0
- * @param {Runtime} runtime - the runtime instantiating this block package.
- * @constructor
- */
-
-// Chanchada con el lapiz FINAL
 class Scratch3YourExtension {
     
     static get EXTENSION_ID () {  
@@ -85,8 +95,8 @@ class Scratch3YourExtension {
 
 
 
-// Chanchada con el lapiz INICIO /////////////////////////////////////
-/**
+// Inicio de copia de setup de PEN/
+        /**
          * The runtime instantiating this block package.
          * @type {Runtime}
          */
@@ -113,11 +123,11 @@ class Scratch3YourExtension {
         runtime.on('RUNTIME_DISPOSED', this.clear.bind(this));
 
     
-// Chanchada con el lapiz FINAL ///////////////////////////////////////
+//Fin de copia de setup de PEN
 
     }// fin constructor
 
-    //Chanchada con lapiz inicio
+    //Copia de funciones auxiliares de PEN inicio
     static get DEFAULT_PEN_STATE () {
         return {
             penDown: false,
@@ -326,7 +336,9 @@ class Scratch3YourExtension {
 
 
 
-    //chachada con lapiz final 
+    //Final de funciones auxiliares de PEN
+
+    // getInfo es el método que le provee la información a la GUI de Scratch. Los bloques aparecen en el mismo orden que se declaran.
 
     getInfo () {
         return {
@@ -343,8 +355,8 @@ class Scratch3YourExtension {
             color3: '#a0a0a0',
 
             // icons to display
-            blockIconURI: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAFCAAAAACyOJm3AAAAFklEQVQYV2P4DwMMEMgAI/+DEUIMBgAEWB7i7uidhAAAAABJRU5ErkJggg==',
-            menuIconURI: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAFCAAAAACyOJm3AAAAFklEQVQYV2P4DwMMEMgAI/+DEUIMBgAEWB7i7uidhAAAAABJRU5ErkJggg==',
+            blockIconURI: URIIconoBloques,
+            menuIconURI: URIIconoExtension,
 
             // link to documentation content for this extension.
             docsURI: 'https://github.com/dalelane/scratch-extension-development',
@@ -352,7 +364,6 @@ class Scratch3YourExtension {
             // your Scratch blocks, in the order they will be displayed
             blocks: [
 
-// Bloques para Debug/desarrollo//******************************** 
 // */
                 {    // name of the function where your block code lives
                     opcode: 'AttaMensajeBLE',
@@ -1049,7 +1060,7 @@ class Scratch3YourExtension {
 
 
 
-// Chanchada con el lapiz Inicio////////////////////
+// Bloques de la extensión PEN //
 {
                     opcode: 'clear',
                     blockType: BlockType.COMMAND,
@@ -1247,7 +1258,7 @@ class Scratch3YourExtension {
 
 
 
-// Chanchada con el lapiz Fin////////////////////
+// Fin bloques PEN//
 
                 {
                     // name of the function where your block code lives
@@ -1327,14 +1338,14 @@ class Scratch3YourExtension {
                     {text: 'negro' , value: 0}
                     ]
                 },
-// Chanchada con el lapiz Inicio////////////////////
+// Menu PEN Inicio//
 
                 colorParam: {
                     acceptReporters: true,
                     items: this._initColorParam()
                 }
 
-// Chanchada con el lapiz Fin////////////////////
+// Menu PEN fin//
 
                 }
         };
@@ -1348,6 +1359,12 @@ class Scratch3YourExtension {
      * implementation of the block with the opcode that matches this name
      *  this will be called when the block is used
      */
+
+    /** 
+    * Método para que el AttaBot en la GUI avance o concatene el comando AV### al string de comandos
+    * @param {int} distancia_cm - los centimetros a moverse en físico. Se entienden como steps de Scratch (escalable)
+    * @param {object}  util - objeto con métodos y valores varios que el motor de Scratch retorna a todas las extensiones
+    */
     AttaAvanzar ({distancia_cm},util) {
         if(this.varModoTransmision){
             this.FormatearComando('AV', distancia_cm);
@@ -1360,6 +1377,12 @@ class Scratch3YourExtension {
         }           
 
     };
+
+    /** 
+    * Método para que el AttaBot en la GUI retroceda o concatene el comando RE### al string de comandos
+    * @param {int} distancia_cm - los centimetros a moverse en físico. Se entienden como steps de Scratch (escalable)
+    * @param {object}  util - objeto con métodos y valores varios que el motor de Scratch retorna a todas las extensiones
+    */
 
     AttaRetroceder({distancia_cm},util){
         if(this.varModoTransmision){
@@ -1374,6 +1397,12 @@ class Scratch3YourExtension {
 
     };
 
+    /**
+    *  Método para que el AttaBot en la GUI gire a la izquierda o concatene el comando GI### al string de comandos
+    * @param {int} angulo - los grados sexagesimal a moverse en físico. 
+    * @param {object}  util - objeto con métodos y valores varios que el motor de Scratch retorna a todas las extensiones
+    */
+
     AttaGirarIzquierda({angulo},util){
         if(this.varModoTransmision){
             this.FormatearComando('GI', angulo);
@@ -1383,6 +1412,12 @@ class Scratch3YourExtension {
 
     };
 
+    /**
+    *  Método para que el AttaBot en la GUI gire a la derecha o concatene el comando GD### al string de comandos
+    * @param {int} angulo - los grados sexagesimal a moverse en físico. 
+    * @param {object}  util - objeto con métodos y valores varios que el motor de Scratch retorna a todas las extensiones
+    */
+
     AttaGirarDerecha({angulo},util){
         if(this.varModoTransmision){
             this.FormatearComando('GD', angulo);
@@ -1391,6 +1426,12 @@ class Scratch3YourExtension {
         } 
 
     };
+
+    /**
+    *  Método para que el AttaBot ejecute ciclos o concatene el comando CI###...CIFIN al string de comandos
+    * @param {int} repeticiones - Cantidad de veces a repetir el ciclo. 
+    * @param {object}  util - objeto con métodos y valores varios que el motor de Scratch retorna a todas las extensiones
+    */
 
     AttaFor ({repeticiones}, util){
         if(this.varModoTransmision){
@@ -1421,7 +1462,12 @@ class Scratch3YourExtension {
 
     };
 
-//Con bloques C .LOOP puedo hacer obligatorio que si se activa algo tambien deba apagarse. Necesario?
+    /**
+    *  Método para que el AttaBot inicia la detección de obstaculos (gráficamente no implmentado) o concatene el comando OBINI al string de comandos
+    * @param {object} args - argumentos declarados del bloque en GetInfo(). 
+    * @param {object}  util - objeto con métodos y valores varios que el motor de Scratch retorna a todas las extensiones
+    */
+
     AttaDeteccionIniciada(args, util){
         if (this.varModoTransmision){
             this.varMensajeBle += 'OBINI'
@@ -1429,6 +1475,12 @@ class Scratch3YourExtension {
 
         } 
     };
+
+    /**
+    *  Método para que el AttaBot finalice la detección de obstaculos (gráficamente no implmentado) o concatene el comando OBIFIN al string de comandos
+    * @param {object} args - argumentos declarados del bloque en GetInfo(). 
+    * @param {object}  util - objeto con métodos y valores varios que el motor de Scratch retorna a todas las extensiones
+    */
     AttaDeteccionFinalizada(args,util){
         if (this.varModoTransmision){
             this.varMensajeBle += 'OBFIN'
@@ -1437,15 +1489,25 @@ class Scratch3YourExtension {
         } 
 
     };
+
+    /**
+    *  Método para que el AttaBot incia el trazado o concatene el comando HEINI al string de comandos
+    * @param {object} args - argumentos declarados del bloque en GetInfo(). 
+    * @param {object}  util - objeto con métodos y valores varios que el motor de Scratch retorna a todas las extensiones
+    */    
     AttaLapizActivado(args,util){
         if (this.varModoTransmision){
             this.varMensajeBle += 'HEINI'
         } else { // comportamiento gráfico
-            this.penDown (args, util)
-    
+            this.penDown (args, util)    
         } 
     };
 
+    /**
+    *  Método para que el AttaBot finaliza el trazado o concatene el comando HEFIN al string de comandos
+    * @param {object} args - argumentos declarados del bloque en GetInfo(). 
+    * @param {object} util - objeto con métodos y valores varios que el motor de Scratch retorna a todas las extensiones
+    */ 
        AttaLapizDesactivado(args,util){
         if (this.varModoTransmision){
             this.varMensajeBle += 'HEFIN'
@@ -1453,8 +1515,11 @@ class Scratch3YourExtension {
             this.penUp (args, util)
         } 
     };
-////////////////////////// Inicio Chanchada con el lapiz
+//Inicio métodos de PEN
 
+    /**
+    *  Método para que limpiar todo lo trazado por el objeto
+    */ 
  clear () {
         const penSkinId = this._getPenLayerID();
         if (penSkinId >= 0) {
@@ -1723,8 +1788,16 @@ class Scratch3YourExtension {
 
         this._updatePenColor(penState);
     }
-////////////////////////// Fin Chanchada con el lapiz
+//Fin métodos de PEN
 
+    /**
+    *  Método para que el AttaBot realice bifurcaciones IF o concatene el comando IF### ... IFFIN al string de comandos según la selección de blanco/negro
+    * @param {object} args - argumentos declarados del bloque en GetInfo(). 
+    *   @property {int} colorSensorIzquierdo , colorSensorDerecho - valores de color identificados como los sensores en el Sprite
+    *   @property {int} colorBlanco, colorNegro - valores de color identificados para el fondo
+    *   @property {int} condicionSensorIzq, condicionSensorDer - selección del menú para esocger cual color de fondo genera el true
+    * @param {object} util - objeto con métodos y valores varios que el motor de Scratch retorna a todas las extensiones
+    */ 
 
     AttaIf(args,util){
         if (this.varModoTransmision){         
@@ -1800,6 +1873,15 @@ class Scratch3YourExtension {
         } 
     };
 
+    /**
+    *  Método para que el AttaBot realice bifurcaciones IF-Else o concatene el comando IF###...EL###...IFFIN al string de comandos según la selección de blanco/negro
+    * @param {object} args - argumentos declarados del bloque en GetInfo(). 
+    *   @property {int} colorSensorIzquierdo , colorSensorDerecho - valores de color identificados como los sensores en el Sprite
+    *   @property {int} colorBlanco, colorNegro - valores de color identificados para el fondo
+    *   @property {int} condicionSensorIzq, condicionSensorDer - selección del menú para esocger cual color de fondo genera el true
+    *   @property {int} condicionSensorIzqElse, condicionSensorDerElse - selección del menú para esocger cual color de fondo genera el true en el else
+    * @param {object} util - objeto con métodos y valores varios que el motor de Scratch retorna a todas las extensiones
+    */ 
 
 
     AttaIfElseIf(args,util){
@@ -1868,6 +1950,17 @@ class Scratch3YourExtension {
 
         } 
     };
+
+
+    /**
+    *  Método para que el AttaBot realice bifurcaciones IF-Elseif o concatene el comando IF###...EL###...EL999...IFFIN al string de comandos según la selección de blanco/negro
+    * @param {object} args - argumentos declarados del bloque en GetInfo(). 
+    *   @property {int} colorSensorIzquierdo , colorSensorDerecho - valores de color identificados como los sensores en el Sprite
+    *   @property {int} colorBlanco, colorNegro - valores de color identificados para el fondo
+    *   @property {int} condicionSensorIzq, condicionSensorDer - selección del menú para esocger cual color de fondo genera el true
+    *   @property {int} condicionSensorIzqElse, condicionSensorDerElse - selección del menú para esocger cual color de fondo genera el true en el else
+    * @param {object} util - objeto con métodos y valores varios que el motor de Scratch retorna a todas las extensiones
+    */     
 
  AttaIfElseIfElse(args,util){
         if (this.varModoTransmision){         
@@ -1942,6 +2035,16 @@ class Scratch3YourExtension {
         } 
     };
 
+
+    /**
+    *  Método para que el AttaBot realice bifurcaciones IF-Else o concatene el comando IF###...EL999...IFFIN al string de comandos según la selección de blanco/negro
+    * @param {object} args - argumentos declarados del bloque en GetInfo(). 
+    *   @property {int} colorSensorIzquierdo , colorSensorDerecho - valores de color identificados como los sensores en el Sprite
+    *   @property {int} colorBlanco, colorNegro - valores de color identificados para el fondo
+    *   @property {int} condicionSensorIzq, condicionSensorDer - selección del menú para esocger cual color de fondo genera el true
+    * @param {object} util - objeto con métodos y valores varios que el motor de Scratch retorna a todas las extensiones
+    */ 
+
     AttaIfElse (args,util){
         if (this.varModoTransmision){         
             if (typeof util.stackFrame.loopCounter === 'undefined') {
@@ -1987,6 +2090,16 @@ class Scratch3YourExtension {
             }                                
         } 
     };
+
+    /**
+    *  Método para que el AttaBot realice bifurcaciones While o concatene el comando WH###...WHFIN al string de comandos según la selección de blanco/negro
+    * @param {object} args - argumentos declarados del bloque en GetInfo(). 
+    *   @property {int} colorSensorIzquierdo , colorSensorDerecho - valores de color identificados como los sensores en el Sprite
+    *   @property {int} colorBlanco, colorNegro - valores de color identificados para el fondo
+    *   @property {int} condicionSensorIzq, condicionSensorDer - selección del menú para esocger cual color de fondo genera el true
+    * @param {object} util - objeto con métodos y valores varios que el motor de Scratch retorna a todas las extensiones
+    */ 
+
     AttaWhile (args,util){
         if (this.varModoTransmision){         
             if (typeof util.stackFrame.loopCounter === 'undefined') {
@@ -2045,6 +2158,16 @@ class Scratch3YourExtension {
             
         } 
     };
+
+    /**
+    *  Método para que el AttaBot realice bifurcaciones WhileNot o concatene el comando WH###...WHFIN al string de comandos según la selección de blanco/negro
+    * @param {object} args - argumentos declarados del bloque en GetInfo(). 
+    *   @property {int} colorSensorIzquierdo , colorSensorDerecho - valores de color identificados como los sensores en el Sprite
+    *   @property {int} colorBlanco, colorNegro - valores de color identificados para el fondo
+    *   @property {int} condicionSensorIzq, condicionSensorDer - selección del menú para esocger cual color de fondo genera el true
+    * @param {object} util - objeto con métodos y valores varios que el motor de Scratch retorna a todas las extensiones
+    */ 
+
     AttaWhileNot (args,util){
         if (this.varModoTransmision){         
             if (typeof util.stackFrame.loopCounter === 'undefined') {
@@ -2065,20 +2188,7 @@ class Scratch3YourExtension {
             const esBlanco=1;
             let colorFondoIzquierdo;
             let colorFondoDerecho;
-          
-            /*
-            En la GUI al dibujar Scratch usa escala HSV normalizada para los colores. Normaliza cada valor entre 0-100
-            por lo tanto estos colores para deteccion de los sensores simples en hexadecimal equivalen en la escala de Scratch en:
-                    VerdeIzq RojoeDer blanco  negro
-            Color:      25  0           0       0
-            Saturacion: 100 100         0       0
-            Brillo:     100 100         100     0
 
-            ******Esta es la formula matematica de HSV normal a HSV de scratch. De RBG/hexadecimal a HSV normal hay calculadoras en linea
-                color = (hsv.h / 360) * 100;  
-                saturation = hsv.s * 100;  
-                brightness = hsv.v * 100;
-            */
             if(args.condicionSensorIzq === esBlanco){
                  colorFondoIzquierdo = colorBlanco;
             }else{
@@ -2093,8 +2203,7 @@ class Scratch3YourExtension {
 
             let boolSensorIzquierdo = util.target.colorIsTouchingColor(colorFondoIzquierdo, colorSensorIzquierdo);
             let boolSensorDerecho = util.target.colorIsTouchingColor(colorFondoDerecho, colorSensorDerecho);
-            //let boolSensorIzquierdo = util.target.colorIsTouchingColor(colorSensorIzquierdo, colorFondoIzquierdo);  
-            //let boolSensorDerecho = util.target.colorIsTouchingColor(colorSensorDerecho, colorFondoDerecho);
+
             
             if (!(boolSensorIzquierdo && boolSensorDerecho )) {
                 util.startBranch(1, true);
@@ -2102,6 +2211,16 @@ class Scratch3YourExtension {
             
         } 
     };
+
+    /**
+    *  Método para que el AttaBot realice cambie de traje o concatene el comando HE### al string de comandos según la herramienta del menú
+    * 
+    * El AttaBot activa la herramienta según la selección en el menú
+    * @param {object} args - argumentos declarados del bloque en GetInfo(). 
+    *   @property {int} herramientaAccion - valor de la selección para el cambio de traje del Sprite
+    * @param {object} util - objeto con métodos y valores varios que el motor de Scratch retorna a todas las extensiones
+    */ 
+
     AttaHerramienta (args,util){
         if (this.varModoTransmision){
             this.FormatearComando('HE',args.herramientaAccion)
@@ -2145,6 +2264,14 @@ class Scratch3YourExtension {
         } // Fin modo grafico
     };
 
+     /**
+    *  Método para activar los modos transmisión de los bloques y concatenar ATINI...ATFIN al string de comandos
+    * 
+    * Los bloques dentro de la C de este bloque concatenan al string. Los bloques fuera de la C realizán sus funciones gráficas.
+    * @param {object} args - argumentos declarados del bloque en GetInfo().
+    * @param {object} util - objeto con métodos y valores varios que el motor de Scratch retorna a todas las extensiones
+    */    
+
     AttaComandoBLE(args,util){ 
         if (typeof util.stackFrame.loopCounter === 'undefined') {
                 util.stackFrame.loopCounter = -1; //Primera ejecucion del bloque
@@ -2158,9 +2285,24 @@ class Scratch3YourExtension {
 
     };
 
+    /**
+    *  Método para el bloque que transmite los comandos mediante Bluetooth  
+    * 
+    * @param {object} args - argumentos declarados del bloque en GetInfo().
+    *   @property {string} mensajeBle - Entrada de texto que será transmitida al AttaBot mediante Bluetooth
+    * @param {object} util - objeto con métodos y valores varios que el motor de Scratch retorna a todas las extensiones
+    */ 
+
     AttaEnvioBLE(args,util){
           escribirMensajeBLE(args.mensajeBle);        
     };
+
+    /**
+    *  Método para el bloque que reconecta con dispositivos Bluetooth y se pueda seleccionar uno nuevo 
+    * 
+    * @param {object} args - argumentos declarados del bloque en GetInfo().
+    * @param {object} util - objeto con métodos y valores varios que el motor de Scratch retorna a todas las extensiones
+    */ 
 
     AttaReconectar(args,util){
         obtenerDispositivo();
@@ -2171,13 +2313,25 @@ class Scratch3YourExtension {
         util.startBranch(1, false); //eliminar y pasar a command luego
     };
 */
-
-
+    /**
+    *  Método para el bloque variable del string de comandos 
+    * 
+    * @param {object} args - argumentos declarados del bloque en GetInfo().
+    * @param {object} util - objeto con métodos y valores varios que el motor de Scratch retorna a todas las extensiones
+    * @return {string} varMensajeBle - retorna el string de comandos al que los otros bloques concatenan
+    */ 
     AttaMensajeBLE (args,util){
         return this.varMensajeBle;
     };
 
     //utilidades
+
+    /**
+    *  Método para que los valores numéricos se concatenen con los ceros a la izquierda correctos en el string de comandos 
+    * 
+    * @param {string} strComando - letras iniciales del comando
+    * @param {int} intValor - valor numérico a ser concatenado en los ### del comando
+    */     
 
     FormatearComando(strComando, intValor){
         if (intValor>0){
@@ -2192,6 +2346,15 @@ class Scratch3YourExtension {
             } 
 
     };
+
+    /**
+    *  Método del bloque para guardar localmente una secuencia de comandos en un Array JSON .dat
+    * 
+    * @param {object} args - argumentos declarados del bloque en GetInfo().
+    *   @property {string}  stringComando - Entrada string de comandos a ser guardado
+    * @param {object} util - objeto con métodos y valores varios que el motor de Scratch retorna a todas las extensiones
+    * 
+    */ 
 
     AttaExportar2BOTString(args, util){
         const stringComandoCompleto= args.stringComando;
@@ -2211,31 +2374,52 @@ class Scratch3YourExtension {
         this.guardarArchivo(BotString, nombreArchivo); 
     };
 
+    /**
+    *  Método de que guarda localmente un archivo
+    * 
+    * @param {string} contenido - Los datos del archivo a guardarse
+    * @param {string} nombreArchivo - Nombre con el que se guardará el archivo
+    * 
+    */ 
 
     guardarArchivo(contenido, nombreArchivo) {
-    // Crear blob con el contenido
-    const blob = new Blob([contenido], { type: 'application/octet-stream' });
-    
-    // Crear URL temporal
-    const url = URL.createObjectURL(blob);
-    
-    // Crear enlace de descarga
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = nombreArchivo; // 'comandos.dat'
-    
-    // Simular click
-    document.body.appendChild(a);
-    a.click();
-    
-    // Limpiar
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-} // FIn utilizades para guardar a .dat
+        // Crear blob con el contenido
+        const blob = new Blob([contenido], { type: 'application/octet-stream' });
+        
+        // Crear URL temporal
+        const url = URL.createObjectURL(blob);
+        
+        // Crear enlace de descarga
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = nombreArchivo; // 'comandos.dat'
+        
+        // Simular click
+        document.body.appendChild(a);
+        a.click();
+        
+        // Limpiar
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } // FIn utilizades para guardar a .dat
 
 // Inicio Importar de .dat
+// Falta soporte para importar IF, IFELSE y WHILE/WHILENOT
+
+    /**
+    *  Método del bloque que importa una secuecia de comandos desde un array JSON y genera la secuencia de bloques en el ambiente
+    * 
+    * El como funciona: carga y decodifica el array JSON en un array. Luego, de ese array lee 5 caracteres  que forman un comando del Attabot.
+    * Según el comando identificado se asignan propiedades para controlar el flujo del resto del procedimiento y las características de los bloques dentro de
+    * la extensión que representan esos comandos. Según las propiedades de los bloques se llaman funciones de creación y adhesión al Stack (Stack: una columna de bloques de Scratch)
+    * 
+    * @param {object} args - argumentos declarados del bloque en GetInfo().
+    * @param {object} util - objeto con métodos y valores varios que el motor de Scratch retorna a todas las extensiones
+    * 
+    */ 
+
     async AttaImportarDeBOTString(args,util){
-        const arrayStringImportado = await procesarArchivo();
+        const arrayStringImportado = await leerArrayDesdeDat();
         let idBloqueActual = util.thread.peekStack();
         let idBloqueNuevo = uid();  
         let comandoExtraido;
@@ -2328,7 +2512,7 @@ class Scratch3YourExtension {
             } // fin switch 
 
 
-            //creacion de bloques
+            //Flujo de creacion de registro de bloques nuevos
             if (!(esFinBifurcacion)){
                 opcodeCompleto =  idExtension + '_'+ opcodeIdentificado;
                 if (tieneInput){
@@ -2337,7 +2521,6 @@ class Scratch3YourExtension {
                     this.crearBloqueDeSinInput(opcodeCompleto,idBloqueActual,idBloqueNuevo,util);
                     tieneInput=true;
                 };
-
                 
                 this.añadirBloquesAlStack(idBloqueActual,idBloqueNuevo,esPrimeroEnRama,util);
                 idBloqueActual = idBloqueNuevo;
@@ -2358,9 +2541,23 @@ class Scratch3YourExtension {
             
         } // fin for 
  
-
+ 
     }; // Fin AttaImportarDeBOTString
 
+/**
+ * Método que crea objetos de registro de bloques de 1 entrada en Scratch-vm con máscaras de modificación de usuario de forma dinámica
+ * 
+ * 
+ * @param {string} opcodeCompleto - string de identificación del tipo de bloque en Scratch
+ * @param {string} nombreArgumentoIdentificado - string del nombre del argumento del tipo de bloque en el GetInfo() de la extensión
+ * @param {int} valorIdentificado - int del valor decodificado del commando a ser "escrito" en el parametró del nuevo bloque
+ * @param {int} idBloqueActual - número de uid del bloque que actualmente se encuentra al final del STACK
+ * @param {int} idBloqueNuevo - número de uid del bloque que se esta generando
+ * @param {boolean} esFor - booleano para controlar cambios del proceso de creación para los bloques C de los FOR
+ * @param {object} util - objeto con métodos y valores varios que el motor de Scratch retorna a todas las extensiones
+ */
+
+    
     crearBloqueDe1Input(opcodeCompleto,nombreArgumentoIdentificado,valorIdentificado,idBloqueActual,idBloqueNuevo,esFor,util){
         const shadowId = uid();
         const inputsIdentificados={};
@@ -2395,7 +2592,13 @@ class Scratch3YourExtension {
             shadow: false  
         });  
     };
-
+/**
+ * Método que crea objetos de registro de bloques que no tienen entradas en Scratch-vm
+ * @param {string} opcodeCompleto - string de identificación del tipo de bloque en Scratch
+ * @param {int} idBloqueActual - número de uid del bloque que actualmente se encuentra al final del STACK
+ * @param {int} idBloqueNuevo - número de uid del bloque que se esta generando
+ * @param {object} util - objeto con métodos y valores varios que el motor de Scratch retorna a todas las extensiones
+ */
     crearBloqueDeSinInput(opcodeCompleto,idBloqueActual,idBloqueNuevo,util){
         util.target.blocks.createBlock({  
             id: idBloqueNuevo,  
@@ -2408,6 +2611,15 @@ class Scratch3YourExtension {
             shadow: false  
         });  
     };
+
+/**
+ * Método que le escribe al bloque considerado al final del STACK actual el identificador del nuevo bloque y fuerza un update en la GUI para que se cree el bloque
+ * @param {string} opcodeCompleto - string de identificación del tipo de bloque en Scratch
+ * @param {int} idBloqueActual - número de uid del bloque que actualmente se encuentra al final del STACK
+ * @param {int} idBloqueNuevo - número de uid del bloque que se esta generando
+ * @param {boolean} esPrimeroEnRama - booleano que identifica si el bloque siendo añadido es el primero en los SUBSTACK de los bloques C (For, if, while) (SUBSCTACK: los "stacks" dentros de las ramificaciones de los bloques C)
+ * @param {object} util - objeto con métodos y valores varios que el motor de Scratch retorna a todas las extensiones
+ */
 
     añadirBloquesAlStack(idBloqueActual,idBloqueNuevo,esPrimeroEnRama,util){
         // 2. Modificar el `next` del bloque actual para apuntar al nuevo  
@@ -2422,20 +2634,16 @@ class Scratch3YourExtension {
         util.runtime.emit('BLOCKS_NEED_UPDATE');
     };
 
-
-    /**
- * Solicita un archivo .dat que contiene un array JSON y devuelve el array parseado.
- * @returns {Promise<string[]>} Promesa que resuelve con el array de cadenas.
- */
-
-
-    
-
-
 }
 
+// Funciones de utilidad
 
     // FuncionBLE Inicio 
+
+/**
+ * Función asícrona que escanea y retorna el dispositivo bluetooth según el UUID de servicio (Attabots-STEM)
+ * @returns dispositivoBLE - identificador del dispositivo de bluetooth seleccionado
+ */
 
 async function obtenerDispositivo() {
   if (dispositivoBLE) {
@@ -2448,38 +2656,54 @@ async function obtenerDispositivo() {
   });
   return dispositivoBLE;
 }
-    async function escribirMensajeBLE(varMensajeBLE) {
-if (!navigator.bluetooth) {
-    alert("Web Bluetooth no está soportado en este navegador.");
-    return;
-  }
+
+/**
+ * Función asícrona que escribe al dispositivo bluetooth según el UUID de servicio (Attabots-STEM) y característica (comandos)
+ * Utiliza Web Bluetooth. Disponibilidad según navegador. Funciona en Android, iOS, Windows, MacOS, Linux y Chromebooks.
+ * Windows: Chrome, Edge, entre otros. Firefox no.
+ * Android: Chrome, entre otros. Firefox no.
+ * iOS: Zafari y Chome no. Navegadores WebBle entre otros sí.
+ * MacOS: Chrome, entre otros sí.
+ * Dispositivo requiere soporte de Bluetooth 4.0 o superior para capacidades BLE.
+ * @param {string} varMensajeBLE - el string de comandos a ser transmitidos
+ */
+async function escribirMensajeBLE(varMensajeBLE) {
+    if (!navigator.bluetooth) {
+        alert("Web Bluetooth no está soportado en este navegador.");
+        return;
+    }
 
   try {
-    // 1. Solicitar el dispositivo (con filtro para evitar el diálogo si ya tiene permiso)
-    const dispositivo = await obtenerDispositivo();
+        // 1. Solicitar el dispositivo (con filtro para evitar el diálogo si ya tiene permiso)
+        const dispositivo = await obtenerDispositivo();
 
-    // 2. Conectar al servidor GATT
-    const servidor = await dispositivo.gatt.connect();
+        // 2. Conectar al servidor GATT
+        const servidor = await dispositivo.gatt.connect();
 
-    // 3. Obtener el servicio y la característica
-    const servicio = await servidor.getPrimaryService(SERVICIO_UUID);
-    const caracteristica = await servicio.getCharacteristic(CARACTERISTICA_UUID);
+        // 3. Obtener el servicio y la característica
+        const servicio = await servidor.getPrimaryService(SERVICIO_UUID);
+        const caracteristica = await servicio.getCharacteristic(CARACTERISTICA_UUID);
 
-    // 4. Codificar y escribir el mensaje
-    const codificador = new TextEncoder();
-    const datos = codificador.encode(varMensajeBLE);
-    await caracteristica.writeValue(datos);
-    
-    console.log("Mensaje escrito correctamente:", varMensajeBLE);
-  } catch (error) {
-    console.error("Error en la comunicación BLE:", error);
-  }
+        // 4. Codificar y escribir el mensaje
+        const codificador = new TextEncoder();
+        const datos = codificador.encode(varMensajeBLE);
+        await caracteristica.writeValue(datos);
         
-    };
+        console.log("Mensaje escrito correctamente:", varMensajeBLE);
+    } catch (error) {
+        console.error("Error en la comunicación BLE:", error);
+    }
+        
+};    //FuncionBLE FInal 
 
-    //FuncionBLE FInal  
+ 
 
     //Pedir y abrir archivos INICIO
+
+    /**
+     * Función asíncrona que abre una ventana para subir un archivo .dat desde la computadora
+     * @returns {array} contenidos del array JSON en forma de un array de string
+     */
 
 function leerArrayDesdeDat() {
   return new Promise((resolve, reject) => {
@@ -2512,21 +2736,18 @@ function leerArrayDesdeDat() {
      });
 }
 
+/*
 async function procesarArchivo() {
     try {
-        // ¡Esto se ejecuta como si fuera síncrono! Pero sin bloquear la interfaz.
-        const array = await leerArrayDesdeDat();
         
-        // Ahora ya tenemos el array, como si hubiéramos llamado a una función normal
+        const array = await leerArrayDesdeDat();        
         console.log('Array obtenido:', array);
         
-        // Recorrer cada entrada (como for(auto& item : array) en C++)
         for (let i = 0; i < array.length; i++) {
         console.log(`Entrada ${i}: ${array[i]} (longitud: ${array[i].length})`);
         }
-               
-        // Aquí puedes hacer más procesamiento...
-        return array; // Si quieres devolver algo
+
+        return array; 
         
     } catch (error) {
         // Esto atrapa cualquier reject() de la promesa o throw
@@ -2535,10 +2756,6 @@ async function procesarArchivo() {
 }
 
     //Pedir y abrir archivos FINAL
-
-
-
-
-
+    */
 
 module.exports = Scratch3YourExtension;
