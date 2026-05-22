@@ -72,9 +72,15 @@ const int activateAngle = 87;  // Activated Tool
 const int deactivateAngle = 118; // Deactivated Tool
 int set = 0;
 
+//Variables del servomotor 360 del set de herramientas
+const int pinServo360 = 23;
+const int velocidadPositiva = 115; // ###
+const int velocidadNegativa = 70; // ###
+const int velocidadNeutra = 90; // ###
 
 // Create a Servo object to control the MG90S
 Servo myServo;
+Servo servoHerramientaSet;
 
 
 // Define pin for the servo signal
@@ -97,7 +103,7 @@ const int leftMotorM2 = 15;   // Direction control pin 1 for the left motor
 
 // Obstacle sensors setup
 const int rightInfraredSensor = 4; // Pin for the right infrared obstacle sensor
-const int leftInfraredSensor = 34;  // Pin for the right infrared obstacle sensor
+const int leftInfraredSensor = 34;  // Pin for the left infrared obstacle sensor
 
 // Tracker sensors setup
 const int rightTrackerSensor = 36;  // Pin for the right tracker sensor
@@ -116,7 +122,7 @@ unsigned long stepStartTime = 0; // Variable to track the start time of each ste
 
 
 //variables máquina de estados
-enum posibles_Estados {ESPERA=0, LEE_MEMORIA, MOVERSE, GIRAR, DETENERSE, CICLO, OBSTACULOS, MOVIMIENTO_OBSTACULO, HERRAMIENTA, NADA};
+enum posibles_Estados {ESPERA=0, LEE_MEMORIA, MOVERSE, GIRAR, DETENERSE, CICLO, OBSTACULOS, MOVIMIENTO_OBSTACULO, HERRAMIENTA, HERRAMIENTA_SET, IF, WHILE, NADA};
 posibles_Estados estado = ESPERA;
 bool giro_listo = false;
 bool movimiento_listo = true; 
@@ -126,6 +132,8 @@ bool retroceso_listo = false;
 bool obstaculo_detectado=false;
 bool paro_emergencia=false;
 
+
+
 //variables para comunicación Bluetooth
 string mensajeBLE="ATINIAV020GD030CI003RE010GI090CIFINATFIN";  
 BLEService servicio("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
@@ -133,7 +141,9 @@ BLEStringCharacteristic caracteristico("beb5483e-36e1-4688-b7f5-ea07361b26a8", B
 //char nombreBLErobot= "AttaBotSTEM";
 
 //apuntadores y variables para la lista de instrucciones
-enum posibles_Instrucciones {inst_Avanzar=1, inst_Retroceder, inst_GiroIzquierdo, inst_GiroDerecho, inst_CicloInicia, inst_CicloFin, inst_ObstaculoInicia, inst_ObstaculoFin, inst_HerramientaInicia, inst_HerramientaFin, inst_FinalMsg};
+enum posibles_Instrucciones {inst_Avanzar=1, inst_Retroceder, inst_GiroIzquierdo, inst_GiroDerecho, 
+inst_CicloInicia, inst_CicloFin, inst_ObstaculoInicia, inst_ObstaculoFin, inst_HerramientaInicia, inst_HerramientaFin, inst_FinalMsg,
+inst_HerramientaSet, inst_IfInicia,inst_Else, inst_IfFinal, inst_WhileInicia, inst_WhileFinal};
 short lista_instrucciones[100][2];
 short inst_final = 0;
 short inst_actual = 0;
@@ -209,6 +219,11 @@ void setup() {
   pinMode(pinLedRgbAzul, OUTPUT);
   pinMode(pinLedRgbVerde, OUTPUT);
 
+  // Setup servo360
+  pinMode(pinServo360, OUTPUT);
+  servoHerramientaSet.attach(pinServo360);
+  servoHerramientaSet.write(velocidadNeutra);
+
   // Señal de batería baja set up
   pinMode(pinBateriaBaja, INPUT_PULLUP);
 
@@ -234,15 +249,33 @@ void setup() {
   tiempoDeEncendidoDeLed = millis();
 }
 
+// banderas de control de bifurcaciones
+bool ignorarHastaIFFIN = false;
+bool ignorarHastaElse = false;
+bool ignorarHastaWHILEFIN = false;
+// registros de anidacion WHILE
+short indicesWhile[5] = {};
+short anidamientoWhile = 0;
+short anidamientoWhileIgnorar=0;
+// registros de anidacion IF
+short anidamientoIF=0;
+short anidamientoIFIgnorar=0;
+
+// saqué los bool de lectura a globales
+
+  bool lecturaInfrarrojoDerecho;
+  bool lecturaInfrarrojoIzquierdo;
+  bool lecturaSensorTrackerDerecho;
+  bool lecturaSensorTrackerIzquierdo;
 
 void loop() {
  
   BLEDevice central = BLE.central();
 
-  bool lecturaInfrarrojoDerecho=digitalRead(rightInfraredSensor);
-  bool lecturaInfrarrojoIzquierdo=digitalRead(leftInfraredSensor);
-  bool lecturaSensorTrackerDerecho=digitalRead(rightTrackerSensor);
-  bool lecturaSensorTrackerIzquierdo=digitalRead(leftTrackerSensor);
+  lecturaInfrarrojoDerecho=digitalRead(rightInfraredSensor);
+  lecturaInfrarrojoIzquierdo=digitalRead(leftInfraredSensor);
+  lecturaSensorTrackerDerecho=digitalRead(rightTrackerSensor);
+  lecturaSensorTrackerIzquierdo=digitalRead(leftTrackerSensor);
   int flagBateriaBaja = digitalRead(pinBateriaBaja);
 
 
@@ -279,10 +312,39 @@ void loop() {
         }
       }
       //Lógica estado siguiente
-      if (inst_actual == inst_final) { 
+      if (instruccion == inst_final) { 
         estado = ESPERA;
         flagEjecucion = 0;
 
+      } else if (ignorarHastaIFFIN || ignorarHastaElse || ignorarHastaWHILEFIN){ //salta los bif
+        //if
+          if ((ignorarHastaIFFIN || ignorarHastaElse) && (instruccion == inst_IfInicia)){
+            anidamientoIFIgnorar++; // debe ignorar un "fin" extra
+
+          } else if ((ignorarHastaIFFIN || ignorarHastaElse) && (instruccion == inst_IfFinal)){            
+            if (anidamientoIFIgnorar == anidamientoIF){
+              ignorarHastaIFFIN = false;
+              } else {
+                anidamientoIFIgnorar--;
+              }
+
+          } else if (ignorarHastaElse && (instruccion == inst_Else)){
+            ignorarHastaElse = false;
+            estado = IF;
+
+          } else if (ignorarHastaWHILEFIN){ // Whiles
+            if (instruccion = inst_WhileInicia){
+              anidamientoWhileIgnorar++;
+
+            } else if (instruccion = inst_WhileFinal){
+              if(anidamientoWhileIgnorar == anidamientoWhile){
+                ignorarHastaWHILEFIN = false;
+              } else {
+                anidamientoWhileIgnorar--;
+              }
+            }
+          }  // estado se mantiene igual, se salta el resto de comparaciones y lee nueva instruccion   
+      
       }else if (instruccion == inst_Avanzar) {
         rightEncoderPos = 0; 
         leftEncoderPos = 0;
@@ -313,6 +375,15 @@ void loop() {
       
       }else if (instruccion == inst_HerramientaInicia  ||  instruccion == inst_HerramientaFin) {
         estado = HERRAMIENTA;
+
+      } else if (instruccion == inst_HerramientaSet) {
+        estado = HERRAMIENTA_SET;
+
+      } else if (instruccion == inst_IfInicia || instruccion == inst_Else || instruccion == inst_IfFinal){
+        estado = IF;
+
+      } else if (instruccion == inst_WhileInicia || instruccion == inst_WhileFinal){
+        estado = WHILE;
       }
 
       break; 
@@ -485,6 +556,26 @@ void loop() {
     case NADA: {
       break;
     }
+
+    case IF: {
+      bifurcacionIF();
+      estado = LEE_MEMORIA;
+      break;
+    }
+
+    case WHILE: {
+      bifurcacionWHILE();
+      estado = LEE_MEMORIA;
+      break;
+    }
+
+    case HERRAMIENTA_SET: {
+      accionarHerramientaSet();
+      estado = LEE_MEMORIA;
+      break;
+    }
+
+
   }
 
   flancoNegRecibeProgra = 0;
@@ -500,6 +591,263 @@ void loop() {
 
   delay(5);
 }
+
+// Funciones de control de flujo 
+bool ejecutandoRamaIf = false;
+const short sensorIzquierdoSobreNegro = 0;
+const short sensorIzquierdoSobreBlanco = 10;
+
+const short sensorDerechoSobreNegro = 0;
+const short sensorDerechoSobreBlanco = 1;
+
+const short sensorNoImporta = 999; // Else sin condicion
+// traker son los del suelo
+
+//******************************************************************************************************************
+// Procedimiento que realiza la comparación de las lectura de los sensores para determinar si se salta o ejecuta la rama IF
+//
+// @param {bool} condicionSensorIzquierdo - Booleano que indica si se busca que la lectura del sensor sea alta o baja
+// @param {bool} condicionSensorDerecho - Booleano que indica si se busca que la lectura del sensor sea alta o baja
+//******************************************************************************************************************
+
+void validacionIf(bool condicionSensorIzquierdo, bool condicionSensorDerecho){
+if (condicionSensorIzquierdo && condicionSensorDerecho){
+    ejecutandoRamaIf = true;
+    anidamientoIF++;
+  } else {
+    ignorarHastaElse = true;
+    anidamientoIFIgnorar = anidamientoIF;
+  }
+};
+
+//******************************************************************************************************************
+// Procedimiento de ejecución de la lógica de las banderas de flujo de bifurcaciones IF
+// 
+//******************************************************************************************************************
+
+void bifurcacionIF(){
+  if (ejecutandoRamaIf && !(instruccion == inst_IfInicia)){ // rama completada
+    switch (instruccion){
+      case (inst_Else) : {
+        ignorarHastaIFFIN = true;
+        anidamientoIFIgnorar = anidamientoIF;
+        break;
+      };
+
+      case (inst_IfFinal) : {
+        anidamientoIF--;
+        if (anidamientoIF == 0){
+          ejecutandoRamaIf = false;
+        };
+        break;
+      }            
+    };
+
+  } else { // inicios de ramas segun condicionales
+    switch (valor_instruccion) {
+      case (sensorIzquierdoSobreNegro + sensorDerechoSobreNegro): {
+        validacionIf (!lecturaSensorTrackerIzquierdo, !lecturaSensorTrackerDerecho );
+        break;
+      }
+
+      case (sensorIzquierdoSobreNegro + sensorDerechoSobreBlanco): {
+        validacionIf (!lecturaSensorTrackerIzquierdo, lecturaSensorTrackerDerecho );
+        break;
+      }
+
+      case (sensorIzquierdoSobreBlanco + sensorDerechoSobreNegro): {
+        validacionIf (lecturaSensorTrackerIzquierdo, !lecturaSensorTrackerDerecho );
+        break;
+      }      
+
+      case (sensorIzquierdoSobreBlanco + sensorDerechoSobreBlanco): {
+        validacionIf (lecturaSensorTrackerIzquierdo, lecturaSensorTrackerDerecho );
+        break;
+      }
+
+      case (sensorNoImporta): {
+        validacionIf(true, true);
+        break;
+      }
+      
+    }
+  }
+};
+
+
+
+//******************************************************************************************************************
+// Procedimiento que realiza la comparación de las lectura de los sensores para determinar si se salta o ejecuta la rama While
+//
+// @param {bool} condicionSensorIzquierdo - Booleano que indica si se busca que la lectura del sensor sea alta o baja
+// @param {bool} condicionSensorDerecho - Booleano que indica si se busca que la lectura del sensor sea alta o baja
+//******************************************************************************************************************
+const short mientras = 0;
+const short mientrasNo = 100; 
+
+void validacionWhile(bool condicionSensorIzquierdo, bool condicionSensorDerecho){
+  if (condicionSensorIzquierdo && condicionSensorDerecho){
+    indicesWhile[anidamientoWhile]=inst_actual-1;
+    anidamientoWhile++;
+  } else {
+    ignorarHastaWHILEFIN = true;
+    anidamientoWhileIgnorar = anidamientoWhile;
+  }
+};
+
+//******************************************************************************************************************
+// Procedimiento que realiza la comparación de las lectura de los sensores para determinar si se salta o ejecuta la rama WhileNot
+//
+// @param {bool} condicionSensorIzquierdo - Booleano que indica si se busca que la lectura del sensor sea alta o baja
+// @param {bool} condicionSensorDerecho - Booleano que indica si se busca que la lectura del sensor sea alta o baja
+//******************************************************************************************************************
+
+void validacionNotWhile(bool condicionSensorIzquierdo, bool condicionSensorDerecho){
+  if (!(condicionSensorIzquierdo && condicionSensorDerecho)){
+    indicesWhile[anidamientoWhile]=inst_actual-1;
+    anidamientoWhile++;
+  } else {
+    ignorarHastaWHILEFIN = true;
+    anidamientoWhileIgnorar = anidamientoWhile;
+  }
+};
+
+//******************************************************************************************************************
+// Procedimiento de ejecución de la lógica de las banderas de flujo de bifurcaciones While y WhileNot
+// 
+//******************************************************************************************************************
+
+void bifurcacionWHILE(){
+  if (instruccion == inst_WhileFinal){
+    inst_actual == indicesWhile[anidamientoWhile-1];
+    anidamientoWhile--;
+
+  }else {
+
+    switch (valor_instruccion){
+      case (mientras + sensorIzquierdoSobreNegro + sensorDerechoSobreNegro): {
+        validacionWhile(!lecturaSensorTrackerIzquierdo,!lecturaSensorTrackerDerecho);
+        break;
+      }
+
+      case (mientras + sensorIzquierdoSobreNegro + sensorDerechoSobreBlanco): {
+        validacionWhile(!lecturaSensorTrackerIzquierdo,lecturaSensorTrackerDerecho);
+        break;
+      }
+
+      case (mientras + sensorIzquierdoSobreBlanco + sensorDerechoSobreNegro): {
+        validacionWhile(lecturaSensorTrackerIzquierdo,!lecturaSensorTrackerDerecho);
+        break;
+      }      
+
+      case (mientras + sensorIzquierdoSobreBlanco + sensorDerechoSobreBlanco): {
+        validacionWhile(lecturaSensorTrackerIzquierdo,lecturaSensorTrackerDerecho);
+        break;
+      }
+
+      case (mientrasNo + sensorIzquierdoSobreNegro + sensorDerechoSobreNegro): {
+        validacionNotWhile(!lecturaSensorTrackerIzquierdo,!lecturaSensorTrackerDerecho);
+        break;
+      }
+
+      case (mientrasNo + sensorIzquierdoSobreNegro + sensorDerechoSobreBlanco): {
+        validacionNotWhile(!lecturaSensorTrackerIzquierdo,lecturaSensorTrackerDerecho);
+        break;
+      }
+
+      case (mientrasNo + sensorIzquierdoSobreBlanco + sensorDerechoSobreNegro): {
+        validacionNotWhile(lecturaSensorTrackerIzquierdo,!lecturaSensorTrackerDerecho);
+        break;
+      }      
+
+      case (mientrasNo + sensorIzquierdoSobreBlanco + sensorDerechoSobreBlanco): {
+        validacionNotWhile(lecturaSensorTrackerIzquierdo,lecturaSensorTrackerDerecho);
+        break;
+      }    
+
+    }
+
+  }
+
+};
+const short garraAbrir = 101; 
+const short garraCerrar = 1;
+const short gruaSubir = 102;
+const short gruaBajar = 2;
+
+const short posicionHerramientaPositiva = 1; // Garra abierta, Grua arriba
+const short posicionHerramientaNegativa = 2; // Garra cerrada, grua abajo
+short posicionHerramienta = 0; // al prender el robot no se conoce la posicion de la herramienta. La primera ejecución se confía en el usuario, para la segunda ejecución ya se conoce la posicion
+
+const short tiempoGarra = 600;//###;
+const short tiempoGrua = 4000;//###;
+
+short tiempoDeAccion=0;
+short velocidad=velocidadNeutra;
+
+//******************************************************************************************************************
+// Procedimiento que mueve la herramienta la velocidad y tiempo indicados por el tipo de acción de la herramienta
+// 
+//******************************************************************************************************************
+
+void accionarMotorHerramientaSet(){
+  servoHerramientaSet.write(velocidad);
+  delay(tiempoDeAccion);
+  servoHerramientaSet.write(velocidadNeutra);
+};
+
+//******************************************************************************************************************
+// Procedimiento que asigna la velocidad y tiempo de ejecución de la herramienta según el valor del comando3
+// 
+//******************************************************************************************************************
+
+void accionarHerramientaSet(){
+tiempoDeAccion=0;
+velocidad=velocidadNeutra;
+  switch (valor_instruccion){
+    case (garraAbrir) : {
+      if (!posicionHerramientaPositiva){
+        tiempoDeAccion = tiempoGarra;
+        velocidad = velocidadPositiva;
+        accionarMotorHerramientaSet();
+        posicionHerramienta=posicionHerramientaPositiva;
+      };
+      break;
+    };
+
+    case (garraCerrar) : {
+      if (!posicionHerramientaNegativa){
+        tiempoDeAccion = tiempoGrua;
+        velocidad = velocidadNegativa;
+        accionarMotorHerramientaSet();
+        posicionHerramienta=posicionHerramientaNegativa;
+      };
+      break;
+    };
+
+    case (gruaSubir) : {
+      if (!posicionHerramientaPositiva){
+        tiempoDeAccion = tiempoGrua;
+        velocidad = velocidadPositiva;
+        accionarMotorHerramientaSet();
+        posicionHerramienta=posicionHerramientaPositiva;
+      };
+      break;
+    };
+    
+    case (gruaBajar) : {
+      if (!posicionHerramientaNegativa){
+        tiempoDeAccion = tiempoGrua ;
+        velocidad = velocidadNegativa;
+        accionarMotorHerramientaSet();
+        posicionHerramienta=posicionHerramientaNegativa;
+      };
+      break;
+    };    
+
+  };
+
+};
 
 
 
@@ -595,6 +943,40 @@ void Interpreta_mensajeBLE (string mensaje) {
         } else if (comando == "HEFIN") {
           lista_instrucciones[inst_actual][0] = inst_HerramientaFin;
           lista_instrucciones[inst_actual][1] = 0;
+          inst_actual++;
+
+        } else if (comando == "IFFIN"){
+          lista_instrucciones[inst_actual][0] = inst_IfFinal;
+          lista_instrucciones[inst_actual][1] = 0;
+          inst_actual++;
+
+        } else if (instruccion == "IF"){
+          short valor = stoi (valor_instruccion);
+          lista_instrucciones[inst_actual][0] = inst_IfInicia;
+          lista_instrucciones[inst_actual][1] = valor;
+          inst_actual++;
+
+        } else if (instruccion == "EL"){
+          short valor = stoi (valor_instruccion);
+          lista_instrucciones[inst_actual][0] = inst_Else;
+          lista_instrucciones[inst_actual][1] = valor;
+          inst_actual++;
+
+        } else if (comando == "WHFIN"){
+          lista_instrucciones[inst_actual][0] = inst_WhileFinal;
+          lista_instrucciones[inst_actual][1] = 0;
+          inst_actual++;
+
+        } else if (instruccion == "WH"){
+          short valor = stoi (valor_instruccion);
+          lista_instrucciones[inst_actual][0] = inst_WhileInicia;
+          lista_instrucciones[inst_actual][1] = valor;
+          inst_actual++;
+
+        } else if (instruccion == "HE"){
+          short valor = stoi (valor_instruccion);
+          lista_instrucciones[inst_actual][0] = inst_HerramientaSet;
+          lista_instrucciones[inst_actual][1] = valor;
           inst_actual++;
         }
   }
