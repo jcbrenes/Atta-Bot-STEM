@@ -310,7 +310,7 @@ void loop() {
       } 
       
       //Lógica de estado siguiente
-      if (instruccion == inst_final) { 
+      if (inst_actual == inst_final) { 
         estado = ESPERA;
         inst_actual = 0;
         flagEjecucion = 0;
