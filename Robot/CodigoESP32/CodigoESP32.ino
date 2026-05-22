@@ -806,7 +806,7 @@ tiempoDeAccion=0;
 velocidad=velocidadNeutra;
   switch (valor_instruccion){
     case (garraAbrir) : {
-      if (!(posicionHerramientaPositiva)){
+      if (!(posicionHerramienta == posicionHerramientaPositiva)){
         tiempoDeAccion = tiempoGarra;
         velocidad = velocidadPositiva;
         accionarMotorHerramientaSet();
@@ -816,7 +816,7 @@ velocidad=velocidadNeutra;
     };
 
     case (garraCerrar) : {
-      if (!(posicionHerramientaNegativa)){
+      if (!(posicionHerramienta == posicionHerramientaNegativa)){
         tiempoDeAccion = tiempoGrua;
         velocidad = velocidadNegativa;
         accionarMotorHerramientaSet();
@@ -826,7 +826,7 @@ velocidad=velocidadNeutra;
     };
 
     case (gruaSubir) : {
-      if (!(posicionHerramientaPositiva)){
+      if (!(posicionHerramienta == posicionHerramientaPositiva)){
         tiempoDeAccion = tiempoGrua;
         velocidad = velocidadPositiva;
         accionarMotorHerramientaSet();
@@ -836,7 +836,7 @@ velocidad=velocidadNeutra;
     };
     
     case (gruaBajar) : {
-      if (!(posicionHerramientaNegativa)){
+      if (!(posicionHerramienta == posicionHerramientaNegativa)){
         tiempoDeAccion = tiempoGrua ;
         velocidad = velocidadNegativa;
         accionarMotorHerramientaSet();
