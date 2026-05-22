@@ -793,6 +793,7 @@ void accionarMotorHerramientaSet(){
   servoHerramientaSet.write(velocidad);
   delay(tiempoDeAccion);
   servoHerramientaSet.write(velocidadNeutra);
+  delay(100);
 };
 
 //******************************************************************************************************************
@@ -805,7 +806,7 @@ tiempoDeAccion=0;
 velocidad=velocidadNeutra;
   switch (valor_instruccion){
     case (garraAbrir) : {
-      if (!posicionHerramientaPositiva){
+      if (!(posicionHerramientaPositiva)){
         tiempoDeAccion = tiempoGarra;
         velocidad = velocidadPositiva;
         accionarMotorHerramientaSet();
@@ -815,7 +816,7 @@ velocidad=velocidadNeutra;
     };
 
     case (garraCerrar) : {
-      if (!posicionHerramientaNegativa){
+      if (!(posicionHerramientaNegativa)){
         tiempoDeAccion = tiempoGrua;
         velocidad = velocidadNegativa;
         accionarMotorHerramientaSet();
@@ -825,7 +826,7 @@ velocidad=velocidadNeutra;
     };
 
     case (gruaSubir) : {
-      if (!posicionHerramientaPositiva){
+      if (!(posicionHerramientaPositiva)){
         tiempoDeAccion = tiempoGrua;
         velocidad = velocidadPositiva;
         accionarMotorHerramientaSet();
@@ -835,7 +836,7 @@ velocidad=velocidadNeutra;
     };
     
     case (gruaBajar) : {
-      if (!posicionHerramientaNegativa){
+      if (!(posicionHerramientaNegativa)){
         tiempoDeAccion = tiempoGrua ;
         velocidad = velocidadNegativa;
         accionarMotorHerramientaSet();
