@@ -2305,7 +2305,9 @@ class Scratch3YourExtension {
     */ 
 
     AttaReconectar(args,util){
-        obtenerDispositivo();
+      dispositivoBLE = await navigator.bluetooth.requestDevice({
+        filters: [{ services: [SERVICIO_UUID] }],
+     });
     };
 /*
     AttaSimulacion(args,util){
