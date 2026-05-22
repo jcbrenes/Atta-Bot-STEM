@@ -2704,6 +2704,7 @@ async function escribirMensajeBLE(varMensajeBLE) {
      * @returns {array} contenidos del array JSON en forma de un array de string
      */
 
+    
 function leerArrayDesdeDat() {
   return new Promise((resolve, reject) => {
     const input = document.createElement('input');
