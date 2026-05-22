@@ -2697,7 +2697,6 @@ async function escribirMensajeBLE(varMensajeBLE) {
 };    //FuncionBLE FInal 
 
  
-
     //Pedir y abrir archivos INICIO
 
     /**
