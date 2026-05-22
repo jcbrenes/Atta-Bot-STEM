@@ -39,7 +39,7 @@ const int esperaMovimientoServo = 100;
 const int distRetrocesoObstaculo = 50;
 
 // Constante para tener siempre activos (o no) los sensores inferiores (trackers)
-const bool trackersSiempreActivos = true;
+const bool trackersSiempreActivos = false;
 
 // Error accumulation for speed PID control
 float sumErrorVelRight = 0; // Accumulated integral error for the right wheel
