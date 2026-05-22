@@ -302,18 +302,17 @@ void loop() {
     }
 
     case LEE_MEMORIA:  { 
-      if ( inst_actual != inst_final ){
+      if ( inst_actual != inst_final ){ // avanza en memoria de instrucciones
         instruccion = lista_instrucciones[inst_actual][0];
         valor_instruccion = lista_instrucciones[inst_actual][1];
-        if ( inst_actual == inst_final ){ //Si esta en la instruccion de final, deja el apuntador en cero
-        inst_actual = 0;
-        }else {
-        inst_actual++;
-        }
-      }
-      //Lógica estado siguiente
+        inst_actual++;         
+
+      } 
+      
+      //Lógica de estado siguiente
       if (instruccion == inst_final) { 
         estado = ESPERA;
+        inst_actual = 0;
         flagEjecucion = 0;
 
       } else if (ignorarHastaIFFIN || ignorarHastaElse || ignorarHastaWHILEFIN){ //salta los bif
@@ -797,7 +796,7 @@ void accionarMotorHerramientaSet(){
 };
 
 //******************************************************************************************************************
-// Procedimiento que asigna la velocidad y tiempo de ejecución de la herramienta según el valor del comando3
+// Procedimiento que asigna la velocidad y tiempo de ejecución de la herramienta según el valor del comando
 // 
 //******************************************************************************************************************
 
