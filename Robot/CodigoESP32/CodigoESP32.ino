@@ -324,6 +324,7 @@ void loop() {
             if (anidamientoIFIgnorar == anidamientoIF){
               ignorarHastaIFFIN = false;
               ignorarHastaElse = false;
+              estado = IF;
               } else {
                 anidamientoIFIgnorar--;
               }
@@ -628,58 +629,94 @@ if (condicionSensorIzquierdo && condicionSensorDerecho){
 };
 
 //******************************************************************************************************************
-// Procedimiento de ejecución de la lógica de las banderas de flujo de bifurcaciones IF
+// Procedimiento de asignación de las condiciones de los sensores para los condicionales IF
+// 
+//******************************************************************************************************************
+
+void condicionesIF(){
+  // inicios de ramas segun condicionales
+  switch (valor_instruccion) {
+    case (sensorIzquierdoSobreNegro + sensorDerechoSobreNegro): {
+      validacionIf (lecturaSensorTrackerIzquierdo, lecturaSensorTrackerDerecho );
+      break;
+    }
+
+    case (sensorIzquierdoSobreNegro + sensorDerechoSobreBlanco): {
+      validacionIf (lecturaSensorTrackerIzquierdo, !lecturaSensorTrackerDerecho );
+      break;
+    }
+
+    case (sensorIzquierdoSobreBlanco + sensorDerechoSobreNegro): {
+      validacionIf (!lecturaSensorTrackerIzquierdo, lecturaSensorTrackerDerecho );
+      break;
+    }      
+
+    case (sensorIzquierdoSobreBlanco + sensorDerechoSobreBlanco): {
+      validacionIf (!lecturaSensorTrackerIzquierdo, !lecturaSensorTrackerDerecho );
+      break;
+    }
+
+    case (sensorNoImporta): {
+      validacionIf(true, true);
+      break;
+    }
+    
+  }
+
+}
+
+//******************************************************************************************************************
+// Procedimiento de ejecución de la lógica del flujo de las bifurcaciones IF
 // 
 //******************************************************************************************************************
 
 void bifurcacionIF(){
+
+  switch (instruccion){
+    case (inst_IfInicia) : {
+      anidamientoIF++;  
+      condicionesIF();        
+      break;
+    }
+    case (inst_Else) : {
+        if (ejecutandoRamaIf[anidamientoIF]){
+          ignorarHastaIFFIN = true;
+          anidamientoIFIgnorar = anidamientoIF;
+        } else {
+          condicionesIF();
+        }
+      break;
+    }
+    case (inst_IfFinal) : {      
+      ejecutandoRamaIf[anidamientoIF] = false;
+      anidamientoIF--;
+      break;
+    }
+
+  
+  }
+
+
   if (instruccion  == inst_IfInicia){
     anidamientoIF++;
-  }
-  if (ejecutandoRamaIf[anidamientoIF] && !(instruccion == inst_IfInicia)){ // rama completada
-    switch (instruccion){
-      case (inst_Else) : {
-        ignorarHastaIFFIN = true;
-        anidamientoIFIgnorar = anidamientoIF;
-        break;
-      };
-
-      case (inst_IfFinal) : {
-        anidamientoIF--;        
-        ejecutandoRamaIf[anidamientoIF] = false;        
-        break;
-      }            
+  } else if
+  if (ejecutandoRamaIf[anidamientoIF] ){ // rama completada
+  switch (instruccion){
+    case (inst_Else) : {
+      ignorarHastaIFFIN = true;
+      anidamientoIFIgnorar = anidamientoIF;
+      break;
     };
 
-  } else { // inicios de ramas segun condicionales
-    switch (valor_instruccion) {
-      case (sensorIzquierdoSobreNegro + sensorDerechoSobreNegro): {
-        validacionIf (lecturaSensorTrackerIzquierdo, lecturaSensorTrackerDerecho );
-        break;
-      }
+    case (inst_IfFinal) : {
+      anidamientoIF--;        
+      ejecutandoRamaIf[anidamientoIF] = false;        
+      break;
+    }            
+  };
 
-      case (sensorIzquierdoSobreNegro + sensorDerechoSobreBlanco): {
-        validacionIf (lecturaSensorTrackerIzquierdo, !lecturaSensorTrackerDerecho );
-        break;
-      }
 
-      case (sensorIzquierdoSobreBlanco + sensorDerechoSobreNegro): {
-        validacionIf (!lecturaSensorTrackerIzquierdo, lecturaSensorTrackerDerecho );
-        break;
-      }      
-
-      case (sensorIzquierdoSobreBlanco + sensorDerechoSobreBlanco): {
-        validacionIf (!lecturaSensorTrackerIzquierdo, !lecturaSensorTrackerDerecho );
-        break;
-      }
-
-      case (sensorNoImporta): {
-        validacionIf(true, true);
-        break;
-      }
-      
-    }
-  }
+}
 };
 
 
