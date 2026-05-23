@@ -728,7 +728,7 @@ void validacionNotWhile(bool condicionSensorIzquierdo, bool condicionSensorDerec
 void bifurcacionWHILE(){
   if (instruccion == inst_WhileFinal){
     anidamientoWhile--;
-    inst_actual == indicesWhile[anidamientoWhile];
+    inst_actual = indicesWhile[anidamientoWhile];
     
 
   }else {
