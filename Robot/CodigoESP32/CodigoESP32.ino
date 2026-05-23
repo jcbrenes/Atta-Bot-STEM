@@ -26,7 +26,7 @@ const int lowerDutyCycleLimitSpeed = 60; // Minimum allowed PWM value for speed 
 
 // Constants for RGB LED configuration
 const int duracionParpadeoLed = 500;
-const int duracionIndicadorRecibeProgra = 2000;
+const int duracionIndicadorRecibeProgra = 100;//2000;
 
 // Constants for Bluetooth connection
 const int esperaBT = 500;
@@ -557,12 +557,14 @@ void loop() {
     }
 
     case IF: {
+      verSernsores()
       bifurcacionIF();
       estado = LEE_MEMORIA;
       break;
     }
 
     case WHILE: {
+      verSernsores();
       bifurcacionWHILE();
       estado = LEE_MEMORIA;
       break;
@@ -589,6 +591,12 @@ void loop() {
   ConfigurarEstadoLedRgb(flagBateriaBaja, flagBluetooth, flagEjecucion, flagObstaculo, recibeProgra, flagParar);
 
   delay(5);
+}
+
+void verSernsores(){
+  Serial.println("****************************");
+  Serial.println(lecturaSensorTrackerIzquierdo);
+  Serial.println(lecturaSensorTrackerDerecho);
 }
 
 // Funciones de control de flujo 
@@ -778,7 +786,7 @@ const short posicionHerramientaPositiva = 1; // Garra abierta, Grua arriba
 const short posicionHerramientaNegativa = 2; // Garra cerrada, grua abajo
 short posicionHerramienta = 0; // al prender el robot no se conoce la posicion de la herramienta. La primera ejecución se confía en el usuario, para la segunda ejecución ya se conoce la posicion
 
-const short tiempoGarra = 600;//###;
+const short tiempoGarra = 700;//###;
 const short tiempoGrua = 4000;//###;
 
 short tiempoDeAccion=0;
@@ -817,7 +825,7 @@ velocidad=velocidadNeutra;
 
     case (garraCerrar) : {
       if (!(posicionHerramienta == posicionHerramientaNegativa)){
-        tiempoDeAccion = tiempoGrua;
+        tiempoDeAccion = tiempoGarra;
         velocidad = velocidadNegativa;
         accionarMotorHerramientaSet();
         posicionHerramienta=posicionHerramientaNegativa;
