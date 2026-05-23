@@ -161,6 +161,55 @@ bool recibeProgra = 0;
 bool flancoNegRecibeProgra = 0;
 unsigned long recibePrograTiempo0 = 0;
 
+//Variables de control del flujo de bifurcaciones
+// banderas de control de bifurcaciones
+bool ignorarHastaIFFIN = false;
+bool ignorarHastaElse = false;
+bool ignorarHastaWHILEFIN = false;
+// registros de anidacion WHILE
+short indicesWhile[5] = {};
+short anidamientoWhile = 0;
+short anidamientoWhileIgnorar=0;
+// registros de anidacion IF
+short anidamientoIF=0;
+short anidamientoIFIgnorar=0;
+
+// Funciones de control de flujo 
+bool ejecutandoRamaIf[5] = {};
+const short sensorIzquierdoSobreNegro = 0;
+const short sensorIzquierdoSobreBlanco = 10;
+
+const short sensorDerechoSobreNegro = 0;
+const short sensorDerechoSobreBlanco = 1;
+
+const short sensorNoImporta = 999; // Else sin condicion
+// traker son los del suelo
+const short mientras = 0;
+const short mientrasNo = 100; 
+
+// saqué los bool de lectura a globales
+
+  bool lecturaInfrarrojoDerecho;
+  bool lecturaInfrarrojoIzquierdo;
+  bool lecturaSensorTrackerDerecho;
+  bool lecturaSensorTrackerIzquierdo;
+
+// Constantes del set de herramientas
+const short garraAbrir = 101; 
+const short garraCerrar = 1;
+const short gruaSubir = 102;
+const short gruaBajar = 2;
+
+const short posicionHerramientaPositiva = 1; // Garra abierta, Grua arriba
+const short posicionHerramientaNegativa = 2; // Garra cerrada, grua abajo
+short posicionHerramienta = 0; // al prender el robot no se conoce la posicion de la herramienta. La primera ejecución se confía en el usuario, para la segunda ejecución ya se conoce la posicion
+
+const short tiempoGarra = 700;//###;
+const short tiempoGrua = 4000;//###;
+
+short tiempoDeAccion=0;
+short velocidad=velocidadNeutra; 
+
 //******************************************************************************************************************
 // Function that updates the position of the right wheel encoder.
 //
@@ -249,24 +298,7 @@ void setup() {
   tiempoDeEncendidoDeLed = millis();
 }
 
-// banderas de control de bifurcaciones
-bool ignorarHastaIFFIN = false;
-bool ignorarHastaElse = false;
-bool ignorarHastaWHILEFIN = false;
-// registros de anidacion WHILE
-short indicesWhile[5] = {};
-short anidamientoWhile = 0;
-short anidamientoWhileIgnorar=0;
-// registros de anidacion IF
-short anidamientoIF=0;
-short anidamientoIFIgnorar=0;
 
-// saqué los bool de lectura a globales
-
-  bool lecturaInfrarrojoDerecho;
-  bool lecturaInfrarrojoIzquierdo;
-  bool lecturaSensorTrackerDerecho;
-  bool lecturaSensorTrackerIzquierdo;
 
 void loop() {
  
@@ -315,13 +347,13 @@ void loop() {
         inst_actual = 0;
         flagEjecucion = 0;
 
-      } else if (ignorarHastaIFFIN || ignorarHastaElse || ignorarHastaWHILEFIN){ //salta los bif
+      } else if (ignorarHastaIFFIN || ignorarHastaElse || ignorarHastaWHILEFIN){ //se leen e ignoran segmentos de instrucciones hasta marcas de ramas
         //if
           if ((ignorarHastaIFFIN || ignorarHastaElse) && (instruccion == inst_IfInicia)){
             anidamientoIFIgnorar++; // debe ignorar un "fin" extra
 
           } else if ((ignorarHastaIFFIN || ignorarHastaElse) && (instruccion == inst_IfFinal)){            
-            if (anidamientoIFIgnorar == anidamientoIF){
+            if (anidamientoIFIgnorar == anidamientoIF){ // se llegó al fin de una rama
               ignorarHastaIFFIN = false;
               ignorarHastaElse = false;
               estado = IF;
@@ -330,16 +362,16 @@ void loop() {
               }
 
           } else if (ignorarHastaElse && (instruccion == inst_Else)){
-            ignorarHastaElse = false;
+            ignorarHastaElse = false; // se llegó al inicio de una nueva rama
             estado = IF;
 
           } else if (ignorarHastaWHILEFIN){ // Whiles
             if (instruccion == inst_WhileInicia){
-              anidamientoWhileIgnorar++;
+              anidamientoWhileIgnorar++; // se debe ignorar un fin extra
 
             } else if (instruccion == inst_WhileFinal){
               if(anidamientoWhileIgnorar == anidamientoWhile){
-                ignorarHastaWHILEFIN = false;
+                ignorarHastaWHILEFIN = false; //se llegó al fin del ciclo
               } else {
                 anidamientoWhileIgnorar--;
               }
@@ -601,22 +633,17 @@ void loop() {
   delay(5);
 }
 
+//*****************************************************************
+// Procedimiento para observar las lecturas de los sensores inferiores
+//******************************************************************************************************************
+
 void verSernsores(){
   Serial.println("****************************");
   Serial.println(lecturaSensorTrackerIzquierdo);
   Serial.println(lecturaSensorTrackerDerecho);
 }
 
-// Funciones de control de flujo 
-bool ejecutandoRamaIf[5] = {};
-const short sensorIzquierdoSobreNegro = 0;
-const short sensorIzquierdoSobreBlanco = 10;
 
-const short sensorDerechoSobreNegro = 0;
-const short sensorDerechoSobreBlanco = 1;
-
-const short sensorNoImporta = 999; // Else sin condicion
-// traker son los del suelo
 
 //******************************************************************************************************************
 // Procedimiento que realiza la comparación de las lectura de los sensores para determinar si se salta o ejecuta la rama IF
@@ -712,8 +739,7 @@ void bifurcacionIF(){
 // @param {bool} condicionSensorIzquierdo - Booleano que indica si se busca que la lectura del sensor sea alta o baja
 // @param {bool} condicionSensorDerecho - Booleano que indica si se busca que la lectura del sensor sea alta o baja
 //******************************************************************************************************************
-const short mientras = 0;
-const short mientrasNo = 100; 
+
 
 void validacionWhile(bool condicionSensorIzquierdo, bool condicionSensorDerecho){
   if (condicionSensorIzquierdo && condicionSensorDerecho){
@@ -801,20 +827,7 @@ void bifurcacionWHILE(){
   }
 
 };
-const short garraAbrir = 101; 
-const short garraCerrar = 1;
-const short gruaSubir = 102;
-const short gruaBajar = 2;
 
-const short posicionHerramientaPositiva = 1; // Garra abierta, Grua arriba
-const short posicionHerramientaNegativa = 2; // Garra cerrada, grua abajo
-short posicionHerramienta = 0; // al prender el robot no se conoce la posicion de la herramienta. La primera ejecución se confía en el usuario, para la segunda ejecución ya se conoce la posicion
-
-const short tiempoGarra = 700;//###;
-const short tiempoGrua = 4000;//###;
-
-short tiempoDeAccion=0;
-short velocidad=velocidadNeutra;
 
 //******************************************************************************************************************
 // Procedimiento que mueve la herramienta la velocidad y tiempo indicados por el tipo de acción de la herramienta
@@ -834,8 +847,8 @@ void accionarMotorHerramientaSet(){
 //******************************************************************************************************************
 
 void accionarHerramientaSet(){
-tiempoDeAccion=0;
-velocidad=velocidadNeutra;
+  tiempoDeAccion=0;
+  velocidad=velocidadNeutra;
   switch (valor_instruccion){
     case (garraAbrir) : {
       if (!(posicionHerramienta == posicionHerramientaPositiva)){
