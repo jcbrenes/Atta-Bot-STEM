@@ -601,7 +601,7 @@ void verSernsores(){
 }
 
 // Funciones de control de flujo 
-bool ejecutandoRamaIf = false;
+bool ejecutandoRamaIf[5] = {};
 const short sensorIzquierdoSobreNegro = 0;
 const short sensorIzquierdoSobreBlanco = 10;
 
@@ -620,7 +620,7 @@ const short sensorNoImporta = 999; // Else sin condicion
 
 void validacionIf(bool condicionSensorIzquierdo, bool condicionSensorDerecho){
 if (condicionSensorIzquierdo && condicionSensorDerecho){
-    ejecutandoRamaIf = true;
+    ejecutandoRamaIf[anidamientoIF] = true;
     anidamientoIF++;
   } else {
     ignorarHastaElse = true;
@@ -634,7 +634,7 @@ if (condicionSensorIzquierdo && condicionSensorDerecho){
 //******************************************************************************************************************
 
 void bifurcacionIF(){
-  if (ejecutandoRamaIf && !(instruccion == inst_IfInicia)){ // rama completada
+  if (ejecutandoRamaIf[anidamientoIF] && !(instruccion == inst_IfInicia)){ // rama completada
     switch (instruccion){
       case (inst_Else) : {
         ignorarHastaIFFIN = true;
@@ -643,10 +643,8 @@ void bifurcacionIF(){
       };
 
       case (inst_IfFinal) : {
-        anidamientoIF--;
-        if (anidamientoIF == 0){
-          ejecutandoRamaIf = false;
-        };
+        anidamientoIF--;        
+        ejecutandoRamaIf[anidamientoIF] = false;        
         break;
       }            
     };
