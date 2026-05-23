@@ -1808,7 +1808,6 @@ class Scratch3YourExtension {
                     } else {
                         this.varMensajeBle += 'IF'+ '0' + args.condicionSensorIzq + args.condicionSensorDer;
                     }
-                    this.varMensajeBle += 'IF'+ '0' + args.condicionSensorIzq + args.condicionSensorDer;
                     util.startBranch(1, true);                  
                 } else { //segunda iteracion> If fin
                     this.varMensajeBle += 'IFFIN';
