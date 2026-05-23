@@ -333,10 +333,10 @@ void loop() {
             estado = IF;
 
           } else if (ignorarHastaWHILEFIN){ // Whiles
-            if (instruccion = inst_WhileInicia){
+            if (instruccion == inst_WhileInicia){
               anidamientoWhileIgnorar++;
 
-            } else if (instruccion = inst_WhileFinal){
+            } else if (instruccion == inst_WhileFinal){
               if(anidamientoWhileIgnorar == anidamientoWhile){
                 ignorarHastaWHILEFIN = false;
               } else {
@@ -727,8 +727,9 @@ void validacionNotWhile(bool condicionSensorIzquierdo, bool condicionSensorDerec
 
 void bifurcacionWHILE(){
   if (instruccion == inst_WhileFinal){
-    inst_actual == indicesWhile[anidamientoWhile-1];
     anidamientoWhile--;
+    inst_actual == indicesWhile[anidamientoWhile];
+    
 
   }else {
 
