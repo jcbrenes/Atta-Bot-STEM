@@ -310,7 +310,7 @@ void loop() {
       } 
       
       //Lógica de estado siguiente
-      if (inst_actual == (inst_final+1)) { 
+      if (inst_actual == inst_final) { 
         estado = ESPERA;
         inst_actual = 0;
         flagEjecucion = 0;
@@ -323,6 +323,7 @@ void loop() {
           } else if ((ignorarHastaIFFIN || ignorarHastaElse) && (instruccion == inst_IfFinal)){            
             if (anidamientoIFIgnorar == anidamientoIF){
               ignorarHastaIFFIN = false;
+              ignorarHastaElse = false;
               } else {
                 anidamientoIFIgnorar--;
               }
