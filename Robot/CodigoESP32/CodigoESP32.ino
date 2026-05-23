@@ -696,27 +696,6 @@ void bifurcacionIF(){
   
   }
 
-
-  if (instruccion  == inst_IfInicia){
-    anidamientoIF++;
-  } else if
-  if (ejecutandoRamaIf[anidamientoIF] ){ // rama completada
-  switch (instruccion){
-    case (inst_Else) : {
-      ignorarHastaIFFIN = true;
-      anidamientoIFIgnorar = anidamientoIF;
-      break;
-    };
-
-    case (inst_IfFinal) : {
-      anidamientoIF--;        
-      ejecutandoRamaIf[anidamientoIF] = false;        
-      break;
-    }            
-  };
-
-
-}
 };
 
 
