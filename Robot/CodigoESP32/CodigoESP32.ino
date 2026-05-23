@@ -557,7 +557,7 @@ void loop() {
     }
 
     case IF: {
-      verSernsores()
+      verSernsores();
       bifurcacionIF();
       estado = LEE_MEMORIA;
       break;
