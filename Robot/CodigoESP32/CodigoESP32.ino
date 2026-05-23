@@ -620,8 +620,7 @@ const short sensorNoImporta = 999; // Else sin condicion
 
 void validacionIf(bool condicionSensorIzquierdo, bool condicionSensorDerecho){
 if (condicionSensorIzquierdo && condicionSensorDerecho){
-    ejecutandoRamaIf[anidamientoIF] = true;
-    anidamientoIF++;
+    ejecutandoRamaIf[anidamientoIF] = true;    
   } else {
     ignorarHastaElse = true;
     anidamientoIFIgnorar = anidamientoIF;
@@ -634,6 +633,9 @@ if (condicionSensorIzquierdo && condicionSensorDerecho){
 //******************************************************************************************************************
 
 void bifurcacionIF(){
+  if (instruccion  == inst_IfInicia){
+    anidamientoIF++;
+  }
   if (ejecutandoRamaIf[anidamientoIF] && !(instruccion == inst_IfInicia)){ // rama completada
     switch (instruccion){
       case (inst_Else) : {
