@@ -654,22 +654,22 @@ void bifurcacionIF(){
   } else { // inicios de ramas segun condicionales
     switch (valor_instruccion) {
       case (sensorIzquierdoSobreNegro + sensorDerechoSobreNegro): {
-        validacionIf (!lecturaSensorTrackerIzquierdo, !lecturaSensorTrackerDerecho );
+        validacionIf (lecturaSensorTrackerIzquierdo, lecturaSensorTrackerDerecho );
         break;
       }
 
       case (sensorIzquierdoSobreNegro + sensorDerechoSobreBlanco): {
-        validacionIf (!lecturaSensorTrackerIzquierdo, lecturaSensorTrackerDerecho );
+        validacionIf (lecturaSensorTrackerIzquierdo, !lecturaSensorTrackerDerecho );
         break;
       }
 
       case (sensorIzquierdoSobreBlanco + sensorDerechoSobreNegro): {
-        validacionIf (lecturaSensorTrackerIzquierdo, !lecturaSensorTrackerDerecho );
+        validacionIf (!lecturaSensorTrackerIzquierdo, lecturaSensorTrackerDerecho );
         break;
       }      
 
       case (sensorIzquierdoSobreBlanco + sensorDerechoSobreBlanco): {
-        validacionIf (lecturaSensorTrackerIzquierdo, lecturaSensorTrackerDerecho );
+        validacionIf (!lecturaSensorTrackerIzquierdo, !lecturaSensorTrackerDerecho );
         break;
       }
 
@@ -734,42 +734,42 @@ void bifurcacionWHILE(){
 
     switch (valor_instruccion){
       case (mientras + sensorIzquierdoSobreNegro + sensorDerechoSobreNegro): {
-        validacionWhile(!lecturaSensorTrackerIzquierdo,!lecturaSensorTrackerDerecho);
-        break;
-      }
-
-      case (mientras + sensorIzquierdoSobreNegro + sensorDerechoSobreBlanco): {
-        validacionWhile(!lecturaSensorTrackerIzquierdo,lecturaSensorTrackerDerecho);
-        break;
-      }
-
-      case (mientras + sensorIzquierdoSobreBlanco + sensorDerechoSobreNegro): {
-        validacionWhile(lecturaSensorTrackerIzquierdo,!lecturaSensorTrackerDerecho);
-        break;
-      }      
-
-      case (mientras + sensorIzquierdoSobreBlanco + sensorDerechoSobreBlanco): {
         validacionWhile(lecturaSensorTrackerIzquierdo,lecturaSensorTrackerDerecho);
         break;
       }
 
+      case (mientras + sensorIzquierdoSobreNegro + sensorDerechoSobreBlanco): {
+        validacionWhile(lecturaSensorTrackerIzquierdo,!lecturaSensorTrackerDerecho);
+        break;
+      }
+
+      case (mientras + sensorIzquierdoSobreBlanco + sensorDerechoSobreNegro): {
+        validacionWhile(!lecturaSensorTrackerIzquierdo,lecturaSensorTrackerDerecho);
+        break;
+      }      
+
+      case (mientras + sensorIzquierdoSobreBlanco + sensorDerechoSobreBlanco): {
+        validacionWhile(!lecturaSensorTrackerIzquierdo,!lecturaSensorTrackerDerecho);
+        break;
+      }
+
       case (mientrasNo + sensorIzquierdoSobreNegro + sensorDerechoSobreNegro): {
-        validacionNotWhile(!lecturaSensorTrackerIzquierdo,!lecturaSensorTrackerDerecho);
+        validacionNotWhile(lecturaSensorTrackerIzquierdo,lecturaSensorTrackerDerecho);
         break;
       }
 
       case (mientrasNo + sensorIzquierdoSobreNegro + sensorDerechoSobreBlanco): {
-        validacionNotWhile(!lecturaSensorTrackerIzquierdo,lecturaSensorTrackerDerecho);
+        validacionNotWhile(lecturaSensorTrackerIzquierdo,!lecturaSensorTrackerDerecho);
         break;
       }
 
       case (mientrasNo + sensorIzquierdoSobreBlanco + sensorDerechoSobreNegro): {
-        validacionNotWhile(lecturaSensorTrackerIzquierdo,!lecturaSensorTrackerDerecho);
+        validacionNotWhile(!lecturaSensorTrackerIzquierdo,lecturaSensorTrackerDerecho);
         break;
       }      
 
       case (mientrasNo + sensorIzquierdoSobreBlanco + sensorDerechoSobreBlanco): {
-        validacionNotWhile(lecturaSensorTrackerIzquierdo,lecturaSensorTrackerDerecho);
+        validacionNotWhile(!lecturaSensorTrackerIzquierdo,!lecturaSensorTrackerDerecho);
         break;
       }    
 
