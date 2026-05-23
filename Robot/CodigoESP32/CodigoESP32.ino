@@ -566,6 +566,12 @@ void loop() {
     }
 
     case WHILE: {
+      // Leer la conexión BLE periódicamente por si se requiere salir de un loop infinito
+      if (millis() >= tiempoPasadaLecturaBT + esperaBT) {
+        leerBluetooth(central);
+        tiempoPasadaLecturaBT = millis();
+      }
+
       verSernsores();
       bifurcacionWHILE();
       estado = LEE_MEMORIA;
