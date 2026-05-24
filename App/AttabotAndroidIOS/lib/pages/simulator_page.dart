@@ -374,7 +374,7 @@ class _SimulatorPageState extends State<SimulatorPage> {
                             width: double.infinity,
                             height: double.infinity,
                             useImage: true,
-                            botImagePath: 'assets/atta_bot.png',
+                            botImagePath: 'assets/atta_bot.svg',
                             onInstructionChange: (instruction) {
                               WidgetsBinding.instance.addPostFrameCallback((_) {
                                 if (mounted) {

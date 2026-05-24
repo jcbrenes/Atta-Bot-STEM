@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:proyecto_tec/shared/components/ui/images/bot_asset_image.dart';
 
 class ObjectSimulator extends StatefulWidget {
   final String botImagePath;
@@ -101,7 +102,11 @@ class _ObjectSimulatorState extends State<ObjectSimulator>
   @override
   Widget build(BuildContext context) {
     final Widget robot = widget.useImage && widget.botImagePath.isNotEmpty
-        ? Image.asset(widget.botImagePath, width: widget.size, height: widget.size)
+        ? BotAssetImage(
+            assetPath: widget.botImagePath,
+            width: widget.size,
+            height: widget.size,
+          )
         : CustomPaint(
             size: Size(widget.size, widget.size),
             painter: TrianglePainter(),
