@@ -50,9 +50,9 @@ class _SimulationAreaState extends State<SimulationArea> {
   int instructionMarkerCount = 0;
   int? selectedInstructionMarkerIndex;
 
-  static const double _defaultGridCellSize = 30;
-  static const double _tabletColumns = 10;
-  static const double _tabletMinGridCellSize = 60;
+  static const double _defaultGridCellSize = 42;
+  static const double _tabletColumns = 6;
+  static const double _tabletMinGridCellSize = 78;
   static const double _centimetersPerGridCell = 20;
   static const int _movementMillisecondsPerGridCell = 400;
   static const int _rotationMillisecondsPer90Degrees = 300;
@@ -506,7 +506,7 @@ class _SimulationAreaState extends State<SimulationArea> {
         final objectSize = _gridCellSize * 2;
         final robotLeft = (size.width - objectSize) / 2;
         final robotTop = (size.height - objectSize) / 2;
-        final gridLineColor = const Color(0xFF2E6CC8).withValues(alpha: 0.35);
+        const gridLineColor = Color(0xFFC8CDD8);
 
         return Container(
           width: widget.width,
@@ -694,7 +694,7 @@ class GridBackgroundPainter extends CustomPainter {
 
     final linePaint = Paint()
       ..color = lineColor
-      ..strokeWidth = 1
+      ..strokeWidth = 2.35
       ..style = PaintingStyle.stroke;
 
     final startX = offset.dx % cellSize;
