@@ -40,8 +40,8 @@ class _ObjectSimulatorState extends State<ObjectSimulator>
       parent: _glowController,
       curve: Curves.easeInOut,
     );
-    _glowScale = Tween<double>(begin: 0.97, end: 1.05).animate(curved);
-    _glowOpacity = Tween<double>(begin: 0.85, end: 1.0).animate(curved);
+    _glowScale = Tween<double>(begin: 1, end: 1).animate(curved);
+    _glowOpacity = Tween<double>(begin: 1, end: 1).animate(curved);
 
     if (widget.obstacleDetectionActive) {
       _glowController.repeat(reverse: true);
@@ -72,7 +72,7 @@ class _ObjectSimulatorState extends State<ObjectSimulator>
   Widget _buildGlow() {
     final double glowWidth = widget.size * 2.2;
     final double glowHeight = widget.size * 1.12;
-    final double glowExtent = widget.size * 3.2;
+    final double glowExtent = widget.size * 4.8;
     return OverflowBox(
       maxWidth: glowExtent,
       maxHeight: glowExtent,
