@@ -195,8 +195,8 @@ class FlashlightGlowPainter extends CustomPainter {
     canvas.translate(beamOrigin.dx, beamOrigin.dy);
 
     final rect = Offset.zero & beamSize;
-    final warmColor = Color.lerp(baseColor, const Color(0xFFFFF2B0), 0.45)!;
-    final paleColor = Color.lerp(baseColor, const Color(0xFFFFF9DE), 0.72)!;
+    const warmColor = Color(0xFFFFC928);
+    const paleColor = Color(0xFFFFE16D);
 
     final outerBeam = Path()
       ..moveTo(beamSize.width * 0.5, beamSize.height * 0.98)
@@ -220,14 +220,13 @@ class FlashlightGlowPainter extends CustomPainter {
         begin: Alignment.bottomCenter,
         end: Alignment.topCenter,
         colors: [
-          baseColor.withValues(alpha: 0.68),
+          baseColor.withValues(alpha: 0.58),
           warmColor.withValues(alpha: 0.34),
-          paleColor.withValues(alpha: 0.14),
+          paleColor.withValues(alpha: 0.18),
           Colors.transparent,
         ],
         stops: const [0.0, 0.38, 0.72, 1.0],
       ).createShader(rect)
-      ..blendMode = BlendMode.plus
       ..isAntiAlias = true
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18);
     canvas.drawPath(outerBeam, outerBeamPaint);
@@ -254,14 +253,13 @@ class FlashlightGlowPainter extends CustomPainter {
         begin: Alignment.bottomCenter,
         end: Alignment.topCenter,
         colors: [
-          baseColor.withValues(alpha: 0.92),
-          warmColor.withValues(alpha: 0.56),
-          paleColor.withValues(alpha: 0.22),
+          baseColor.withValues(alpha: 0.76),
+          warmColor.withValues(alpha: 0.52),
+          paleColor.withValues(alpha: 0.28),
           Colors.transparent,
         ],
         stops: const [0.0, 0.34, 0.7, 1.0],
       ).createShader(rect)
-      ..blendMode = BlendMode.plus
       ..isAntiAlias = true
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
     canvas.drawPath(innerBeam, innerBeamPaint);
@@ -276,13 +274,12 @@ class FlashlightGlowPainter extends CustomPainter {
         center: const Alignment(0, 0),
         radius: 0.95,
         colors: [
-          paleColor.withValues(alpha: 0.5),
-          warmColor.withValues(alpha: 0.2),
+          warmColor.withValues(alpha: 0.46),
+          baseColor.withValues(alpha: 0.24),
           Colors.transparent,
         ],
         stops: const [0.0, 0.58, 1.0],
       ).createShader(hotspotRect)
-      ..blendMode = BlendMode.plus
       ..isAntiAlias = true
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
     canvas.drawOval(hotspotRect, hotspotPaint);
