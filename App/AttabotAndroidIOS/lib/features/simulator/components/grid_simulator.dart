@@ -747,7 +747,7 @@ class _InstructionMarker {
 }
 
 class _InstructionMarkerTooltip extends StatelessWidget {
-  static const double _width = 220;
+  static const double _width = 170;
 
   final List<_InstructionMarker> markers;
   final Offset position;
@@ -759,73 +759,128 @@ class _InstructionMarkerTooltip extends StatelessWidget {
     required this.canvasSize,
   });
 
+  ({IconData icon, Color color}) _iconForLabel(String label) {
+    final normalized = label.toLowerCase();
+    if (normalized.contains('girar') && normalized.contains('izquierda')) {
+      return (icon: Icons.turn_left_rounded, color: primaryOrange);
+    }
+    if (normalized.contains('girar') && normalized.contains('derecha')) {
+      return (icon: Icons.turn_right_rounded, color: primaryOrange);
+    }
+    if (normalized.contains('avanzar')) {
+      return (icon: Icons.arrow_upward_rounded, color: primaryBlue);
+    }
+    if (normalized.contains('retroceder')) {
+      return (icon: Icons.arrow_downward_rounded, color: primaryBlue);
+    }
+    if (normalized.contains('lapiz')) {
+      return (icon: Icons.edit_rounded, color: secondaryPurple);
+    }
+    if (normalized.contains('deteccion')) {
+      return (icon: Icons.visibility_rounded, color: primaryYellow);
+    }
+    return (icon: Icons.circle_rounded, color: primaryOrange);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final estimatedHeight = 24.0 + (markers.length * 26.0);
-    final tooltipWidth = min(_width, max(80.0, canvasSize.width - 16.0));
-    final maxLeft = max(8.0, canvasSize.width - tooltipWidth - 8.0);
-    final left =
-        (position.dx - (tooltipWidth / 2)).clamp(8.0, maxLeft).toDouble();
-    final hasSpaceAbove = position.dy > estimatedHeight + 18;
-    final rawTop =
-        hasSpaceAbove ? position.dy - estimatedHeight - 12 : position.dy + 12;
+    final estimatedHeight = 18.0 + (markers.length * 30.0);
+    final tooltipWidth = min(_width, max(120.0, canvasSize.width - 20.0));
+    final rightCandidate = position.dx + 10;
+    final leftCandidate = position.dx - tooltipWidth - 10;
+    final canShowRight = rightCandidate + tooltipWidth <= canvasSize.width - 8;
+    final left = canShowRight
+        ? rightCandidate
+        : leftCandidate.clamp(8.0, canvasSize.width - tooltipWidth - 8.0)
+              .toDouble();
     final maxTop = max(8.0, canvasSize.height - estimatedHeight - 8.0);
-    final top = rawTop.clamp(8.0, maxTop).toDouble();
+    final top =
+        (position.dy - (estimatedHeight / 2)).clamp(8.0, maxTop).toDouble();
+    final bubbleOnRight = left >= position.dx;
+    final pointerCenterY = (position.dy - top).clamp(14.0, estimatedHeight - 14)
+        .toDouble();
+    const borderColor = Color(0xFF7E8CAA);
+    const fillColor = Color(0xFFF7F8FC);
 
     return Positioned(
       left: left,
       top: top,
       width: tooltipWidth,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: neutralDarkBlueAD,
-          border: Border.all(color: neutralWhite, width: 2),
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.25),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (int i = 0; i < markers.length; i++) ...[
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 9,
-                    height: 9,
-                    decoration: const BoxDecoration(
-                      color: primaryOrange,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      markers[i].label,
-                      style: const TextStyle(
-                        color: neutralWhite,
-                        fontFamily: "Poppins",
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              if (i < markers.length - 1)
-                const SizedBox(
-                  height: 6,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            left: bubbleOnRight ? -6 : null,
+            right: bubbleOnRight ? null : -6,
+            top: pointerCenterY - 6,
+            child: Transform.rotate(
+              angle: pi / 4,
+              child: Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: fillColor,
+                  border: Border.all(color: borderColor, width: 1.8),
                 ),
-            ],
-          ],
-        ),
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: fillColor,
+              border: Border.all(color: borderColor, width: 1.8),
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.12),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (int i = 0; i < markers.length; i++) ...[
+                  Builder(
+                    builder: (context) {
+                      final iconData = _iconForLabel(markers[i].label);
+                      return Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(
+                            iconData.icon,
+                            color: iconData.color,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              markers[i].label,
+                              style: const TextStyle(
+                                color: neutralDarkBlueAD,
+                                fontFamily: 'Poppins',
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                                height: 1.15,
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  if (i < markers.length - 1)
+                    const SizedBox(
+                      height: 8,
+                    ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -834,6 +889,7 @@ class _InstructionMarkerTooltip extends StatelessWidget {
 class _PenTrailPainter extends CustomPainter {
   static const double _strokeWidth = 3;
   static const double _endpointRadius = 4;
+  static const double _markerRadius = 5;
   static const double _cycleBoundaryRadius = 6.5;
   static const double _overlapDistance = 0.01;
   static const double _dashLength = 10;
@@ -993,6 +1049,11 @@ class _PenTrailPainter extends CustomPainter {
       ..color = primaryOrange
       ..style = PaintingStyle.fill
       ..isAntiAlias = true;
+    final markerBorderPaint = Paint()
+      ..color = const Color(0xFFFFE1D2)
+      ..strokeWidth = 1.4
+      ..style = PaintingStyle.stroke
+      ..isAntiAlias = true;
 
     final paintedPositions = <Offset>[];
     for (final marker in markers) {
@@ -1013,8 +1074,13 @@ class _PenTrailPainter extends CustomPainter {
       final screenPosition = _toScreen(marker.position, size);
       canvas.drawCircle(
         screenPosition,
-        _endpointRadius,
+        _markerRadius,
         markerPaint,
+      );
+      canvas.drawCircle(
+        screenPosition,
+        _markerRadius,
+        markerBorderPaint,
       );
 
       if (markerCount > 1) {
