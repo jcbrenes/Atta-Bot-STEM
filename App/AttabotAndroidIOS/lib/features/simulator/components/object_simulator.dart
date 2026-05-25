@@ -68,8 +68,8 @@ class _ObjectSimulatorState extends State<ObjectSimulator>
   }
 
   Widget _buildGlow() {
-    final double glowWidth = widget.size * 7.0;
-    final double glowHeight = widget.size * 2.8;
+    final double glowWidth = widget.size * 7.4;
+    final double glowHeight = widget.size * 3.6;
     return Align(
       alignment: Alignment.center,
       child: AnimatedBuilder(
@@ -78,7 +78,7 @@ class _ObjectSimulatorState extends State<ObjectSimulator>
           return Opacity(
             opacity: _glowOpacity.value,
             child: Transform.translate(
-              offset: Offset(0, -widget.size * 0.55),
+              offset: Offset(0, -widget.size * 0.95),
               child: Transform.scale(
                 scale: _glowScale.value,
                 child: child,
@@ -130,18 +130,6 @@ class _ObjectSimulatorState extends State<ObjectSimulator>
               ),
             ),
           ),
-        if (widget.obstacleDetectionActive)
-          Positioned(
-            right: 0,
-            child: Container(
-              width: 6,
-              height: 6,
-              decoration: const BoxDecoration(
-                color: Colors.blue,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
       ],
     );
   }
@@ -182,146 +170,99 @@ class FlashlightGlowPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
-    final softColor = Color.lerp(baseColor, const Color(0xFFFFF2C0), 0.45)!;
-    final haloRect = Rect.fromCenter(
-      center: Offset(size.width * 0.5, size.height * 0.98),
-      width: size.width * 0.9,
-      height: size.height * 0.6,
-    );
-    final haloPaint = Paint()
-      ..shader = RadialGradient(
-        center: const Alignment(0, 0.7),
-        radius: 1.1,
-        colors: [
-          baseColor.withOpacity(0.65),
-          softColor.withOpacity(0.3),
-          softColor.withOpacity(0.14),
-          Colors.transparent,
-        ],
-        stops: const [0.0, 0.5, 0.78, 1.0],
-      ).createShader(haloRect)
-      ..blendMode = BlendMode.plus
-      ..isAntiAlias = true
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 22);
+    final rect = Offset.zero & size;
+    final warmColor = Color.lerp(baseColor, const Color(0xFFFFF2B0), 0.45)!;
+    final paleColor = Color.lerp(baseColor, const Color(0xFFFFF9DE), 0.72)!;
 
-    canvas.drawOval(haloRect, haloPaint);
+    final outerBeam = Path()
+      ..moveTo(size.width * 0.5, size.height * 0.98)
+      ..lineTo(size.width * -0.16, size.height * 0.42)
+      ..quadraticBezierTo(
+        size.width * 0.08,
+        size.height * 0.18,
+        size.width * 0.5,
+        size.height * 0.08,
+      )
+      ..quadraticBezierTo(
+        size.width * 0.92,
+        size.height * 0.18,
+        size.width * 1.16,
+        size.height * 0.42,
+      )
+      ..close();
 
-    final outerPath = Path();
-    outerPath.moveTo(size.width * 0.5, size.height * 1.04);
-    outerPath.lineTo(size.width * -0.22, size.height * 0.42);
-    outerPath.lineTo(size.width * 1.22, size.height * 0.42);
-    outerPath.close();
-
-    final outerPaint = Paint()
+    final outerBeamPaint = Paint()
       ..shader = LinearGradient(
         begin: Alignment.bottomCenter,
         end: Alignment.topCenter,
         colors: [
-          softColor.withOpacity(0.4),
-          softColor.withOpacity(0.24),
-          softColor.withOpacity(0.14),
-          softColor.withOpacity(0.06),
+          baseColor.withValues(alpha: 0.68),
+          warmColor.withValues(alpha: 0.34),
+          paleColor.withValues(alpha: 0.14),
           Colors.transparent,
         ],
-        stops: const [0.0, 0.45, 0.7, 0.9, 1.0],
+        stops: const [0.0, 0.38, 0.72, 1.0],
       ).createShader(rect)
+      ..blendMode = BlendMode.plus
+      ..isAntiAlias = true
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18);
+    canvas.drawPath(outerBeam, outerBeamPaint);
+
+    final innerBeam = Path()
+      ..moveTo(size.width * 0.5, size.height * 0.98)
+      ..lineTo(size.width * 0.06, size.height * 0.46)
+      ..quadraticBezierTo(
+        size.width * 0.19,
+        size.height * 0.24,
+        size.width * 0.5,
+        size.height * 0.14,
+      )
+      ..quadraticBezierTo(
+        size.width * 0.81,
+        size.height * 0.24,
+        size.width * 0.94,
+        size.height * 0.46,
+      )
+      ..close();
+
+    final innerBeamPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.bottomCenter,
+        end: Alignment.topCenter,
+        colors: [
+          baseColor.withValues(alpha: 0.92),
+          warmColor.withValues(alpha: 0.56),
+          paleColor.withValues(alpha: 0.22),
+          Colors.transparent,
+        ],
+        stops: const [0.0, 0.34, 0.7, 1.0],
+      ).createShader(rect)
+      ..blendMode = BlendMode.plus
+      ..isAntiAlias = true
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
+    canvas.drawPath(innerBeam, innerBeamPaint);
+
+    final hotspotRect = Rect.fromCenter(
+      center: Offset(size.width * 0.5, size.height * 0.28),
+      width: size.width * 0.86,
+      height: size.height * 0.34,
+    );
+    final hotspotPaint = Paint()
+      ..shader = RadialGradient(
+        center: const Alignment(0, 0),
+        radius: 0.95,
+        colors: [
+          paleColor.withValues(alpha: 0.5),
+          warmColor.withValues(alpha: 0.2),
+          Colors.transparent,
+        ],
+        stops: const [0.0, 0.58, 1.0],
+      ).createShader(hotspotRect)
       ..blendMode = BlendMode.plus
       ..isAntiAlias = true
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
+    canvas.drawOval(hotspotRect, hotspotPaint);
 
-    canvas.drawPath(outerPath, outerPaint);
-
-    final softBeamPath = Path();
-    softBeamPath.moveTo(size.width * 0.5, size.height * 0.96);
-    softBeamPath.lineTo(size.width * -0.32, size.height * 0.18);
-    softBeamPath.lineTo(size.width * 1.32, size.height * 0.18);
-    softBeamPath.close();
-
-    final softBeamPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.bottomCenter,
-        end: Alignment.topCenter,
-        colors: [
-          baseColor.withOpacity(0.75),
-          softColor.withOpacity(0.38),
-          softColor.withOpacity(0.18),
-          Colors.transparent,
-        ],
-        stops: const [0.0, 0.45, 0.78, 1.0],
-      ).createShader(rect)
-      ..blendMode = BlendMode.plus
-      ..isAntiAlias = true
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 24);
-
-    canvas.drawPath(softBeamPath, softBeamPaint);
-
-    final path = Path();
-    path.moveTo(size.width * 0.5, size.height * 0.94);
-    path.quadraticBezierTo(
-      size.width * 0.2,
-      size.height * 0.62,
-      size.width * -0.06,
-      size.height * 0.24,
-    );
-    path.lineTo(size.width * 1.06, size.height * 0.24);
-    path.quadraticBezierTo(
-      size.width * 0.8,
-      size.height * 0.62,
-      size.width * 0.5,
-      size.height * 0.94,
-    );
-    path.close();
-
-    final paint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.bottomCenter,
-        end: Alignment.topCenter,
-        colors: [
-          baseColor.withOpacity(0.92),
-          softColor.withOpacity(0.68),
-          softColor.withOpacity(0.3),
-          Colors.transparent,
-        ],
-        stops: const [0.0, 0.45, 0.78, 1.0],
-      ).createShader(rect)
-      ..isAntiAlias = true
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16);
-
-    canvas.drawPath(path, paint);
-
-    final innerPath = Path();
-    innerPath.moveTo(size.width * 0.5, size.height * 0.9);
-    innerPath.quadraticBezierTo(
-      size.width * 0.25,
-      size.height * 0.64,
-      size.width * 0.06,
-      size.height * 0.32,
-    );
-    innerPath.lineTo(size.width * 0.94, size.height * 0.32);
-    innerPath.quadraticBezierTo(
-      size.width * 0.75,
-      size.height * 0.64,
-      size.width * 0.5,
-      size.height * 0.9,
-    );
-    innerPath.close();
-
-    final innerPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.bottomCenter,
-        end: Alignment.topCenter,
-        colors: [
-          baseColor.withOpacity(0.86),
-          softColor.withOpacity(0.62),
-          Colors.transparent,
-        ],
-        stops: const [0.0, 0.65, 1.0],
-      ).createShader(rect)
-      ..isAntiAlias = true
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
-
-    canvas.drawPath(innerPath, innerPaint);
   }
 
   @override
