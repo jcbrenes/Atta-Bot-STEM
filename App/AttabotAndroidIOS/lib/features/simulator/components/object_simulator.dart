@@ -7,6 +7,7 @@ class ObjectSimulator extends StatefulWidget {
   final bool useImage;
   final bool penActive;
   final bool obstacleDetectionActive;
+  final double rotationRadians;
 
   const ObjectSimulator({
     super.key,
@@ -15,6 +16,7 @@ class ObjectSimulator extends StatefulWidget {
     this.useImage = false,
     this.penActive = false,
     this.obstacleDetectionActive = false,
+    this.rotationRadians = 0,
   });
 
   @override
@@ -38,7 +40,7 @@ class _ObjectSimulatorState extends State<ObjectSimulator>
       parent: _glowController,
       curve: Curves.easeInOut,
     );
-    _glowScale = Tween<double>(begin: 0.95, end: 1.2).animate(curved);
+    _glowScale = Tween<double>(begin: 0.97, end: 1.05).animate(curved);
     _glowOpacity = Tween<double>(begin: 0.85, end: 1.0).animate(curved);
 
     if (widget.obstacleDetectionActive) {
@@ -68,32 +70,31 @@ class _ObjectSimulatorState extends State<ObjectSimulator>
   }
 
   Widget _buildGlow() {
-    final double glowWidth = widget.size * 7.4;
-    final double glowHeight = widget.size * 3.6;
-    return Align(
-      alignment: Alignment.center,
-      child: AnimatedBuilder(
-        animation: _glowController,
-        builder: (context, child) {
-          return Opacity(
-            opacity: _glowOpacity.value,
-            child: Transform.translate(
-              offset: Offset(0, -widget.size * 0.95),
-              child: Transform.scale(
-                scale: _glowScale.value,
-                child: child,
+    final double glowWidth = widget.size * 2.2;
+    final double glowHeight = widget.size * 1.12;
+    final double glowExtent = widget.size * 3.2;
+    return OverflowBox(
+      maxWidth: glowExtent,
+      maxHeight: glowExtent,
+      child: SizedBox(
+        width: glowExtent,
+        height: glowExtent,
+        child: AnimatedBuilder(
+          animation: _glowController,
+          builder: (context, child) {
+            return Opacity(
+              opacity: _glowOpacity.value,
+              child: CustomPaint(
+                size: Size(glowExtent, glowExtent),
+                painter: FlashlightGlowPainter(
+                  baseColor: const Color(0xFFEEB417),
+                  beamWidth: glowWidth * _glowScale.value,
+                  beamHeight: glowHeight * _glowScale.value,
+                  rotationRadians: widget.rotationRadians,
+                ),
               ),
-            ),
-          );
-        },
-        child: SizedBox(
-          width: glowWidth,
-          height: glowHeight,
-          child: CustomPaint(
-            painter: FlashlightGlowPainter(
-              baseColor: const Color(0xFFEEB417),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
@@ -117,19 +118,28 @@ class _ObjectSimulatorState extends State<ObjectSimulator>
       clipBehavior: Clip.none,
       children: [
         if (widget.obstacleDetectionActive) _buildGlow(),
-        robot,
-        if (widget.penActive)
-          Positioned(
-            left: 0,
-            child: Container(
-              width: 6,
-              height: 6,
-              decoration: const BoxDecoration(
-                color: Colors.green,
-                shape: BoxShape.circle,
-              ),
-            ),
+        Transform.rotate(
+          angle: widget.rotationRadians,
+          child: Stack(
+            alignment: Alignment.center,
+            clipBehavior: Clip.none,
+            children: [
+              robot,
+              if (widget.penActive)
+                Positioned(
+                  left: 0,
+                  child: Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: Colors.green,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+            ],
           ),
+        ),
       ],
     );
   }
@@ -163,31 +173,45 @@ class TrianglePainter extends CustomPainter {
 
 class FlashlightGlowPainter extends CustomPainter {
   final Color baseColor;
+  final double beamWidth;
+  final double beamHeight;
+  final double rotationRadians;
 
   FlashlightGlowPainter({
     required this.baseColor,
+    required this.beamWidth,
+    required this.beamHeight,
+    required this.rotationRadians,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
+    final beamSize = Size(beamWidth, beamHeight);
+    final beamOrigin = Offset(-beamWidth / 2, -beamHeight);
+
+    canvas.save();
+    canvas.translate(size.width / 2, size.height / 2);
+    canvas.rotate(rotationRadians);
+    canvas.translate(beamOrigin.dx, beamOrigin.dy);
+
+    final rect = Offset.zero & beamSize;
     final warmColor = Color.lerp(baseColor, const Color(0xFFFFF2B0), 0.45)!;
     final paleColor = Color.lerp(baseColor, const Color(0xFFFFF9DE), 0.72)!;
 
     final outerBeam = Path()
-      ..moveTo(size.width * 0.5, size.height * 0.98)
-      ..lineTo(size.width * -0.16, size.height * 0.42)
+      ..moveTo(beamSize.width * 0.5, beamSize.height * 0.98)
+      ..lineTo(beamSize.width * -0.16, beamSize.height * 0.42)
       ..quadraticBezierTo(
-        size.width * 0.08,
-        size.height * 0.18,
-        size.width * 0.5,
-        size.height * 0.08,
+        beamSize.width * 0.08,
+        beamSize.height * 0.18,
+        beamSize.width * 0.5,
+        beamSize.height * 0.08,
       )
       ..quadraticBezierTo(
-        size.width * 0.92,
-        size.height * 0.18,
-        size.width * 1.16,
-        size.height * 0.42,
+        beamSize.width * 0.92,
+        beamSize.height * 0.18,
+        beamSize.width * 1.16,
+        beamSize.height * 0.42,
       )
       ..close();
 
@@ -209,19 +233,19 @@ class FlashlightGlowPainter extends CustomPainter {
     canvas.drawPath(outerBeam, outerBeamPaint);
 
     final innerBeam = Path()
-      ..moveTo(size.width * 0.5, size.height * 0.98)
-      ..lineTo(size.width * 0.06, size.height * 0.46)
+      ..moveTo(beamSize.width * 0.5, beamSize.height * 0.98)
+      ..lineTo(beamSize.width * 0.06, beamSize.height * 0.46)
       ..quadraticBezierTo(
-        size.width * 0.19,
-        size.height * 0.24,
-        size.width * 0.5,
-        size.height * 0.14,
+        beamSize.width * 0.19,
+        beamSize.height * 0.24,
+        beamSize.width * 0.5,
+        beamSize.height * 0.14,
       )
       ..quadraticBezierTo(
-        size.width * 0.81,
-        size.height * 0.24,
-        size.width * 0.94,
-        size.height * 0.46,
+        beamSize.width * 0.81,
+        beamSize.height * 0.24,
+        beamSize.width * 0.94,
+        beamSize.height * 0.46,
       )
       ..close();
 
@@ -243,9 +267,9 @@ class FlashlightGlowPainter extends CustomPainter {
     canvas.drawPath(innerBeam, innerBeamPaint);
 
     final hotspotRect = Rect.fromCenter(
-      center: Offset(size.width * 0.5, size.height * 0.28),
-      width: size.width * 0.86,
-      height: size.height * 0.34,
+      center: Offset(beamSize.width * 0.5, beamSize.height * 0.28),
+      width: beamSize.width * 0.86,
+      height: beamSize.height * 0.34,
     );
     final hotspotPaint = Paint()
       ..shader = RadialGradient(
@@ -263,10 +287,14 @@ class FlashlightGlowPainter extends CustomPainter {
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
     canvas.drawOval(hotspotRect, hotspotPaint);
 
+    canvas.restore();
   }
 
   @override
   bool shouldRepaint(covariant FlashlightGlowPainter oldDelegate) {
-    return oldDelegate.baseColor != baseColor;
+    return oldDelegate.baseColor != baseColor ||
+        oldDelegate.beamWidth != beamWidth ||
+        oldDelegate.beamHeight != beamHeight ||
+        oldDelegate.rotationRadians != rotationRadians;
   }
 }

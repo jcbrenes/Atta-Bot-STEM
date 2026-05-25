@@ -618,10 +618,17 @@ class _SimulationAreaState extends State<SimulationArea> {
                   ),
                   duration: _currentRotationAnimationDuration,
                   builder: (context, angleDegrees, child) {
-                    return Transform.rotate(
-                      angle: _radians(angleDegrees),
-                      alignment: Alignment.center,
-                      child: child,
+                    return SizedBox(
+                      width: objectSize,
+                      height: objectSize,
+                      child: ObjectSimulator(
+                        size: objectSize,
+                        useImage: widget.useImage,
+                        botImagePath: widget.botImagePath ?? '',
+                        penActive: penActive,
+                        obstacleDetectionActive: obstacleDetectionActive,
+                        rotationRadians: _radians(angleDegrees),
+                      ),
                     );
                   },
                   onEnd: () {
@@ -629,17 +636,6 @@ class _SimulationAreaState extends State<SimulationArea> {
                       previousRotation = rotation;
                     });
                   },
-                  child: SizedBox(
-                    width: objectSize,
-                    height: objectSize,
-                    child: ObjectSimulator(
-                      size: objectSize,
-                      useImage: widget.useImage,
-                      botImagePath: widget.botImagePath ?? '',
-                      penActive: penActive,
-                      obstacleDetectionActive: obstacleDetectionActive,
-                    ),
-                  ),
                 ),
               ),
             ],
