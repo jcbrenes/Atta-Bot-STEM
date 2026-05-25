@@ -934,7 +934,7 @@ class _InstructionMarkerTooltip extends StatelessWidget {
 class _PenTrailPainter extends CustomPainter {
   static const double _strokeWidth = 5;
   static const double _endpointRadius = 5.5;
-  static const double _markerRadius = 5;
+  static const double _markerRadius = 7;
   static const double _cycleBoundaryRadius = 7.5;
   static const double _overlapDistance = 0.01;
   static const double _dashLength = 13;
@@ -1096,7 +1096,7 @@ class _PenTrailPainter extends CustomPainter {
       ..isAntiAlias = true;
     final markerBorderPaint = Paint()
       ..color = const Color(0xFFFFE1D2)
-      ..strokeWidth = 1.4
+      ..strokeWidth = 1.8
       ..style = PaintingStyle.stroke
       ..isAntiAlias = true;
 
@@ -1108,12 +1108,6 @@ class _PenTrailPainter extends CustomPainter {
         continue;
       }
 
-      final markerCount = markers
-          .where(
-            (other) =>
-                (other.position - marker.position).distance < _overlapDistance,
-          )
-          .length;
       paintedPositions.add(marker.position);
 
       final screenPosition = _toScreen(marker.position, size);
@@ -1127,44 +1121,7 @@ class _PenTrailPainter extends CustomPainter {
         _markerRadius,
         markerBorderPaint,
       );
-
-      if (markerCount > 1) {
-        _paintMarkerCount(canvas, screenPosition, markerCount);
-      }
     }
-  }
-
-  void _paintMarkerCount(Canvas canvas, Offset markerPosition, int count) {
-    final badgeCenter = markerPosition + const Offset(7, -7);
-    final badgePaint = Paint()
-      ..color = neutralDarkBlueAD
-      ..style = PaintingStyle.fill
-      ..isAntiAlias = true;
-    final badgeBorderPaint = Paint()
-      ..color = neutralWhite
-      ..strokeWidth = 1
-      ..style = PaintingStyle.stroke
-      ..isAntiAlias = true;
-
-    canvas.drawCircle(badgeCenter, 7, badgePaint);
-    canvas.drawCircle(badgeCenter, 7, badgeBorderPaint);
-
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: count.toString(),
-        style: const TextStyle(
-          color: neutralWhite,
-          fontSize: 9,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-
-    textPainter.paint(
-      canvas,
-      badgeCenter - Offset(textPainter.width / 2, textPainter.height / 2),
-    );
   }
 
   @override
