@@ -512,7 +512,12 @@ class _SimulationAreaState extends State<SimulationArea> {
           width: widget.width,
           height: widget.height,
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.white, width: 2),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: const Color(0xFFD5DBE8),
+              width: 1.2,
+            ),
           ),
           child: Stack(
             clipBehavior: Clip.none,

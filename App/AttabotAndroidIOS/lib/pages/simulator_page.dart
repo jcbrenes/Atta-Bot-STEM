@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 import 'package:provider/provider.dart';
 import 'package:proyecto_tec/pages/bot_control_page.dart';
 import 'package:proyecto_tec/features/simulator/dialogs/simulator_actions_dialog.dart';
@@ -34,6 +35,10 @@ class _SimulatorPageState extends State<SimulatorPage> {
   bool isExecutingCycleInstruction = false;
   int stopSignal = 0;
   int restartSignal = 0;
+  static const Color _panelBlue = Color(0xFF1A3564);
+  static const Color _panelBorder = Color(0xFFF5F6F9);
+  static const Color _gridFrame = Color(0xFFE5E9F2);
+  static const double _contentAspectRatio = 0.62;
 
   bool _hasOpenCycleLabel(String instruction) {
     return instruction.toLowerCase().contains('ciclo abierto');
@@ -81,21 +86,23 @@ class _SimulatorPageState extends State<SimulatorPage> {
     required IconData icon,
     required String tooltip,
     required VoidCallback? onPressed,
+    double scale = 1,
   }) {
     final isEnabled = onPressed != null;
+    final double buttonSize = 30 * scale;
+    final double iconSize = 16 * scale;
 
     return Container(
-      width: 36,
-      height: 36,
+      width: buttonSize,
+      height: buttonSize,
       decoration: BoxDecoration(
-        color: isEnabled
-            ? Colors.white.withValues(alpha: 0.12)
-            : Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(10),
+        color: Colors.transparent,
+        shape: BoxShape.circle,
         border: Border.all(
           color: isEnabled
-              ? Colors.white.withValues(alpha: 0.35)
-              : Colors.white.withValues(alpha: 0.18),
+              ? Colors.white.withValues(alpha: 0.8)
+              : Colors.white.withValues(alpha: 0.22),
+          width: 1.2 * scale,
         ),
       ),
       child: IconButton(
@@ -106,8 +113,22 @@ class _SimulatorPageState extends State<SimulatorPage> {
           icon,
           color:
               isEnabled ? neutralWhite : neutralWhite.withValues(alpha: 0.45),
-          size: 20,
+          size: iconSize,
         ),
+      ),
+    );
+  }
+
+  Widget _buildPageIndicator(bool isActive) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      width: isActive ? 10 : 8,
+      height: isActive ? 10 : 8,
+      decoration: BoxDecoration(
+        color: isActive
+            ? _panelBorder
+            : _panelBorder.withValues(alpha: 0.35),
+        shape: BoxShape.circle,
       ),
     );
   }
@@ -117,15 +138,29 @@ class _SimulatorPageState extends State<SimulatorPage> {
     final simplifiedProvider = Provider.of<SimplifiedModeProvider>(context);
     final bool isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
+    final bool isTablet = MediaQuery.of(context).size.width >= 600;
+    final double phoneCardMaxWidth = isLandscape ? 520 : 390;
+    final bool cycleOpen = isExecutingCycleInstruction;
+    final String instructionLabel = currentInstruction.trim();
+    final List<String> instructions = context
+        .watch<CommandService>()
+        .commandHistory
+        .map((cmd) => cmd.toUiString())
+        .toList();
+
+    if (context.watch<CommandService>().cycleActive &&
+        context.watch<SimplifiedModeProvider>().simplifiedMode) {
+      instructions.add(Command(CommandType.endCycle, null).toUiString());
+    }
 
     return Scaffold(
       backgroundColor: neutralDarkBlue,
       appBar: AppBar(
-        title: const Text('Atta-Bot Educativo'),
+        title: const Text('Atta-bot Educativo'),
         centerTitle: true,
         titleTextStyle: const TextStyle(
           color: neutralWhite,
-          fontSize: 18.0,
+          fontSize: 17,
           fontFamily: 'Poppins',
           fontWeight: FontWeight.w700,
         ),
@@ -136,16 +171,15 @@ class _SimulatorPageState extends State<SimulatorPage> {
             builder: (context) {
               final bool isTabletPortrait =
                   !isLandscape && MediaQuery.of(context).size.width >= 600;
-              final double questionIconSize = isTabletPortrait ? 24.0 : 16.0;
+              final double questionIconSize = isTabletPortrait ? 24.0 : 18.0;
               return IconButton(
                 splashRadius: isTabletPortrait ? 30 : null,
                 padding:
                     EdgeInsets.symmetric(horizontal: isTabletPortrait ? 14 : 8),
-                icon: Image.asset(
-                  'assets/button_icons/question_mark.png',
+                icon: Icon(
+                  Icons.question_mark_rounded,
                   color: neutralWhite,
-                  height: questionIconSize,
-                  width: questionIconSize,
+                  size: questionIconSize,
                 ),
                 color: neutralWhite,
                 onPressed: () {
@@ -161,281 +195,355 @@ class _SimulatorPageState extends State<SimulatorPage> {
         ],
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
-          child: Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: neutralDarkBlue,
-              borderRadius: BorderRadius.circular(25),
-              border: Border.all(color: Colors.white, width: 3),
-            ),
-            child: Builder(
-              builder: (context) {
-                final instructions = context
-                    .read<CommandService>()
-                    .commandHistory
-                    .map((cmd) => cmd.toUiString())
-                    .toList();
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final double horizontalPadding = isTablet ? 22 : 18;
+            const double verticalPaddingTop = 10;
+            const double verticalPaddingBottom = 18;
+            final double tabletWidthFactor = isLandscape ? 0.74 : 0.86;
+            final double targetMaxWidth = isTablet
+                ? constraints.maxWidth * tabletWidthFactor
+                : phoneCardMaxWidth;
+            final double availableWidth = math.min(
+              constraints.maxWidth - (horizontalPadding * 2),
+              targetMaxWidth,
+            );
+            final double availableHeight = constraints.maxHeight -
+                verticalPaddingTop -
+                verticalPaddingBottom;
 
-                if (context.watch<CommandService>().cycleActive &&
-                    context.watch<SimplifiedModeProvider>().simplifiedMode) {
-                  instructions
-                      .add(Command(CommandType.endCycle, null).toUiString());
-                }
+            double contentWidth = availableWidth;
+            double contentHeight = contentWidth / _contentAspectRatio;
+            final double uiScale = isTablet
+                ? (contentWidth / 390).clamp(1.12, 1.42)
+                : 1.0;
+            final double titleSize = 18 * uiScale;
+            final double labelSize = 13 * uiScale;
+            final double captionSize = 12 * uiScale;
+            final double topPadding = 14 * uiScale;
+            final double horizontalInnerPadding = 14 * uiScale;
+            final double rowGap = 12 * uiScale;
+            final double smallGap = 8 * uiScale;
+            final double controlGap = 6 * uiScale;
+            final double dropdownHeight = 34 * uiScale;
+            final double plusButtonSize = 28 * uiScale;
+            final double cycleDotSize = 14 * uiScale;
+            final double gridFramePadding = math.max(2, 3 * uiScale);
+            final double gridFrameRadius = 14 * uiScale;
+            final double cardRadius = 24 * uiScale;
+            final double gridRadius = 12 * uiScale;
 
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // -------------------- TÍTULO & DROPDOWN ----------------------
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Simulación',
-                            style: TextStyle(
-                              color: neutralWhite,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'Poppins',
-                            ),
+            if (contentHeight > availableHeight) {
+              contentHeight = availableHeight;
+              contentWidth = contentHeight * _contentAspectRatio;
+            }
+
+            return Center(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  horizontalPadding,
+                  verticalPaddingTop,
+                  horizontalPadding,
+                  verticalPaddingBottom,
+                ),
+                child: SizedBox(
+                  width: contentWidth,
+                  height: contentHeight,
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.fromLTRB(
+                            horizontalInnerPadding,
+                            topPadding,
+                            horizontalInnerPadding,
+                            horizontalInnerPadding,
                           ),
-                          const SizedBox(height: 10),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.10),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.18),
-                              ),
-                            ),
-                            child: const Text(
-                              'Escala del simulador: 1 cuadro = 20 x 20 cm',
-                              style: TextStyle(
-                                color: neutralWhite,
-                                fontSize: 12,
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
+                          decoration: BoxDecoration(
+                            color: _panelBlue,
+                            borderRadius: BorderRadius.circular(cardRadius),
+                            border: Border.all(color: _panelBorder, width: 3),
                           ),
-                          const SizedBox(height: 10),
-                          Row(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Visualizando:',
+                              Text(
+                                'Simulador',
                                 style: TextStyle(
                                   color: neutralWhite,
-                                  fontSize: 14,
+                                  fontSize: titleSize,
+                                  fontWeight: FontWeight.w700,
                                   fontFamily: 'Poppins',
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(height: 4 * uiScale),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    'Visualizando:',
+                                    style: TextStyle(
+                                      color: neutralWhite,
+                                      fontSize: labelSize,
+                                      fontWeight: FontWeight.w500,
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                  SizedBox(width: smallGap),
+                                  Expanded(
+                                    child: Container(
+                                      height: dropdownHeight,
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 8 * uiScale,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        border: Border(
+                                          bottom: BorderSide(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.8,
+                                            ),
+                                            width: 1.2 * uiScale,
+                                          ),
+                                        ),
+                                      ),
+                                      child: DropdownButtonHideUnderline(
+                                        child: DropdownButton<String>(
+                                          value: selectedFile,
+                                          isExpanded: true,
+                                          icon: const Icon(
+                                            Icons.keyboard_arrow_down_rounded,
+                                            color: neutralWhite,
+                                            size: 16,
+                                          ),
+                                          dropdownColor: _panelBlue,
+                                          style: TextStyle(
+                                            color: neutralWhite,
+                                            fontSize: labelSize,
+                                            fontWeight: FontWeight.w600,
+                                            fontFamily: 'Poppins',
+                                          ),
+                                          items: availableFiles.map((file) {
+                                            return DropdownMenuItem(
+                                              value: file,
+                                              child: Text(
+                                                file,
+                                                overflow:
+                                                    TextOverflow.ellipsis,
+                                              ),
+                                            );
+                                          }).toList(),
+                                          onChanged: (value) {
+                                            if (value != null) {
+                                              setState(
+                                                () => selectedFile = value,
+                                              );
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: smallGap),
+                                  Container(
+                                    width: plusButtonSize,
+                                    height: plusButtonSize,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.8,
+                                        ),
+                                        width: 1.2 * uiScale,
+                                      ),
+                                    ),
+                                    child: IconButton(
+                                      onPressed: () {
+                                        showSimulatorActionsDialog(context);
+                                      },
+                                      padding: EdgeInsets.zero,
+                                      icon: Icon(
+                                        Icons.add_rounded,
+                                        size: 16 * uiScale,
+                                        color: neutralWhite,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: rowGap),
+                              Row(
+                                children: [
+                                  Text(
+                                    cycleOpen
+                                        ? 'Ciclo abierto'
+                                        : 'Ciclo cerrado',
+                                    style: TextStyle(
+                                      color: cycleOpen
+                                          ? secondaryGreen
+                                          : const Color(0xFFFFB2B2),
+                                      fontSize: labelSize,
+                                      fontWeight: FontWeight.w700,
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                  SizedBox(width: 10 * uiScale),
+                                  Container(
+                                    width: cycleDotSize,
+                                    height: cycleDotSize,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: cycleOpen
+                                          ? secondaryGreen
+                                          : const Color(0xFFFF8A80),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: (cycleOpen
+                                                  ? secondaryGreen
+                                                  : const Color(0xFFFF8A80))
+                                              .withValues(alpha: 0.55),
+                                          blurRadius: 8 * uiScale,
+                                          spreadRadius: 1 * uiScale,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  _buildSimulationControlButton(
+                                    icon: Icons.stop_rounded,
+                                    tooltip: 'Detener',
+                                    scale: uiScale,
+                                    onPressed:
+                                        isExecutingInstructions || isPaused
+                                        ? stopSimulation
+                                        : null,
+                                  ),
+                                  SizedBox(width: controlGap),
+                                  _buildSimulationControlButton(
+                                    icon: isPaused
+                                        ? Icons.play_arrow_rounded
+                                        : Icons.pause_rounded,
+                                    tooltip:
+                                        isPaused ? 'Reanudar' : 'Pausar',
+                                    scale: uiScale,
+                                    onPressed:
+                                        isExecutingInstructions || isPaused
+                                        ? togglePause
+                                        : null,
+                                  ),
+                                  SizedBox(width: controlGap),
+                                  _buildSimulationControlButton(
+                                    icon: Icons.restart_alt_rounded,
+                                    tooltip: 'Reiniciar',
+                                    scale: uiScale,
+                                    onPressed: restartSimulation,
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: rowGap),
                               Expanded(
                                 child: Container(
-                                  height: 32,
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 8),
+                                  padding: EdgeInsets.all(gridFramePadding),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.10),
-                                    borderRadius: BorderRadius.circular(8),
+                                    color: _gridFrame,
+                                    borderRadius: BorderRadius.circular(
+                                      gridFrameRadius,
+                                    ),
                                   ),
-                                  child: DropdownButtonHideUnderline(
-                                    child: DropdownButton<String>(
-                                      value: selectedFile,
-                                      isExpanded: true,
-                                      iconSize: 14,
-                                      iconEnabledColor: neutralWhite,
-                                      dropdownColor: neutralDarkBlue,
-                                      style: const TextStyle(
-                                        color: neutralWhite,
-                                        fontSize: 14,
-                                        fontFamily: 'Poppins',
-                                      ),
-                                      items: availableFiles.map((file) {
-                                        return DropdownMenuItem(
-                                          value: file,
-                                          child: Text(
-                                            file,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        );
-                                      }).toList(),
-                                      onChanged: (value) {
-                                        if (value != null) {
-                                          setState(() => selectedFile = value);
-                                        }
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(
+                                      gridRadius,
+                                    ),
+                                    child: SimulationArea(
+                                      instructions: instructions,
+                                      paused: isPaused,
+                                      width: double.infinity,
+                                      height: double.infinity,
+                                      useImage: true,
+                                      botImagePath: 'assets/atta_bot.svg',
+                                      onInstructionChange: (instruction) {
+                                        WidgetsBinding.instance
+                                            .addPostFrameCallback((_) {
+                                          if (mounted) {
+                                            setState(() {
+                                              currentInstruction = instruction;
+                                            });
+                                          }
+                                        });
                                       },
+                                      onExecutionStateChanged: (isExecuting) {
+                                        WidgetsBinding.instance
+                                            .addPostFrameCallback((_) {
+                                          if (mounted) {
+                                            setState(() {
+                                              isExecutingInstructions =
+                                                  isExecuting;
+                                              if (!isExecuting) {
+                                                isPaused = false;
+                                                _closeCycleStatus();
+                                              }
+                                            });
+                                          }
+                                        });
+                                      },
+                                      onCycleExecutionStateChanged:
+                                          (isExecutingCycle) {
+                                        WidgetsBinding.instance
+                                            .addPostFrameCallback((_) {
+                                          if (mounted) {
+                                            setState(() {
+                                              isExecutingCycleInstruction =
+                                                  isExecutingCycle;
+                                            });
+                                          }
+                                        });
+                                      },
+                                      stopSignal: stopSignal,
+                                      restartSignal: restartSignal,
                                     ),
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              IconButton(
-                                icon: Image.asset(
-                                  'assets/button_icons/add.png',
-                                  height: 20,
-                                  width: 20,
-                                  color: neutralWhite,
-                                ),
-                                onPressed: () {
-                                  showSimulatorActionsDialog(context);
-                                },
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: (isExecutingCycleInstruction
-                                              ? Colors.green
-                                              : Colors.red)
-                                          .withValues(alpha: 0.16),
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                        color: isExecutingCycleInstruction
-                                            ? Colors.green
-                                            : Colors.red,
-                                        width: 1.5,
+                              if (instructionLabel.isNotEmpty) ...[
+                                SizedBox(height: 10 * uiScale),
+                                Center(
+                                  child: Text(
+                                    instructionLabel,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.78,
                                       ),
-                                    ),
-                                    child: Text(
-                                      isExecutingCycleInstruction
-                                          ? 'Ciclo abierto'
-                                          : 'Ciclo cerrado',
-                                      style: TextStyle(
-                                        color: isExecutingCycleInstruction
-                                            ? Colors.greenAccent
-                                            : const Color(0xFFFF8A80),
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w700,
-                                        fontFamily: 'Poppins',
-                                      ),
+                                      fontSize: captionSize,
+                                      fontWeight: FontWeight.w500,
+                                      fontFamily: 'Poppins',
                                     ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 12),
-                              _buildSimulationControlButton(
-                                icon: Icons.stop_rounded,
-                                tooltip: 'Detener',
-                                onPressed: isExecutingInstructions || isPaused
-                                    ? stopSimulation
-                                    : null,
-                              ),
-                              const SizedBox(width: 8),
-                              _buildSimulationControlButton(
-                                icon: isPaused
-                                    ? Icons.play_arrow_rounded
-                                    : Icons.pause_rounded,
-                                tooltip: isPaused ? 'Reanudar' : 'Pausar',
-                                onPressed: isExecutingInstructions || isPaused
-                                    ? togglePause
-                                    : null,
-                              ),
-                              const SizedBox(width: 8),
-                              _buildSimulationControlButton(
-                                icon: Icons.restart_alt_rounded,
-                                tooltip: 'Reiniciar',
-                                onPressed: restartSimulation,
-                              ),
+                              ],
                             ],
                           ),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildPageIndicator(false),
+                          const SizedBox(width: 10),
+                          _buildPageIndicator(false),
+                          const SizedBox(width: 10),
+                          _buildPageIndicator(true),
                         ],
                       ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // ---------------------- GRID SIMULATOR ------------------------
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: AspectRatio(
-                          aspectRatio: 1,
-                          child: SimulationArea(
-                            instructions: instructions,
-                            paused: isPaused,
-                            width: double.infinity,
-                            height: double.infinity,
-                            useImage: true,
-                            botImagePath: 'assets/atta_bot.svg',
-                            onInstructionChange: (instruction) {
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                if (mounted) {
-                                  setState(() {
-                                    currentInstruction = instruction;
-                                  });
-                                }
-                              });
-                            },
-                            onExecutionStateChanged: (isExecuting) {
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                if (mounted) {
-                                  setState(() {
-                                    isExecutingInstructions = isExecuting;
-                                    if (!isExecuting) {
-                                      isPaused = false;
-                                      _closeCycleStatus();
-                                    }
-                                  });
-                                }
-                              });
-                            },
-                            onCycleExecutionStateChanged: (isExecutingCycle) {
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                if (mounted) {
-                                  setState(() {
-                                    isExecutingCycleInstruction =
-                                        isExecutingCycle;
-                                  });
-                                }
-                              });
-                            },
-                            stopSignal: stopSignal,
-                            restartSignal: restartSignal,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // --------------------- TEXTO DE INSTRUCCIÓN ----------------------
-                    const SizedBox(height: 12),
-
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          currentInstruction,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontFamily: 'Poppins',
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
