@@ -50,9 +50,9 @@ class _SimulationAreaState extends State<SimulationArea> {
   int instructionMarkerCount = 0;
   int? selectedInstructionMarkerIndex;
 
-  static const double _defaultGridCellSize = 42;
-  static const double _tabletColumns = 6;
-  static const double _tabletMinGridCellSize = 78;
+  static const double _defaultGridCellSize = 36;
+  static const double _tabletColumns = 7;
+  static const double _tabletMinGridCellSize = 68;
   static const double _centimetersPerGridCell = 20;
   static const int _movementMillisecondsPerGridCell = 400;
   static const int _rotationMillisecondsPer90Degrees = 300;
@@ -932,13 +932,13 @@ class _InstructionMarkerTooltip extends StatelessWidget {
 }
 
 class _PenTrailPainter extends CustomPainter {
-  static const double _strokeWidth = 3;
-  static const double _endpointRadius = 4;
+  static const double _strokeWidth = 5;
+  static const double _endpointRadius = 5.5;
   static const double _markerRadius = 5;
-  static const double _cycleBoundaryRadius = 6.5;
+  static const double _cycleBoundaryRadius = 7.5;
   static const double _overlapDistance = 0.01;
-  static const double _dashLength = 10;
-  static const double _dashGap = 6;
+  static const double _dashLength = 13;
+  static const double _dashGap = 7;
 
   final List<_TrailSegment> segments;
   final int segmentCount;
@@ -1006,7 +1006,7 @@ class _PenTrailPainter extends CustomPainter {
       ..isAntiAlias = true;
     final borderPaint = Paint()
       ..color = neutralWhite
-      ..strokeWidth = 1.4
+      ..strokeWidth = 1.7
       ..style = PaintingStyle.stroke
       ..isAntiAlias = true;
 
