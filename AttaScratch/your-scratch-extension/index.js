@@ -1354,6 +1354,8 @@ class Scratch3YourExtension {
 
     varModoTransmision = false;
     varMensajeBle = 'ATINI'; 
+    unionElseIf = 0;
+    memoriaUnion = [];
 
     /**
      * implementation of the block with the opcode that matches this name
@@ -1805,12 +1807,20 @@ class Scratch3YourExtension {
                     util.stackFrame.loopCounter = -1; //Primera ejecucion del bloque   
                     if (this.varMensajeBle.slice(-5)==='EL999'){ // convierte else ... if en elseif
                         this.varMensajeBle = this.varMensajeBle.slice(0,-5) + 'EL'+ '0' + args.condicionSensorIzq + args.condicionSensorDer;
+                        this.memoriaUnion[this.unionElseIf] = true;
+                        
                     } else {
                         this.varMensajeBle += 'IF'+ '0' + args.condicionSensorIzq + args.condicionSensorDer;
+                        this.memoriaUnion[this.unionElseIf] = false;
                     }
+                    this.unionElseIf++;
                     util.startBranch(1, true);                  
                 } else { //segunda iteracion> If fin
+                    this.unionElseIf--;
+                    if (!this.memoriaUnion[this.unionElseIf]){
                     this.varMensajeBle += 'IFFIN';
+                }
+
                 }
 
         } else { // comportamiento gráfico
@@ -1889,13 +1899,16 @@ class Scratch3YourExtension {
 
 
     AttaIfElseIf(args,util){
+        
         if (this.varModoTransmision){         
             if (typeof util.stackFrame.loopCounter === 'undefined') {
                     util.stackFrame.loopCounter = 1; //Primera ejecucion del bloque   
                     if (this.varMensajeBle.slice(-5)==='EL999'){ // convierte else ... if en elseif
                         this.varMensajeBle = this.varMensajeBle.slice(0,-5) + 'EL'+ '0' + args.condicionSensorIzq + args.condicionSensorDer;
+                        this.memoriaUnion[this.unionElseIf] = true;
                     } else {
                         this.varMensajeBle += 'IF'+ '0' + args.condicionSensorIzq + args.condicionSensorDer;
+                        this.memoriaUnion[this.unionElseIf] = true;
                     }
                     util.startBranch(1, true);
                 }else if(util.stackFrame.loopCounter === 1){ // segunda iteracion: else
@@ -1903,7 +1916,10 @@ class Scratch3YourExtension {
                     util.stackFrame.loopCounter = -1;
                     util.startBranch(2, true);                    
                 }else{ //tercera iteracion> If fin
+                    this.unionElseIf--;
+                    if (!this.memoriaUnion[this.unionElseIf]){
                     this.varMensajeBle += 'IFFIN';
+                }
                 }
 
         } else { // comportamiento gráfico
@@ -1976,9 +1992,12 @@ class Scratch3YourExtension {
                     util.stackFrame.loopCounter = 1; //Primera ejecucion del bloque   
                     if (this.varMensajeBle.slice(-5)==='EL999'){ // convierte else ... if en elseif
                         this.varMensajeBle = this.varMensajeBle.slice(0,-5) + 'EL'+ '0' + args.condicionSensorIzq + args.condicionSensorDer;
+                        this.memoriaUnion[this.unionElseIf] = true;
                     } else {
                         this.varMensajeBle += 'IF'+ '0' + args.condicionSensorIzq + args.condicionSensorDer;
+                        this.memoriaUnion[this.unionElseIf] = false;
                     }
+                    this.unionElseIf++;
                     util.startBranch(1, true);
                 } else if(util.stackFrame.loopCounter === 1){ // segunda iteracion: else
                     this.varMensajeBle += 'EL0' + args.condicionSensorIzqElse + args.condicionSensorDerElse;
@@ -1989,7 +2008,10 @@ class Scratch3YourExtension {
                     util.stackFrame.loopCounter = -1;
                     util.startBranch(3, true);                                       
                 } else { //cuarta iteracion> If fin
+                    this.unionElseIf--;
+                    if (!this.memoriaUnion[this.unionElseIf]){
                     this.varMensajeBle += 'IFFIN';
+                }
                 }
 
         } else { // comportamiento gráfico
@@ -2058,21 +2080,28 @@ class Scratch3YourExtension {
     */ 
 
     AttaIfElse (args,util){
+        
         if (this.varModoTransmision){         
             if (typeof util.stackFrame.loopCounter === 'undefined') {
                     util.stackFrame.loopCounter = 1; //Primera ejecucion del bloque   
                     if (this.varMensajeBle.slice(-5)==='EL999'){ // convierte else ... if en elseif
                         this.varMensajeBle = this.varMensajeBle.slice(0,-5) + 'EL'+ '0' + args.condicionSensorIzq + args.condicionSensorDer;
+                        this.memoriaUnion[this.unionElseIf] = true;
                     } else {
                         this.varMensajeBle += 'IF'+ '0' + args.condicionSensorIzq + args.condicionSensorDer;
+                        this.memoriaUnion[this.unionElseIf] = false;
                     }
+                    this.unionElseIf++;
                     util.startBranch(1, true);
                 }else if(util.stackFrame.loopCounter === 1){ // segunda iteracion: else
                     this.varMensajeBle += 'EL999';
                     util.stackFrame.loopCounter = -1;
                     util.startBranch(2, true);                    
                 }else{ //tercera iteracion> If fin
+                    this.unionElseIf--;
+                    if (!this.memoriaUnion[this.unionElseIf]){
                     this.varMensajeBle += 'IFFIN';
+                }                
                 }                
 
         } else { // comportamiento gráfico
@@ -2320,7 +2349,7 @@ class Scratch3YourExtension {
     * @param {object} util - objeto con métodos y valores varios que el motor de Scratch retorna a todas las extensiones
     */ 
 
-    AttaReconectar(args,util){
+    async AttaReconectar(args,util){
       dispositivoBLE = await navigator.bluetooth.requestDevice({
         filters: [{ services: [SERVICIO_UUID] }],
      });
