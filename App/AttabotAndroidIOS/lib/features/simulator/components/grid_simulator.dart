@@ -747,7 +747,8 @@ class _InstructionMarker {
 }
 
 class _InstructionMarkerTooltip extends StatelessWidget {
-  static const double _width = 170;
+  static const double _defaultWidth = 170;
+  static const double _wideWidth = 220;
 
   final List<_InstructionMarker> markers;
   final Offset position;
@@ -759,35 +760,92 @@ class _InstructionMarkerTooltip extends StatelessWidget {
     required this.canvasSize,
   });
 
-  ({IconData icon, Color color}) _iconForLabel(String label) {
-    final normalized = label.toLowerCase();
+  ({
+    IconData icon,
+    Color color,
+    double width,
+    String? assetPath,
+  }) _styleForLabel(String label) {
+    final normalized = label
+        .toLowerCase()
+        .replaceAll(RegExp(r'[\u00e1\u00e0\u00e4\u00e2\u00e3]'), 'a')
+        .replaceAll(RegExp(r'[\u00e9\u00e8\u00eb\u00ea]'), 'e')
+        .replaceAll(RegExp(r'[\u00ed\u00ec\u00ef\u00ee]'), 'i')
+        .replaceAll(RegExp(r'[\u00f3\u00f2\u00f6\u00f4\u00f5]'), 'o')
+        .replaceAll(RegExp(r'[\u00fa\u00f9\u00fc\u00fb]'), 'u')
+        .replaceAll('\u00f1', 'n');
     if (normalized.contains('girar') && normalized.contains('izquierda')) {
-      return (icon: Icons.turn_left_rounded, color: primaryOrange);
+      return (
+        icon: Icons.turn_left_rounded,
+        color: primaryOrange,
+        width: _defaultWidth,
+        assetPath: null,
+      );
     }
     if (normalized.contains('girar') && normalized.contains('derecha')) {
-      return (icon: Icons.turn_right_rounded, color: primaryOrange);
+      return (
+        icon: Icons.turn_right_rounded,
+        color: primaryOrange,
+        width: _defaultWidth,
+        assetPath: null,
+      );
     }
     if (normalized.contains('avanzar')) {
-      return (icon: Icons.arrow_upward_rounded, color: primaryBlue);
+      return (
+        icon: Icons.arrow_upward_rounded,
+        color: primaryBlue,
+        width: _defaultWidth,
+        assetPath: null,
+      );
     }
     if (normalized.contains('retroceder')) {
-      return (icon: Icons.arrow_downward_rounded, color: primaryBlue);
+      return (
+        icon: Icons.arrow_downward_rounded,
+        color: primaryBlue,
+        width: _defaultWidth,
+        assetPath: null,
+      );
     }
     if (normalized.contains('lapiz')) {
-      return (icon: Icons.edit_rounded, color: secondaryPurple);
+      return (
+        icon: Icons.edit_rounded,
+        color: secondaryPurple,
+        width: _defaultWidth,
+        assetPath: 'assets/button_icons/pencil.png',
+      );
     }
     if (normalized.contains('deteccion')) {
-      return (icon: Icons.visibility_rounded, color: primaryYellow);
+      return (
+        icon: Icons.visibility_outlined,
+        color: primaryYellow,
+        width: _wideWidth,
+        assetPath: 'assets/button_icons/obstacle_detection.png',
+      );
     }
-    return (icon: Icons.circle_rounded, color: primaryOrange);
+    return (
+      icon: Icons.circle_rounded,
+      color: primaryOrange,
+      width: _defaultWidth,
+      assetPath: null,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final estimatedHeight = 18.0 + (markers.length * 30.0);
-    final tooltipWidth = min(_width, max(120.0, canvasSize.width - 20.0));
-    final rightCandidate = position.dx + 10;
-    final leftCandidate = position.dx - tooltipWidth - 10;
+    const rowHeight = 58.0;
+    const rowGap = 10.0;
+    final estimatedHeight =
+        (markers.length * rowHeight) + ((markers.length - 1) * rowGap);
+    final maxRequestedWidth = markers.fold<double>(
+      _defaultWidth,
+      (currentMax, marker) => max(currentMax, _styleForLabel(marker.label).width),
+    );
+    final tooltipWidth = min(
+      maxRequestedWidth,
+      max(140.0, canvasSize.width - 20.0),
+    );
+    final rightCandidate = position.dx + 12;
+    final leftCandidate = position.dx - tooltipWidth - 12;
     final canShowRight = rightCandidate + tooltipWidth <= canvasSize.width - 8;
     final left = canShowRight
         ? rightCandidate
@@ -796,9 +854,6 @@ class _InstructionMarkerTooltip extends StatelessWidget {
     final maxTop = max(8.0, canvasSize.height - estimatedHeight - 8.0);
     final top =
         (position.dy - (estimatedHeight / 2)).clamp(8.0, maxTop).toDouble();
-    final bubbleOnRight = left >= position.dx;
-    final pointerCenterY = (position.dy - top).clamp(14.0, estimatedHeight - 14)
-        .toDouble();
     const borderColor = Color(0xFF7E8CAA);
     const fillColor = Color(0xFFF7F8FC);
 
@@ -806,80 +861,74 @@ class _InstructionMarkerTooltip extends StatelessWidget {
       left: left,
       top: top,
       width: tooltipWidth,
-      child: Stack(
-        clipBehavior: Clip.none,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Positioned(
-            left: bubbleOnRight ? -6 : null,
-            right: bubbleOnRight ? null : -6,
-            top: pointerCenterY - 6,
-            child: Transform.rotate(
-              angle: pi / 4,
-              child: Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  color: fillColor,
-                  border: Border.all(color: borderColor, width: 1.8),
-                ),
-              ),
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: fillColor,
-              border: Border.all(color: borderColor, width: 1.8),
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.12),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (int i = 0; i < markers.length; i++) ...[
-                  Builder(
-                    builder: (context) {
-                      final iconData = _iconForLabel(markers[i].label);
-                      return Row(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Icon(
-                            iconData.icon,
-                            color: iconData.color,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              markers[i].label,
-                              style: const TextStyle(
-                                color: neutralDarkBlueAD,
-                                fontFamily: 'Poppins',
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w600,
-                                height: 1.15,
-                              ),
+          for (int i = 0; i < markers.length; i++) ...[
+            Builder(
+              builder: (context) {
+                final style = _styleForLabel(markers[i].label);
+                return Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    constraints: BoxConstraints(
+                      minHeight: rowHeight,
+                      maxWidth: tooltipWidth,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: fillColor,
+                      border: Border.all(color: borderColor, width: 2.2),
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 28,
+                          child: style.assetPath != null
+                              ? Image.asset(
+                                  style.assetPath!,
+                                  width: 23,
+                                  height: 23,
+                                  color: style.color,
+                                )
+                              : Icon(
+                                  style.icon,
+                                  color: style.color,
+                                  size: 23,
+                                ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            markers[i].label,
+                            style: const TextStyle(
+                              color: neutralDarkBlueAD,
+                              fontFamily: 'Poppins',
+                              fontSize: 12.8,
+                              fontWeight: FontWeight.w600,
+                              height: 1.15,
                             ),
                           ),
-                        ],
-                      );
-                    },
-                  ),
-                  if (i < markers.length - 1)
-                    const SizedBox(
-                      height: 8,
+                        ),
+                      ],
                     ),
-                ],
-              ],
+                  ),
+                );
+              },
             ),
-          ),
+            if (i < markers.length - 1) const SizedBox(height: rowGap),
+          ],
         ],
       ),
     );
