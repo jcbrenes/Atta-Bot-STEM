@@ -195,8 +195,8 @@ class FlashlightGlowPainter extends CustomPainter {
     canvas.translate(beamOrigin.dx, beamOrigin.dy);
 
     final rect = Offset.zero & beamSize;
-    const warmColor = Color(0xFFFFC928);
-    const paleColor = Color(0xFFFFE16D);
+    const strongYellow = Color(0xFFFFC400);
+    const softYellow = Color(0xFFFFD93D);
 
     final outerBeam = Path()
       ..moveTo(beamSize.width * 0.5, beamSize.height * 0.98)
@@ -220,69 +220,16 @@ class FlashlightGlowPainter extends CustomPainter {
         begin: Alignment.bottomCenter,
         end: Alignment.topCenter,
         colors: [
-          baseColor.withValues(alpha: 0.58),
-          warmColor.withValues(alpha: 0.34),
-          paleColor.withValues(alpha: 0.18),
+          strongYellow.withValues(alpha: 0.86),
+          strongYellow.withValues(alpha: 0.58),
+          softYellow.withValues(alpha: 0.34),
           Colors.transparent,
         ],
-        stops: const [0.0, 0.38, 0.72, 1.0],
+        stops: const [0.0, 0.42, 0.74, 1.0],
       ).createShader(rect)
       ..isAntiAlias = true
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18);
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14);
     canvas.drawPath(outerBeam, outerBeamPaint);
-
-    final innerBeam = Path()
-      ..moveTo(beamSize.width * 0.5, beamSize.height * 0.98)
-      ..lineTo(beamSize.width * 0.06, beamSize.height * 0.46)
-      ..quadraticBezierTo(
-        beamSize.width * 0.19,
-        beamSize.height * 0.24,
-        beamSize.width * 0.5,
-        beamSize.height * 0.14,
-      )
-      ..quadraticBezierTo(
-        beamSize.width * 0.81,
-        beamSize.height * 0.24,
-        beamSize.width * 0.94,
-        beamSize.height * 0.46,
-      )
-      ..close();
-
-    final innerBeamPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.bottomCenter,
-        end: Alignment.topCenter,
-        colors: [
-          baseColor.withValues(alpha: 0.76),
-          warmColor.withValues(alpha: 0.52),
-          paleColor.withValues(alpha: 0.28),
-          Colors.transparent,
-        ],
-        stops: const [0.0, 0.34, 0.7, 1.0],
-      ).createShader(rect)
-      ..isAntiAlias = true
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
-    canvas.drawPath(innerBeam, innerBeamPaint);
-
-    final hotspotRect = Rect.fromCenter(
-      center: Offset(beamSize.width * 0.5, beamSize.height * 0.28),
-      width: beamSize.width * 0.86,
-      height: beamSize.height * 0.34,
-    );
-    final hotspotPaint = Paint()
-      ..shader = RadialGradient(
-        center: const Alignment(0, 0),
-        radius: 0.95,
-        colors: [
-          warmColor.withValues(alpha: 0.46),
-          baseColor.withValues(alpha: 0.24),
-          Colors.transparent,
-        ],
-        stops: const [0.0, 0.58, 1.0],
-      ).createShader(hotspotRect)
-      ..isAntiAlias = true
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
-    canvas.drawOval(hotspotRect, hotspotPaint);
 
     canvas.restore();
   }
