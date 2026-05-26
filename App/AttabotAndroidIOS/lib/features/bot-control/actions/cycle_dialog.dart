@@ -5,7 +5,16 @@ import 'package:provider/provider.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
 
 class CycleDialog extends StatefulWidget {
-  const CycleDialog({super.key});
+  final int initialCycleCount;
+  final int minCycleCount;
+  final ValueChanged<int>? onConfirm;
+
+  const CycleDialog({
+    super.key,
+    this.initialCycleCount = 1,
+    this.minCycleCount = 1,
+    this.onConfirm,
+  });
 
   @override
   State<CycleDialog> createState() => _CycleDialogState();
@@ -21,7 +30,13 @@ class CycleDialog extends StatefulWidget {
 }
 
 class _CycleDialogState extends State<CycleDialog> {
-  int cycleCount = 1;
+  late int cycleCount;
+
+  @override
+  void initState() {
+    super.initState();
+    cycleCount = widget.initialCycleCount;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +58,8 @@ class _CycleDialogState extends State<CycleDialog> {
         side: const BorderSide(color: neutralWhite, width: 4.0),
       ),
       content: CycleInput(
+        initialValue: widget.initialCycleCount,
+        minValue: widget.minCycleCount,
         onCycleSelected: (value) {
           setState(() {
             cycleCount = value;
@@ -63,7 +80,18 @@ class _CycleDialogState extends State<CycleDialog> {
               style: TextStyle(
                   fontSize: 14, fontFamily: "Poppins", color: neutralWhite)),
           onPressed: () {
-            context.read<CommandService>().initCycle(cycleCount);
+            final onConfirm = widget.onConfirm;
+            if (onConfirm != null) {
+              onConfirm(cycleCount < widget.minCycleCount
+                  ? widget.minCycleCount
+                  : cycleCount);
+            } else {
+              context.read<CommandService>().initCycle(
+                    cycleCount < widget.minCycleCount
+                        ? widget.minCycleCount
+                        : cycleCount,
+                  );
+            }
             Navigator.of(context).pop();
           },
         ),

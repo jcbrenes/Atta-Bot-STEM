@@ -5,8 +5,15 @@ import 'package:proyecto_tec/shared/components/ui/buttons/default_button_factory
 
 class CycleInput extends StatefulWidget {
   final Function(int) onCycleSelected;
+  final int initialValue;
+  final int minValue;
 
-  const CycleInput({super.key, required this.onCycleSelected});
+  const CycleInput({
+    super.key,
+    required this.onCycleSelected,
+    this.initialValue = 1,
+    this.minValue = 1,
+  });
 
   @override
   State<CycleInput> createState() => _CycleInputState();
@@ -18,11 +25,16 @@ class _CycleInputState extends State<CycleInput> {
 
   int value = 1;
 
+  int get _effectiveMinValue => widget.minValue < 1 ? 1 : widget.minValue;
+  int get _effectiveInitialValue =>
+      widget.initialValue < _effectiveMinValue ? _effectiveMinValue : widget.initialValue;
+
   @override
   void initState() {
     super.initState();
+    _controller.text = _effectiveInitialValue.toString();
     _focusNode.addListener(() {
-      if (_focusNode.hasFocus && _controller.text == "1") {
+      if (_focusNode.hasFocus && _controller.text == _effectiveInitialValue.toString()) {
         _controller.clear();
       }
     });
@@ -38,14 +50,25 @@ class _CycleInputState extends State<CycleInput> {
   }
 
   void handleOnChanged(String value) {
-    int newValue = int.tryParse(value) ?? 1;
+    int newValue = int.tryParse(value) ?? _effectiveMinValue;
+    if (newValue < _effectiveMinValue) {
+      newValue = _effectiveMinValue;
+    }
     widget.onCycleSelected(newValue);
-    _controller.text = value;
+    if (_controller.text != newValue.toString()) {
+      _controller.value = TextEditingValue(
+        text: newValue.toString(),
+        selection: TextSelection.collapsed(offset: newValue.toString().length),
+      );
+    }
   }
 
   void _updateSuffixText() {
     setState(() {
-      value = int.tryParse(_controller.text) ?? 1;
+      value = int.tryParse(_controller.text) ?? _effectiveMinValue;
+      if (value < _effectiveMinValue) {
+        value = _effectiveMinValue;
+      }
     });
   }
 
@@ -62,11 +85,10 @@ class _CycleInputState extends State<CycleInput> {
               color: secondaryIconGreen,
               buttonType: ButtonType.secondaryIcon,
               onPressed: () {
-                int currentValue = int.parse(_controller.text);
-                if (currentValue > 1) {
+                int currentValue = int.tryParse(_controller.text) ?? _effectiveMinValue;
+                if (currentValue > _effectiveMinValue) {
                   currentValue--;
-                  _controller.text = currentValue.toString();
-                  handleOnChanged(_controller.text);
+                  handleOnChanged(currentValue.toString());
                 }
               },
               icon: IconType.remove,
@@ -105,10 +127,9 @@ class _CycleInputState extends State<CycleInput> {
               color: secondaryIconGreen,
               buttonType: ButtonType.secondaryIcon,
               onPressed: () {
-                int currentValue = int.parse(_controller.text);
+                int currentValue = int.tryParse(_controller.text) ?? _effectiveMinValue;
                 currentValue++;
-                _controller.text = currentValue.toString();
-                handleOnChanged(_controller.text);
+                handleOnChanged(currentValue.toString());
               },
               icon: IconType.add,
             ),

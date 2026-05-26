@@ -124,8 +124,13 @@ class _ActionMenuState extends State<ActionMenu> {
                     if (!commandService.cycleActive) {
                       CycleDialog.show(context);
                     } else {
-                      context.read<CommandService>().endCycle();
-                      showInfoDialog(context, 'Se ha cerrado el ciclo');
+                      showInfoDialog(
+                        context, 
+                        '¿Cerrar el ciclo?', 
+                         onContinue: () {
+                            context.read<CommandService>().endCycle();
+                          }
+                      );
                     }
                   },
                   icon: IconType.cycle,
@@ -138,11 +143,21 @@ class _ActionMenuState extends State<ActionMenu> {
                 buttonType: ButtonType.primaryIcon,
                 onPressed: () {
                   if (!commandService.obstacleDetection) {
-                    showInfoDialog(context, 'Se ha activado \nla detección \nde obstáculos');
-                    context.read<CommandService>().activateObjectDetection();
+                    showInfoDialog(
+                      context,
+                      '¿Activar la detección \nde obstáculos?',
+                      onContinue: () {
+                        context.read<CommandService>().activateObjectDetection();
+                      },
+                    );
                   } else {
-                    showInfoDialog(context, 'Se ha desactivado \nla detección \nde obstáculos');
-                    context.read<CommandService>().deactivateObjectDetection();
+                    showInfoDialog(
+                      context,
+                      '¿Desactivar la detección \nde obstáculos?',
+                      onContinue: () {
+                        context.read<CommandService>().deactivateObjectDetection();
+                      },
+                    );
                   }
                 },
                 icon: IconType.obstacleDetection,
@@ -184,11 +199,21 @@ class _ActionMenuState extends State<ActionMenu> {
                 buttonType: ButtonType.primaryIcon,
                 onPressed: () {
                   if (!commandService.pencilActive) {
-                    showInfoDialog(context, 'Se ha activado \n el lápiz');
-                    context.read<CommandService>().activateTool();
+                    showInfoDialog(
+                      context,
+                      '¿Activar el lápiz?',
+                      onContinue: () {
+                        context.read<CommandService>().activateTool();
+                      },
+                    );
                   } else {
-                    showInfoDialog(context, 'Se ha desactivado \n el lápiz');
-                    context.read<CommandService>().deactivateTool();
+                    showInfoDialog(
+                      context,
+                      '¿Desactivar el lápiz?',
+                      onContinue: () {
+                        context.read<CommandService>().deactivateTool();
+                      },
+                    );
                   }
                 },
                 icon: IconType.pencil,

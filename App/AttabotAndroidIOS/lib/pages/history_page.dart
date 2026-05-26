@@ -1,5 +1,6 @@
 import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog.dart';
 import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog_for_simplified.dart';
+import 'package:proyecto_tec/features/bot-control/actions/cycle_dialog.dart';
 import 'package:proyecto_tec/features/bot-control/movement/movement.dart';
 import 'package:proyecto_tec/features/bot-control/movement/rotation.dart';
 import 'package:flutter/material.dart';
@@ -256,7 +257,8 @@ class _HistoryPageState extends State<HistoryPage> {
     return command.action == CommandType.moveForward ||
         command.action == CommandType.moveBackward ||
         command.action == CommandType.rotateLeft ||
-        command.action == CommandType.rotateRight;
+        command.action == CommandType.rotateRight ||
+        command.action == CommandType.initCycle;
   }
 
   void _editCommand(int index, Command command) {
@@ -276,6 +278,25 @@ class _HistoryPageState extends State<HistoryPage> {
               context
                   .read<CommandService>()
                   .updateCommand(index, Command(command.action, value));
+            },
+          );
+        },
+      );
+      return;
+    }
+
+    if (command.action == CommandType.initCycle) {
+      showDialog(
+        context: context,
+        builder: (dialogContext) {
+          return CycleDialog(
+            initialCycleCount: command.value?.toInt() ?? 1,
+            minCycleCount: 2,
+            onConfirm: (value) {
+              context.read<CommandService>().updateCommand(
+                    index,
+                    Command(command.action, value),
+                  );
             },
           );
         },

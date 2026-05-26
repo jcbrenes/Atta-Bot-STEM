@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 
-void showInfoDialog(BuildContext context, String message) {
+void showInfoDialog(
+  BuildContext context,
+  String message, {
+  VoidCallback? onContinue,
+}) {
   showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -35,13 +39,30 @@ void showInfoDialog(BuildContext context, String message) {
           ),
           actions: [
             TextButton(
-              child: const Text("Continuar",
-                  style: TextStyle(
-                      fontSize: 14,
-                      fontFamily: "Poppins",
-                      color: neutralWhite)),
+              child: const Text(
+                "Cancelar",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontFamily: "Poppins",
+                  color: neutralWhite,
+                ),
+              ),
               onPressed: () {
                 Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text(
+                "Continuar",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontFamily: "Poppins",
+                  color: neutralWhite,
+                ),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+                onContinue?.call();
               },
             ),
           ],

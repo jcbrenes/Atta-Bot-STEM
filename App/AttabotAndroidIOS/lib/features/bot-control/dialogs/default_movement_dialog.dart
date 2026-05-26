@@ -155,11 +155,6 @@ class _DefaultMovementDialogState extends State<DefaultMovementDialog> {
       fontSize: 12,
     );
 
-    final actionStyle = labelStyle.copyWith(
-      decoration: TextDecoration.underline,
-      decorationThickness: 2,
-      decorationColor: neutralWhite,
-    );
 
     if (isTablet && isLandscape) {
 
