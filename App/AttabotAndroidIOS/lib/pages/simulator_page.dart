@@ -40,7 +40,6 @@ class _SimulatorPageState extends State<SimulatorPage> {
   static const Color _panelBlue = Color(0xFF1A3564);
   static const Color _panelBorder = Color(0xFFF5F6F9);
   static const Color _gridFrame = Color(0xFFE5E9F2);
-  static const double _contentAspectRatio = 0.62;
 
   bool _hasOpenCycleLabel(String instruction) {
     return instruction.toLowerCase().contains('ciclo abierto');
@@ -139,7 +138,6 @@ class _SimulatorPageState extends State<SimulatorPage> {
     final bool isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
     final bool isTablet = MediaQuery.of(context).size.width >= 600;
-    final double phoneCardMaxWidth = isLandscape ? 520 : 390;
     final bool cycleOpen = isExecutingCycleInstruction;
     final String instructionLabel = currentInstruction.trim();
     final List<String> instructions = context
@@ -156,23 +154,17 @@ class _SimulatorPageState extends State<SimulatorPage> {
     final pageBody = SafeArea(
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final double horizontalPadding = isTablet ? 22 : 18;
-          const double verticalPaddingTop = 10;
-          const double verticalPaddingBottom = 18;
-          final double tabletWidthFactor = isLandscape ? 0.74 : 0.86;
-          final double targetMaxWidth = isTablet
-              ? constraints.maxWidth * tabletWidthFactor
-              : phoneCardMaxWidth;
-          final double availableWidth = math.min(
-            constraints.maxWidth - (horizontalPadding * 2),
-            targetMaxWidth,
-          );
+          const double horizontalPadding = 16;
+          const double verticalPaddingTop = 24;
+          const double verticalPaddingBottom = 16;
+          final double availableWidth =
+              constraints.maxWidth - (horizontalPadding * 2);
           final double availableHeight = constraints.maxHeight -
               verticalPaddingTop -
               verticalPaddingBottom;
 
-          double contentWidth = availableWidth;
-          double contentHeight = contentWidth / _contentAspectRatio;
+          final double contentWidth = availableWidth;
+          final double contentHeight = availableHeight;
           final double uiScale =
               isTablet ? (contentWidth / 390).clamp(1.12, 1.42) : 1.0;
           final double titleSize = 18 * uiScale;
@@ -191,14 +183,9 @@ class _SimulatorPageState extends State<SimulatorPage> {
           final double cardRadius = 24 * uiScale;
           final double gridRadius = 12 * uiScale;
 
-          if (contentHeight > availableHeight) {
-            contentHeight = availableHeight;
-            contentWidth = contentHeight * _contentAspectRatio;
-          }
-
           return Center(
             child: Padding(
-              padding: EdgeInsets.fromLTRB(
+              padding: const EdgeInsets.fromLTRB(
                 horizontalPadding,
                 verticalPaddingTop,
                 horizontalPadding,
