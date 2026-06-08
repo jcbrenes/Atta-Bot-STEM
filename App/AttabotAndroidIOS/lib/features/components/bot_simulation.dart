@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:proyecto_tec/shared/components/ui/images/bot_asset_image.dart';
 
 class BotSimulation extends StatelessWidget {
   final String botImagePath;
@@ -20,6 +21,10 @@ class BotSimulation extends StatelessWidget {
   Widget build(BuildContext context) {
     return botImagePath.isEmpty
         ? paintCircle(circleSize)
-        : Image.asset(botImagePath, width: imageSize, height: imageSize);
+        : BotAssetImage(
+            assetPath: botImagePath,
+            width: imageSize,
+            height: imageSize,
+          );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:proyecto_tec/features/bot-control/movement/rotation.dart';
 import 'package:proyecto_tec/features/bot-control/movement/movement.dart';
 import 'package:proyecto_tec/features/bot-control/movement/simplified_movement.dart';
+import 'package:proyecto_tec/shared/components/ui/images/bot_asset_image.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 import 'package:proyecto_tec/shared/components/ui/buttons/default_button_factory.dart';
 
@@ -91,8 +92,10 @@ class MovementMenu extends StatelessWidget {
                     SizedBox(
                       width: imageSide,
                       height: imageSide,
-                      child: Image.asset(
-                        "assets/atta_bot.png",
+                      child: BotAssetImage(
+                        assetPath: "assets/atta_bot.svg",
+                        width: imageSide,
+                        height: imageSide,
                         fit: BoxFit.contain,
                       ),
                     ),
