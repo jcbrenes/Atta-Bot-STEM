@@ -120,18 +120,6 @@ class _SimulatorPageState extends State<SimulatorPage> {
     );
   }
 
-  Widget _buildPageIndicator(bool isActive) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      width: isActive ? 10 : 8,
-      height: isActive ? 10 : 8,
-      decoration: BoxDecoration(
-        color: isActive ? _panelBorder : _panelBorder.withValues(alpha: 0.35),
-        shape: BoxShape.circle,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final simplifiedProvider = Provider.of<SimplifiedModeProvider>(context);
@@ -194,290 +182,271 @@ class _SimulatorPageState extends State<SimulatorPage> {
               child: SizedBox(
                 width: contentWidth,
                 height: contentHeight,
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.fromLTRB(
-                          horizontalInnerPadding,
-                          topPadding,
-                          horizontalInnerPadding,
-                          horizontalInnerPadding,
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalInnerPadding,
+                    topPadding,
+                    horizontalInnerPadding,
+                    horizontalInnerPadding,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _panelBlue,
+                    borderRadius: BorderRadius.circular(cardRadius),
+                    border: Border.all(color: _panelBorder, width: 3),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Simulador',
+                        style: TextStyle(
+                          color: neutralWhite,
+                          fontSize: titleSize,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Poppins',
                         ),
-                        decoration: BoxDecoration(
-                          color: _panelBlue,
-                          borderRadius: BorderRadius.circular(cardRadius),
-                          border: Border.all(color: _panelBorder, width: 3),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Simulador',
-                              style: TextStyle(
-                                color: neutralWhite,
-                                fontSize: titleSize,
-                                fontWeight: FontWeight.w700,
-                                fontFamily: 'Poppins',
-                              ),
+                      ),
+                      SizedBox(height: 4 * uiScale),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            'Visualizando:',
+                            style: TextStyle(
+                              color: neutralWhite,
+                              fontSize: labelSize,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Poppins',
                             ),
-                            SizedBox(height: 4 * uiScale),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  'Visualizando:',
+                          ),
+                          SizedBox(width: smallGap),
+                          Expanded(
+                            child: Container(
+                              height: dropdownHeight,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8 * uiScale,
+                              ),
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: Colors.white.withValues(
+                                      alpha: 0.8,
+                                    ),
+                                    width: 1.2 * uiScale,
+                                  ),
+                                ),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: selectedFile,
+                                  isExpanded: true,
+                                  icon: const Icon(
+                                    Icons.keyboard_arrow_down_rounded,
+                                    color: neutralWhite,
+                                    size: 16,
+                                  ),
+                                  dropdownColor: _panelBlue,
                                   style: TextStyle(
                                     color: neutralWhite,
                                     fontSize: labelSize,
-                                    fontWeight: FontWeight.w500,
+                                    fontWeight: FontWeight.w600,
                                     fontFamily: 'Poppins',
                                   ),
-                                ),
-                                SizedBox(width: smallGap),
-                                Expanded(
-                                  child: Container(
-                                    height: dropdownHeight,
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 8 * uiScale,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      border: Border(
-                                        bottom: BorderSide(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.8,
-                                          ),
-                                          width: 1.2 * uiScale,
-                                        ),
+                                  items: availableFiles.map((file) {
+                                    return DropdownMenuItem(
+                                      value: file,
+                                      child: Text(
+                                        file,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                    ),
-                                    child: DropdownButtonHideUnderline(
-                                      child: DropdownButton<String>(
-                                        value: selectedFile,
-                                        isExpanded: true,
-                                        icon: const Icon(
-                                          Icons.keyboard_arrow_down_rounded,
-                                          color: neutralWhite,
-                                          size: 16,
-                                        ),
-                                        dropdownColor: _panelBlue,
-                                        style: TextStyle(
-                                          color: neutralWhite,
-                                          fontSize: labelSize,
-                                          fontWeight: FontWeight.w600,
-                                          fontFamily: 'Poppins',
-                                        ),
-                                        items: availableFiles.map((file) {
-                                          return DropdownMenuItem(
-                                            value: file,
-                                            child: Text(
-                                              file,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          );
-                                        }).toList(),
-                                        onChanged: (value) {
-                                          if (value != null) {
-                                            setState(
-                                              () => selectedFile = value,
-                                            );
-                                          }
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(width: smallGap),
-                                Container(
-                                  width: plusButtonSize,
-                                  height: plusButtonSize,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.8,
-                                      ),
-                                      width: 1.2 * uiScale,
-                                    ),
-                                  ),
-                                  child: IconButton(
-                                    onPressed: () {
-                                      showSimulatorActionsDialog(context);
-                                    },
-                                    padding: EdgeInsets.zero,
-                                    icon: Icon(
-                                      Icons.add_rounded,
-                                      size: 16 * uiScale,
-                                      color: neutralWhite,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: rowGap),
-                            Row(
-                              children: [
-                                Text(
-                                  cycleOpen ? 'Ciclo abierto' : 'Ciclo cerrado',
-                                  style: TextStyle(
-                                    color: cycleOpen
-                                        ? secondaryGreen
-                                        : const Color(0xFFFFB2B2),
-                                    fontSize: labelSize,
-                                    fontWeight: FontWeight.w700,
-                                    fontFamily: 'Poppins',
-                                  ),
-                                ),
-                                SizedBox(width: 10 * uiScale),
-                                Container(
-                                  width: cycleDotSize,
-                                  height: cycleDotSize,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: cycleOpen
-                                        ? secondaryGreen
-                                        : const Color(0xFFFF8A80),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: (cycleOpen
-                                                ? secondaryGreen
-                                                : const Color(0xFFFF8A80))
-                                            .withValues(alpha: 0.55),
-                                        blurRadius: 8 * uiScale,
-                                        spreadRadius: 1 * uiScale,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const Spacer(),
-                                _buildSimulationControlButton(
-                                  icon: Icons.stop_rounded,
-                                  tooltip: 'Detener',
-                                  scale: uiScale,
-                                  onPressed: isExecutingInstructions || isPaused
-                                      ? stopSimulation
-                                      : null,
-                                ),
-                                SizedBox(width: controlGap),
-                                _buildSimulationControlButton(
-                                  icon: isPaused
-                                      ? Icons.play_arrow_rounded
-                                      : Icons.pause_rounded,
-                                  tooltip: isPaused ? 'Reanudar' : 'Pausar',
-                                  scale: uiScale,
-                                  onPressed: isExecutingInstructions || isPaused
-                                      ? togglePause
-                                      : null,
-                                ),
-                                SizedBox(width: controlGap),
-                                _buildSimulationControlButton(
-                                  icon: Icons.restart_alt_rounded,
-                                  tooltip: 'Reiniciar',
-                                  scale: uiScale,
-                                  onPressed: restartSimulation,
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: rowGap),
-                            Expanded(
-                              child: Container(
-                                padding: EdgeInsets.all(gridFramePadding),
-                                decoration: BoxDecoration(
-                                  color: _gridFrame,
-                                  borderRadius: BorderRadius.circular(
-                                    gridFrameRadius,
-                                  ),
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(
-                                    gridRadius,
-                                  ),
-                                  child: SimulationArea(
-                                    instructions: instructions,
-                                    paused: isPaused,
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                    useImage: true,
-                                    botImagePath: 'assets/atta_bot.svg',
-                                    onInstructionChange: (instruction) {
-                                      WidgetsBinding.instance
-                                          .addPostFrameCallback((_) {
-                                        if (mounted) {
-                                          setState(() {
-                                            currentInstruction = instruction;
-                                          });
-                                        }
-                                      });
-                                    },
-                                    onExecutionStateChanged: (isExecuting) {
-                                      WidgetsBinding.instance
-                                          .addPostFrameCallback((_) {
-                                        if (mounted) {
-                                          setState(() {
-                                            isExecutingInstructions =
-                                                isExecuting;
-                                            if (!isExecuting) {
-                                              isPaused = false;
-                                              _closeCycleStatus();
-                                            }
-                                          });
-                                        }
-                                      });
-                                    },
-                                    onCycleExecutionStateChanged:
-                                        (isExecutingCycle) {
-                                      WidgetsBinding.instance
-                                          .addPostFrameCallback((_) {
-                                        if (mounted) {
-                                          setState(() {
-                                            isExecutingCycleInstruction =
-                                                isExecutingCycle;
-                                          });
-                                        }
-                                      });
-                                    },
-                                    stopSignal: stopSignal,
-                                    restartSignal: restartSignal,
-                                  ),
+                                    );
+                                  }).toList(),
+                                  onChanged: (value) {
+                                    if (value != null) {
+                                      setState(
+                                        () => selectedFile = value,
+                                      );
+                                    }
+                                  },
                                 ),
                               ),
                             ),
-                            if (instructionLabel.isNotEmpty) ...[
-                              SizedBox(height: 10 * uiScale),
-                              Center(
-                                child: Text(
-                                  instructionLabel,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: Colors.white.withValues(
-                                      alpha: 0.78,
-                                    ),
-                                    fontSize: captionSize,
-                                    fontWeight: FontWeight.w500,
-                                    fontFamily: 'Poppins',
-                                  ),
+                          ),
+                          SizedBox(width: smallGap),
+                          Container(
+                            width: plusButtonSize,
+                            height: plusButtonSize,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withValues(
+                                  alpha: 0.8,
                                 ),
+                                width: 1.2 * uiScale,
                               ),
-                            ],
-                          ],
+                            ),
+                            child: IconButton(
+                              onPressed: () {
+                                showSimulatorActionsDialog(context);
+                              },
+                              padding: EdgeInsets.zero,
+                              icon: Icon(
+                                Icons.add_rounded,
+                                size: 16 * uiScale,
+                                color: neutralWhite,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: rowGap),
+                      Row(
+                        children: [
+                          Text(
+                            cycleOpen ? 'Ciclo abierto' : 'Ciclo cerrado',
+                            style: TextStyle(
+                              color: cycleOpen
+                                  ? secondaryGreen
+                                  : const Color(0xFFFFB2B2),
+                              fontSize: labelSize,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
+                          SizedBox(width: 10 * uiScale),
+                          Container(
+                            width: cycleDotSize,
+                            height: cycleDotSize,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: cycleOpen
+                                  ? secondaryGreen
+                                  : const Color(0xFFFF8A80),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: (cycleOpen
+                                          ? secondaryGreen
+                                          : const Color(0xFFFF8A80))
+                                      .withValues(alpha: 0.55),
+                                  blurRadius: 8 * uiScale,
+                                  spreadRadius: 1 * uiScale,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Spacer(),
+                          _buildSimulationControlButton(
+                            icon: Icons.stop_rounded,
+                            tooltip: 'Detener',
+                            scale: uiScale,
+                            onPressed: isExecutingInstructions || isPaused
+                                ? stopSimulation
+                                : null,
+                          ),
+                          SizedBox(width: controlGap),
+                          _buildSimulationControlButton(
+                            icon: isPaused
+                                ? Icons.play_arrow_rounded
+                                : Icons.pause_rounded,
+                            tooltip: isPaused ? 'Reanudar' : 'Pausar',
+                            scale: uiScale,
+                            onPressed: isExecutingInstructions || isPaused
+                                ? togglePause
+                                : null,
+                          ),
+                          SizedBox(width: controlGap),
+                          _buildSimulationControlButton(
+                            icon: Icons.restart_alt_rounded,
+                            tooltip: 'Reiniciar',
+                            scale: uiScale,
+                            onPressed: restartSimulation,
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: rowGap),
+                      Expanded(
+                        child: Container(
+                          padding: EdgeInsets.all(gridFramePadding),
+                          decoration: BoxDecoration(
+                            color: _gridFrame,
+                            borderRadius: BorderRadius.circular(
+                              gridFrameRadius,
+                            ),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(
+                              gridRadius,
+                            ),
+                            child: SimulationArea(
+                              instructions: instructions,
+                              paused: isPaused,
+                              width: double.infinity,
+                              height: double.infinity,
+                              useImage: true,
+                              botImagePath: 'assets/atta_bot.svg',
+                              onInstructionChange: (instruction) {
+                                WidgetsBinding.instance
+                                    .addPostFrameCallback((_) {
+                                  if (mounted) {
+                                    setState(() {
+                                      currentInstruction = instruction;
+                                    });
+                                  }
+                                });
+                              },
+                              onExecutionStateChanged: (isExecuting) {
+                                WidgetsBinding.instance
+                                    .addPostFrameCallback((_) {
+                                  if (mounted) {
+                                    setState(() {
+                                      isExecutingInstructions = isExecuting;
+                                      if (!isExecuting) {
+                                        isPaused = false;
+                                        _closeCycleStatus();
+                                      }
+                                    });
+                                  }
+                                });
+                              },
+                              onCycleExecutionStateChanged: (isExecutingCycle) {
+                                WidgetsBinding.instance
+                                    .addPostFrameCallback((_) {
+                                  if (mounted) {
+                                    setState(() {
+                                      isExecutingCycleInstruction =
+                                          isExecutingCycle;
+                                    });
+                                  }
+                                });
+                              },
+                              stopSignal: stopSignal,
+                              restartSignal: restartSignal,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 18),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildPageIndicator(false),
-                        const SizedBox(width: 10),
-                        _buildPageIndicator(false),
-                        const SizedBox(width: 10),
-                        _buildPageIndicator(true),
+                      if (instructionLabel.isNotEmpty) ...[
+                        SizedBox(height: 10 * uiScale),
+                        Center(
+                          child: Text(
+                            instructionLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white.withValues(
+                                alpha: 0.78,
+                              ),
+                              fontSize: captionSize,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
+                        ),
                       ],
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
