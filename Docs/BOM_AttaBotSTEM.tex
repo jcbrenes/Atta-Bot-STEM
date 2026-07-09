@@ -1,0 +1,75 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{geometry}
+\geometry{a4paper, margin=1.8cm}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{float}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=blue,
+    pdftitle={BOM},
+}
+
+\title{\textbf{Bill of Materials (BOM)
+y Costos de Prototipado}}
+\author{AttaBot STEM}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+Se presenta a continuación la lista de materiales de la versión del robot AttaBotStem más reciente: 
+
+\begin{table}[H]
+    \centering
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabularx}{\textwidth}{@{} l c l X c @{}}
+        \toprule
+        \textbf{Nombre} & \textbf{Cant.} & \textbf{Nº de Parte} & \textbf{Enlace} & \textbf{Costo Unit.} \\
+        \midrule
+        Motor DC con encoder & 2 & ROB-CB0N20 & \href{https://www.crcibernetica.com/n20-gearmotor-with-encoder-and-wheel/}{Referencia} & \$14.95 \\
+        Batería Lipo 3.7V 2500mAh & 1 & ADA-328 & \href{https://www.crcibernetica.com/lithium-ion-polymer-battery-3-7v-2500mah/}{Referencia} & \$17.95 \\
+        Boost Battery Manager 1000C & 1 & ADA-2465 & \href{https://www.crcibernetica.com/powerboost-1000-charger-rechargeable-5v-lipo-usb-boost-1a-1000c/}{Referencia} & \$32.95 \\
+        Soporte Motor Micro & 2 & ROB-CB02443 & \href{https://www.crcibernetica.com/micro-gearmotor-support-bracket/}{Referencia} & \$0.75 \\
+        3pi N20 Ball Caster & 1 & ROB-CB1818 & \href{https://www.crcibernetica.com/3pi-n20-ball-caster/}{Referencia} & \$2.75 \\
+        IdeaBoard & 1 & ROB-CBIB01 & \href{https://www.crcibernetica.com/crcibernetica-ideaboard/}{Referencia} & \$39.95 \\
+        Servomotor MG90S & 1 & MG90S & \href{https://www.crcibernetica.com/mg90s-micro-servo-with-metal-gears/}{Referencia} & \$6.95 \\
+        Sensor Infrarrojo delantero & 2 & SEN-CB0006 & \href{https://www.crcibernetica.com/infrared-obstacle-avoidance-module/}{Referencia} & \$2.95 \\
+        Sensor Infrarrojo track & 2 & SEN-CB0005 & \href{https://www.crcibernetica.com/track-sensor-module/}{Referencia} & \$1.95 \\
+        Kit conectores Dupont & 1 & KIT-CB0012 & \href{https://www.crcibernetica.com/dupont-connector-assorted-kit/}{Referencia} & \$8.95 \\
+        Kit espaciadores Nylon M3 & 1 & TOL-CB0513 & \href{https://www.crcibernetica.com/m3-nylon-screw-black-hex-screw-nut-nylon-pcb-standoff-assortment-kit-250pcs/}{Referencia} & \$15.95 \\
+        Ribbon Cable (6-wire) & 1 & CAB-10646 & \href{https://www.crcibernetica.com/ribbon-cable-6-wire-15ft/}{Referencia} & \$4.50 \\
+        \bottomrule
+    \end{tabularx}
+    \caption{Lista de materiales referente a la tienda costarricense CR Cibernética.}
+\end{table}
+
+\vspace{1.5em}
+
+Asimismo, se detallan los costos estimados de impresión y cortes de acrílico para el prototipo:
+
+\begin{table}[H]
+    \centering
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabularx}{\textwidth}{@{} l c X c @{}}
+        \toprule
+        \textbf{Descripción} & \textbf{Material} & \textbf{Detalles} & \textbf{Costo Est. (\$)} \\
+        \midrule
+        Cortes Láser & Acrílico & Costo por minuto & En espera \\
+        Impresión 3D & PLA / ABS & ₡50 por gramo (120g) & 13.21 \\
+        \bottomrule
+    \end{tabularx}
+    \caption{Estimación de costos de manufactura para el prototipo según precios de Impresión y Corte en Laboratorio LAIMI-TEC Sede Cartago.}
+\end{table}
+
+Con la información anterior se puede estimar que el prototipo completo tiene un precio total de \$184.41 (aproximadamente ₡83\,765). Cabe destacar que ciertos componentes, como los kits de espaciadores, conectores Dupont y cable Ribbon no son vendidos por separado, y adquirir uno de estos da abasto para armar hasta 15 prototipos completos, lo cual reduce el costo unitario a \$156.92 (aproximadamente ₡70\,890).
+
+\end{document}
