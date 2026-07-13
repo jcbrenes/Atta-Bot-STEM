@@ -12,7 +12,7 @@ Sin embargo la piezas piezas "Bumper Trasero" y "Esquinero Trasero" fueron cread
 
 
 
-La carpeta de Set de Herramientas son todos los archivos referentes al TFG del estudiante Jose Carlos.
+La carpeta de Set de Herramientas son todos los archivos referentes al TFG del estudiante Jose Carlos. En en ensamble Completo YA se encuentra el ensamble de Jose Carlos del Set de Herramientas incluido. Si que quisiera suprimir use como guia la imagen "GuiaParaQuitarElSetDeHerrmientasDentroDelEnsamble.png", esto sería seleccionando las carpetas del ensamble que interesan y usando la operación ISOLATE. 
 
 
 
@@ -24,7 +24,7 @@ La Carpeta de "Molde para Curva Trasera" contiene todo el trabajo en inventor re
 
 
 
-Las carpetas de "OldVersions" que aparecen por todo lado, son creadas automáticamente por Inventor cuando se actualizan archivos. Estarlas limpiando continuamente es una buena práctica para no llenar el git de basura, ya que el control de versiones se maneja con los commits directamente en el GitHub. 
+Las carpetas de "OldVersions" que aparecen por todo lado, son creadas automáticamente por Inventor cuando se actualizan archivos. Estarlas limpiando continuamente es una buena práctica para no llenar el git de basura, ya que el control de versiones se maneja con los commits directamente en el GitHub.
 
 
 
