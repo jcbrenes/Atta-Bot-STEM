@@ -1,0 +1,27 @@
+# sketch.yaml
+#
+# Purpose: this file lets arduino-cli know which board and port to use
+# automatically, so you don't have to type --fqbn and -p flags every time
+# you run a compile or upload command.
+#
+# This is a fixed convention of arduino-cli: the file MUST be named
+# exactly "sketch.yaml" and MUST be placed inside the sketch folder
+# (same folder as the .ino file). arduino-cli looks for this filename
+# automatically when it runs — nothing else in this repo points to it.
+#
+# If you're coming from the Arduino IDE: this replaces the board and
+# port selection you used to do manually from the IDE's dropdown menus
+# at the top of the window (Tools > Board, Tools > Port).
+
+# FQBN = Fully Qualified Board Name.
+# A structured string in the format <vendor>:<architecture>:<board>
+# that tells arduino-cli exactly which board to compile for
+# (this affects compiler flags, memory layout, and pin mappings).
+# Find your board's FQBN with: arduino-cli board listall <search term>
+default_fqbn: esp32:esp32:esp32
+
+# Serial port the board is connected to.
+# Find yours with: arduino-cli board list (while the board is plugged in)
+# NOTE: this can change between machines/USB ports, so if compiling
+# works but upload fails with a port error, check this value first.
+default_port: /dev/ttyUSB0

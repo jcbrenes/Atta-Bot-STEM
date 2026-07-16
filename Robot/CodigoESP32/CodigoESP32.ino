@@ -1,5 +1,5 @@
-#include <ESP32Servo.h>
-#include <ArduinoBLE.h>
+#include <ESP32Servo.h> //3.0.2
+#include <ArduinoBLE.h> //1.3.7
 #include <string>
 using namespace std;
 

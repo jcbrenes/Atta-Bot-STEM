@@ -1,0 +1,76 @@
+// tasks.json
+//
+// Purpose: lets VS Code run terminal commands (compile, upload) through
+// a keyboard shortcut or menu, instead of typing them manually every time.
+// VS Code reads this file and builds its internal task list from it.
+//
+// This is a VS Code convention: the file MUST be named "tasks.json" and
+// MUST be placed inside a ".vscode" folder at the repo root. VS Code
+// looks for it automatically when the folder is opened as a workspace.
+//
+// NOTE: this file only knows how to run a command from a given folder
+// (see "cwd" below). It does NOT know about sketch.yaml or arduino-cli's
+// internal conventions — those are handled entirely by arduino-cli itself
+// once the terminal is inside the sketch folder.
+//
+// NOTE 2: normally .json files do not support comments. This file works
+// with them only because VS Code parses it as JSONC (JSON with Comments),
+// a special relaxed format VS Code uses for its own config files.
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      // Name shown when picking this task from the command palette
+      "label": "Arduino: Compile",
+
+      // "shell" means: run this as if typed directly into a terminal
+      "type": "shell",
+
+      // The actual command executed. Compiling here uses arduino-cli,
+      // which will look for sketch.yaml in "cwd" (below) to know
+      // the board (FQBN) and port automatically.
+      "command": "arduino-cli compile .",
+
+      "options": {
+        // Working directory the command runs from.
+        // ${workspaceFolder} = the repo root VS Code has open.
+        // Must point to the folder containing the .ino file.
+        "cwd": "${workspaceFolder}/Robot/CodigoESP32"
+      },
+
+      // Leave empty unless you want VS Code to parse compiler
+      // output and highlight specific error lines automatically
+      "problemMatcher": [],
+
+      "group": {
+        "kind": "build",
+        // Makes this the task that runs when pressing Ctrl+Shift+B
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Arduino: Upload",
+      "type": "shell",
+
+      // Uploads the last compiled binary to the board connected
+      // at the port defined in sketch.yaml
+      "command": "arduino-cli upload .",
+
+      "options": {
+        "cwd": "${workspaceFolder}/Robot/CodigoESP32"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Arduino: Compile and Upload",
+
+      // Runs both tasks above instead of defining commands again
+      "dependsOn": ["Arduino: Compile", "Arduino: Upload"],
+
+      // "sequence" = run in order, and stop if Compile fails
+      // (without this, VS Code might run both at the same time)
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    }
+  ]
+}
