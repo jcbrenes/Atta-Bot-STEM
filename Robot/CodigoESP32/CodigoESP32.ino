@@ -1,5 +1,7 @@
 #include <ESP32Servo.h> //3.0.2
-#include <ArduinoBLE.h> //1.3.7
+#include <BLEDevice.h>
+#include <BLEServer.h>
+#include <BLEUtils.h>
 #include <string>
 using namespace std;
 
@@ -136,9 +138,50 @@ bool paro_emergencia=false;
 
 //variables para comunicación Bluetooth
 string mensajeBLE="ATINIAV020GD030CI003RE010GI090CIFINATFIN";  
-BLEService servicio("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
-BLEStringCharacteristic caracteristico("beb5483e-36e1-4688-b7f5-ea07361b26a8", BLERead | BLEWrite, 512);
-//char nombreBLErobot= "AttaBotSTEM";
+
+//***************************************************************************************
+// Global variables and callback classes for native ESP32 BLE (BLEDevice library)
+//***************************************************************************************
+
+BLEServer *pServer = NULL;               // Represents this ESP32 acting as a BLE server
+BLECharacteristic *pCharacteristic = NULL; // Pointer to the read/write characteristic 
+
+bool deviceConnected = false;   // true while a central (the App) is connected 
+bool nuevoMensajeBLE = false;   // true when a new write has arrived and hasn't been processed yet
+string mensajeBLEBuffer = "";   // Temporary storage for the incoming message, filled inside the callback
+
+//***************************************************************************************
+// Callback class for connection/disconnection events.
+// onConnect/onDisconnect are called automatically by the BLE stack 
+//***************************************************************************************
+class MyServerCallbacks: public BLEServerCallbacks {
+    void onConnect(BLEServer* pServer) {
+      deviceConnected = true;
+    }
+
+    void onDisconnect(BLEServer* pServer) {
+      deviceConnected = false;
+      // IMPORTANT: native ESP32 BLE does NOT restart advertising automatically
+      // after a disconnect. Without this, the device becomes invisible to new
+      // connections after the first disconnect. We'll call this here so a phone
+      // can always find and reconnect to the robot.
+      pServer->getAdvertising()->start();
+    }
+};
+
+//***************************************************************************************
+// Callback class for write events on the characteristic.
+// onWrite is called automatically the moment the App writes a new value 
+//***************************************************************************************
+class MyCharacteristicCallbacks: public BLECharacteristicCallbacks {
+    void onWrite(BLECharacteristic *pCharacteristic) {
+      String valorRecibido = pCharacteristic->getValue();
+      if (valorRecibido.length() > 0) {
+        mensajeBLEBuffer = string(valorRecibido.c_str());
+        nuevoMensajeBLE = true;
+      }
+    }
+};
 
 //apuntadores y variables para la lista de instrucciones
 enum posibles_Instrucciones {inst_Avanzar=1, inst_Retroceder, inst_GiroIzquierdo, inst_GiroDerecho, 
@@ -284,16 +327,41 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(leftEncoderB), leftUpdateEncoder, CHANGE);
 
   Serial.begin(115200);
-  //Inicialización comunicación bluetooth BLE
-  if (!BLE.begin()) {
-    Serial.println("starting BLE failed!");
-    while (1);
-  }
-  BLE.setLocalName("AttaBotSTEM");
-  BLE.setAdvertisedService(servicio);
-  servicio.addCharacteristic(caracteristico);
-  BLE.addService(servicio);
-  BLE.advertise();
+    //Inicialización comunicación bluetooth BLE
+
+  //***************************************************************************************
+  // Inicialización nativa de BLE para ESP32 
+  //***************************************************************************************
+
+  // Establece el nombre que se anuncia del dispositivo 
+  BLEDevice::init("AttaBotSTEM");
+
+  // Crea el objeto servidor y registra los callbacks de conexión/desconexión
+  // para que deviceConnected se actualice automáticamente
+  pServer = BLEDevice::createServer();
+  pServer->setCallbacks(new MyServerCallbacks()); // Callback es cuando un dispositivo se conecta al server
+
+  // Crea el servicio usando el UUID. Este número es un acuerdo entre la APP y el robot. Se puede cambiar a otro UUID, pero se debe cambiar también en la APP.
+  BLEService *pService = pServer->createService("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
+
+  // Crea el característico usando el UUID y permisos de
+  // Lectura/Escritura 
+  pCharacteristic = pService->createCharacteristic(
+                      "beb5483e-36e1-4688-b7f5-ea07361b26a8", Este número es un acuerdo entre la APP y el robot. Se puede cambiar a otro UUID, pero se debe cambiar también en la APP.
+                      BLECharacteristic::PROPERTY_READ |
+                      BLECharacteristic::PROPERTY_WRITE
+                    );
+
+  // Registra el callback onWrite  para que nuevoMensajeBLE se active
+  // automáticamente 
+  pCharacteristic->setCallbacks(new MyCharacteristicCallbacks());
+
+  // Inicia el servicio — debe ocurrir después de crear todos los característicos
+  pService->start();
+
+  // Hace que el servicio sea detectable, y luego inicia el anuncio (advertising)
+  pServer->getAdvertising()->addServiceUUID("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
+  pServer->getAdvertising()->start(); 
 
   tiempoDeEncendidoDeLed = millis();
 }
@@ -302,7 +370,7 @@ void setup() {
 
 void loop() {
  
-  BLEDevice central = BLE.central();
+  
 
   lecturaInfrarrojoDerecho=digitalRead(rightInfraredSensor);
   lecturaInfrarrojoIzquierdo=digitalRead(leftInfraredSensor);
@@ -317,7 +385,7 @@ void loop() {
     case ESPERA:  { 
       // Leer la conexión BLE periódicamente
       if (millis() >= tiempoPasadaLecturaBT + esperaBT) {
-        leerBluetooth(central);
+        leerBluetooth();
         tiempoPasadaLecturaBT = millis();
       }
 
@@ -382,7 +450,7 @@ void loop() {
         rightEncoderPos = 0; 
         leftEncoderPos = 0;
         estado = MOVERSE;
-
+Interpreta_mensajeBLE
       }else if (instruccion == inst_Retroceder) {
         estado = MOVERSE;
         valor_instruccion = valor_instruccion * -1;
@@ -430,7 +498,7 @@ void loop() {
 
       // Leer la conexión BLE periódicamente
       if (millis() >= tiempoPasadaLecturaBT + esperaBT) {
-        leerBluetooth(central);
+        leerBluetooth();
         tiempoPasadaLecturaBT = millis();
       }
 
@@ -466,7 +534,7 @@ void loop() {
 
       // Leer la conexión BLE periódicamente
       if (millis() >= tiempoPasadaLecturaBT + esperaBT) {
-        leerBluetooth(central);
+        leerBluetooth();
         tiempoPasadaLecturaBT = millis();
       }
 
@@ -600,7 +668,7 @@ void loop() {
     case WHILE: {
       // Leer la conexión BLE periódicamente por si se requiere salir de un loop infinito
       if (millis() >= tiempoPasadaLecturaBT + esperaBT) {
-        leerBluetooth(central);
+        leerBluetooth();
         tiempoPasadaLecturaBT = millis();
       }
 
@@ -1035,29 +1103,28 @@ void Interpreta_mensajeBLE (string mensaje) {
 //si llegó un mensaje nuevo. En tal caso, llama a la interpretación del nuevo mensaje.
 //También determina si se trata de una instrucción para la que se debería parpadear el
 //led en azul.
-//
-//@param central Variable que indica si hay un central conectado con este dispositivo
 //***************************************************************************************
-void leerBluetooth(BLEDevice central) {
-  if (central) {
+void leerBluetooth() {
+  // deviceConnected is updated automatically by MyServerCallbacks 
+  flagBluetooth = deviceConnected; // Este flag se usa para el parpadeo del led azul, que indica si hay conexión BLE.
 
-      if (central.connected()) {//era un while
-        flagBluetooth = 1;
-        if (caracteristico.written()) {
-          mensajeBLE = string( caracteristico.value().c_str() );
-          Serial.println(mensajeBLE.c_str()); 
-          caracteristico.writeValue("");
-          Interpreta_mensajeBLE(mensajeBLE);
-          if (!flagParar) { // si no se trata de un comando de detener, se parpadea el LED RGB
-            recibeProgra = 1;
-            recibePrograTiempo0 = millis();
-          }
-        }
-      } 
-    } else {
-        flagBluetooth = 0;
+  if (deviceConnected && nuevoMensajeBLE) {
+    mensajeBLE = mensajeBLEBuffer;
+    Serial.println(mensajeBLE.c_str());
+
+    // Clears the flag so the same message isn't processed again next loop
+    // replaces: caracteristico.writeValue("")
+    nuevoMensajeBLE = false;
+
+    Interpreta_mensajeBLE(mensajeBLE);
+    if (!flagParar) {
+      recibeProgra = 1;
+      recibePrograTiempo0 = millis();
     }
+  }
 }
+
+
 
 
 
