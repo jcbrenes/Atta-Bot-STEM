@@ -54,7 +54,7 @@
 
 Este documento describe algunos conceptos del protocolo de comunicación utilizado entre la aplicación (App) y el robot Atta-Bot STEM. La primera etapa abarca el enlace mediante Bluetooth Low Energy (BLE) entre la aplicación (Central/Client) y el microcontrolador ESP32 del robot (Periférico/Server), implementado mediante la biblioteca nativa \texttt{BLEDevice} del core \texttt{esp32:esp32}. La segunda etapa describe el formato y significado de los comandos que viajan sobre ese enlace, definidos en el protocolo de instrucciones propio del proyecto.
 
-El objetivo es ofrecer una referencia para que al revisar el código fuente (CodigoESP32.ino) se puede reconocer con facilidad qué representa cada línea relacionada con la comunicación. Las fuentes completas utilizadas como base para la construcción del protocolo se encuentran en el apartado de referencias [\ref{sec:referencias}].
+El objetivo es ofrecer una referencia para que al revisar el código fuente (CodigoESP32.ino) se pueda reconocer con facilidad qué representa cada línea relacionada con la comunicación. Las fuentes completas utilizadas como base para la construcción del protocolo se encuentran en el apartado de referencias [\ref{sec:referencias}].
 
 \section{Conceptos básicos de BLE}
 \label{sec:conceptos}
@@ -82,7 +82,7 @@ La siguiente tabla resume conceptos utilizados en este proyecto:
         El ESP32 actúa como el dispositivo que espera conexiones, en lugar de buscarlas activamente. En el código: \texttt{BLEServer}, \texttt{BLEDevice::createServer()}. \\
         \addlinespace
         Callback de conexión &
-        Función que la pila BLE ejecuta automáticamente al conectarse o desconectarse un dispositivo; nunca se llama manualmente. En el código: clase \texttt{BLEServerCallbacks}, métodos \texttt{onConnect()} / \texttt{onDisconnect()}. \\
+        Función que la pila BLE ejecuta automáticamente al conectarse o desconectarse con un dispositivo; nunca se llama manualmente. En el código: clase \texttt{BLEServerCallbacks}, métodos \texttt{onConnect()} / \texttt{onDisconnect()}. \\
         \addlinespace
         Servicio &
         Agrupa una o más características bajo un identificador único (UUID); es una categoría dentro de los datos que expone el servidor. En el código: \texttt{BLEService}, \texttt{createService()}. \\
@@ -91,7 +91,7 @@ La siguiente tabla resume conceptos utilizados en este proyecto:
         Una pieza de datos específica dentro de un servicio, con su propio UUID, que puede leerse y/o escribirse -- el equivalente a una nota puntual dentro del ``tablero'' de datos del servidor. En el código: \texttt{BLECharacteristic}, \texttt{createCharacteristic()}. \\
         \addlinespace
         Propiedades del característico &
-        Determinan qué operaciones puede realizar el dispositivo remoto sobre ese dato: solo lectura, solo escritura, o ambas. En el código: \texttt{PROPERTY\_READ}, \texttt{PROPERTY\_WRITE}. \\
+        Determinan qué operaciones puede realizar el dispositivo remoto sobre ese dato: lectura, escritura, o ambas. En el código: \texttt{PROPERTY\_READ}, \texttt{PROPERTY\_WRITE}. \\
         \addlinespace
         Callback de escritura &
         Se ejecuta automáticamente cuando el dispositivo remoto escribe un nuevo valor en el característico. En el código: clase \texttt{BLECharacteristicCallbacks}, método \texttt{onWrite()}. \\
@@ -107,7 +107,7 @@ La siguiente tabla resume conceptos utilizados en este proyecto:
 \section{Arquitectura de implementación en el proyecto}
 \label{sec:arquitectura}
 
-El robot utliza un único servicio con un único característico de lectura/escritura, que transporta texto libre. El significado de cada mensaje no lo define BLE, sino el protocolo de aplicación propio del proyecto (Sección~\ref{sec:protocolo}). BLE actúa únicamente como canal de transporte, mientras que la interpretación del contenido ocurre en el firmware, dentro de la función \texttt{Interpreta\_mensajeBLE()}. Cabe destacar que las librerías utilizadas (<BLEDevice.h>, <BLEServer.h>, <BLEUtils.h>) al ser nativas del core \texttt{esp32:esp32} no requieren instalación previa. 
+El robot utliza un único servicio con un único característico de lectura/escritura, que transporta texto libre. El significado de cada mensaje no lo define BLE, sino el protocolo de aplicación propio del proyecto (Sección~\ref{sec:protocolo}). BLE actúa únicamente como canal de transporte, mientras que la interpretación del contenido ocurre en el firmware, dentro de la función \texttt{Interpreta\_mensajeBLE()}. Cabe destacar que las librerías utilizadas (<BLEDevice.h>, <BLEServer.h>, <BLEUtils.h>), al ser nativas del core \texttt{esp32:esp32}, no requieren instalación previa. 
 
 El flujo general de la comunicación se puede sintetizar de la siguiente forma:
 Un dispostivo se conecta a un robot Atta. Los avisos de conexión exitosa y recepción de un nuevo comando son detectados con la función \texttt{leerBluetooth()}, la cual revisa variables anidadas a los \textit{callback} definidas por la libería constantemente. Seguidamente la App envía un comando, esto es escribir en el característico con UUID único; ejemplo: ATINIAV300GI090ATFIN - avanzar 300 cm , girar a la izquierda 90\degree. Cuando el mensaje es detectado se llama la función \texttt{Interpreta\_mensajeBLE()} que descompone el mensaje  con una concatenación de condicionales, para así determinar finalmente los siguientes pasos de la máquina de estados general. 
@@ -141,7 +141,7 @@ pServer->getAdvertising()->start();
 
 \subsection{Callbacks}
 
-Dado que \texttt{BLEDevice} funciona mediante eventos asíncronos no es posible ``preguntar'' en cada iteración de \texttt{loop()} si llegó un mensaje nuevo, el proyecto define dos clases de callback. La de escritura sobre el característico es la más relevante para el protocolo de mensajes:
+Dado que \texttt{BLEDevice} funciona mediante eventos asíncronos no es posible ``preguntar'' en cada iteración de \texttt{loop()} si llegó un mensaje nuevo, por lo que el proyecto define dos clases de callback. La de escritura sobre el característico es la más relevante para el protocolo de mensajes:
 
 \begin{lstlisting}[caption={Callback de escritura sobre el característico}, label={lst:callback-write}]
 class MyCharacteristicCallbacks: public BLECharacteristicCallbacks {
@@ -204,7 +204,7 @@ La bandera \texttt{nuevoMensajeBLE} se revisa dentro de \texttt{loop()} (a trav�
     \caption{Lista de comandos del protocolo de instrucciones.}
 \end{table}
 
-\textbf{Nota 1.} En todos los comandos con \texttt{\#\#\#}, este representa un número entero de 3 dígitos sin signo.
+\textbf{Nota 1.} En todos los comandos con \texttt{\#\#\#}, éste representa un número entero de 3 dígitos sin signo.
 
 \textbf{Nota 2.} Los comandos relacionados con instrucciones que el robot debe ejecutar en secuencia se envían dentro de los encabezados de ``mensaje con instrucciones'' (\texttt{ATINI} / \texttt{ATFIN}). Los comandos que deben ejecutarse con prioridad sobre cualquier otra tarea se envían dentro de los encabezados de control (\texttt{ATCOI} / \texttt{ATCOF}).
 
