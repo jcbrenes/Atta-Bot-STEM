@@ -3,21 +3,44 @@
 #include <BLEServer.h>
 #include <BLEUtils.h>
 #include <string>
+#include <Preferences.h> // Librería de almacenamiento de preferencias/credenciales para ESP32
 using namespace std;
 
 // Robot constants
+
+Preferences prefs;
+
+float rightPulsesPerRev = 0;
+float leftPulsesPerRev = 0;
+float kpSpeed = 0;
+float kiSpeed = 0;
+float kdSpeed = 0.0;
+String deviceName = "";
+
+
+void loadConfig() {
+  prefs.begin("Atta-Creds", true); // true = read-only
+  deviceName = prefs.getString("deviceName", "");
+  rightPulsesPerRev = prefs.getFloat("Rppr", 0.0);
+  leftPulsesPerRev = prefs.getFloat("Lppr", 0.0);
+  kpSpeed = prefs.getFloat("kp", 0.0);
+  kiSpeed = prefs.getFloat("ki", 0.0);
+  kdSpeed = prefs.getFloat("kd", 0.0);
+  prefs.end();
+}
+
 const int samplingTime = 25; // units: miliseconds
-const float rightPulsesPerRev = 834; // number of pulses from a single encoder output, for the right motor
-const float leftPulsesPerRev = 834; // number of pulses from a single encoder output, for the left motor
+//const float rightPulsesPerRev = 834; // number of pulses from a single encoder output, for the right motor
+//const float leftPulsesPerRev = 834; // number of pulses from a single encoder output, for the left motor
 const float wheelRadius = 22; // Wheel circumference = 139.5mm
 const float distanceWheelToWheel = 120; // actualizado a chasís v2.4 
 const float distanceCenterToWheel = distanceWheelToWheel / 2 ; // Turning radius of the robot, distance in mm between the center and one wheel
 
 // Constants for PID control with samplingTime = 25ms
 const float targetSpeed = 120.0; // Target speed for the robot in mm/s
-const float kpSpeed = 2; // Proportional constant for speed control 0.75, 1.1
-const float kiSpeed = 2; // Integral constant for speed control
-const float kdSpeed = 0.0; // Derivative constant for speed control (set to zero for no derivative action)
+//const float kpSpeed = 2; // Proportional constant for speed control 0.75, 1.1
+//const float kiSpeed = 2; // Integral constant for speed control
+//const float kdSpeed = 0.0; // Derivative constant for speed control (set to zero for no derivative action)
 
 // Constants for PID control implementation
 const int minIntegralErrorSpeed = -255; // Minimum value for integral error to avoid windup
@@ -281,6 +304,7 @@ void leftUpdateEncoder() {
 
 void setup() {
 
+
   // Set the PWM properties (50 Hz is typical for servos)
   myServo.setPeriodHertz(50);    // Standard 50Hz servo
   myServo.attach(servoPin, 500, 2400);  // Attach the servo on the pin with min/max pulse widths
@@ -327,6 +351,12 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(leftEncoderB), leftUpdateEncoder, CHANGE);
 
   Serial.begin(115200);
+
+   loadConfig(); //Carga Parámetros de configuración desde la memoria no volátil del ESP32. Credentials/Preferences
+
+    Serial.print("Loaded device name: [");
+    Serial.print(deviceName);
+    Serial.println("]");
     //Inicialización comunicación bluetooth BLE
 
   //***************************************************************************************
@@ -334,8 +364,8 @@ void setup() {
   //***************************************************************************************
 
   // Establece el nombre que se anuncia del dispositivo 
-  BLEDevice::init("AttaBotSTEM");
-
+  //BLEDevice::init(deviceName.c_str()); // Use the device name loaded from preferences
+  BLEDevice::init(deviceName);
   // Crea el objeto servidor y registra los callbacks de conexión/desconexión
   // para que deviceConnected se actualice automáticamente
   pServer = BLEDevice::createServer();
@@ -347,7 +377,7 @@ void setup() {
   // Crea el característico usando el UUID y permisos de
   // Lectura/Escritura 
   pCharacteristic = pService->createCharacteristic(
-                      "beb5483e-36e1-4688-b7f5-ea07361b26a8", Este número es un acuerdo entre la APP y el robot. Se puede cambiar a otro UUID, pero se debe cambiar también en la APP.
+                      "beb5483e-36e1-4688-b7f5-ea07361b26a8", //Este número es un acuerdo entre la APP y el robot. Se puede cambiar a otro UUID, pero se debe cambiar también en la APP.
                       BLECharacteristic::PROPERTY_READ |
                       BLECharacteristic::PROPERTY_WRITE
                     );
@@ -450,7 +480,6 @@ void loop() {
         rightEncoderPos = 0; 
         leftEncoderPos = 0;
         estado = MOVERSE;
-Interpreta_mensajeBLE
       }else if (instruccion == inst_Retroceder) {
         estado = MOVERSE;
         valor_instruccion = valor_instruccion * -1;

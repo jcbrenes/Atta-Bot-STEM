@@ -36,6 +36,7 @@
         // ${workspaceFolder} = the repo root VS Code has open.
         // Must point to the folder containing the .ino file.
         "cwd": "${workspaceFolder}/Robot/CodigoESP32"
+        //"cwd": "${workspaceFolder}/Robot/CodigoESP32/Preferences"
       },
 
       // Leave empty unless you want VS Code to parse compiler
@@ -57,7 +58,8 @@
       "command": "arduino-cli upload .",
 
       "options": {
-        "cwd": "${workspaceFolder}/Robot/CodigoESP32"
+      "cwd": "${workspaceFolder}/Robot/CodigoESP32"
+        //"cwd": "${workspaceFolder}/Robot/CodigoESP32/Preferences"
       },
       "problemMatcher": []
     },
