@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
-
+import 'package:file_saver/file_saver.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:proyecto_tec/config/app_config.dart';
 
@@ -107,4 +107,44 @@ class FileManagementService {
 
     return true;
   }
+
+Future<void> exportFile(String fileName, String exportPath) async {
+    final Directory workingDirectory = await getApplicationDocumentsDirectory();
+    final Directory loadDir = Directory('${workingDirectory.path}$savePath');
+
+    final File file = File('${loadDir.path}/$fileName');
+
+    if (!await file.exists()) throw FileManagementErrors.fileNotFound;
+
+    final String fileData = await file.readAsString();
+
+    final File exportFile = File('$exportPath/$fileName');
+    await exportFile.writeAsString(fileData);
+  }
+
+Future<void> saveFileToFolder(String fileName) async {
+    final Directory workingDirectory = await getApplicationDocumentsDirectory();
+    final Directory loadDir = Directory('${workingDirectory.path}$savePath');
+
+    final File file = File('${loadDir.path}/$fileName');
+
+    if (!await file.exists()) throw FileManagementErrors.fileNotFound;
+
+
+    final fileBytes = await file.readAsBytes();
+
+    String cleanName = fileName;
+    if (fileName.toLowerCase().endsWith('.dat')) {
+      cleanName = fileName.substring(0, fileName.length - 4);
+    }
+
+    // Use FileSaver to save the file to the folder selected by the user
+    await FileSaver.instance.saveAs(
+      name: cleanName,
+      bytes: fileBytes,
+      fileExtension: "json", 
+      mimeType: MimeType.json, 
+    );
+  }
+    
 }
