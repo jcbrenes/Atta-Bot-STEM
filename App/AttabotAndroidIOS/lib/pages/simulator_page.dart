@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_tec/pages/bot_control_page.dart';
 import 'package:proyecto_tec/features/simulator/dialogs/simulator_actions_dialog.dart';
@@ -23,13 +24,7 @@ class SimulatorPage extends StatefulWidget {
 }
 
 class _SimulatorPageState extends State<SimulatorPage> {
-  List<String> availableFiles = [
-    'instrucciones1.dat',
-    'instrucciones2.dat',
-    'instrucciones3.dat',
-  ];
-
-  String selectedFile = 'instrucciones1.dat';
+  String selectedFile = 'Seleccionar archivo .dart';
   NavigationService navService = DependencyManager().getNavigationService();
   String currentInstruction = '';
   bool isPaused = false;
@@ -43,6 +38,44 @@ class _SimulatorPageState extends State<SimulatorPage> {
 
   bool _hasOpenCycleLabel(String instruction) {
     return instruction.toLowerCase().contains('ciclo abierto');
+  }
+
+  Future<void> _pickDartFile() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['dart'],
+        allowMultiple: false,
+      );
+
+      if (!mounted || result == null || result.files.isEmpty) return;
+
+      final file = result.files.single;
+      final fileName = file.name;
+      final isDartFile = fileName.toLowerCase().endsWith('.dart');
+
+      // Keep a second validation because some platform file pickers can
+      // return a file outside the requested filter.
+      if (!isDartFile) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Solo puedes seleccionar archivos .dart'),
+          ),
+        );
+        return;
+      }
+
+      setState(() {
+        selectedFile = fileName;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo abrir el explorador de archivos'),
+        ),
+      );
+    }
   }
 
   void _closeCycleStatus() {
@@ -222,53 +255,49 @@ class _SimulatorPageState extends State<SimulatorPage> {
                           ),
                           SizedBox(width: smallGap),
                           Expanded(
-                            child: Container(
-                              height: dropdownHeight,
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 8 * uiScale,
-                              ),
-                              decoration: BoxDecoration(
-                                border: Border(
-                                  bottom: BorderSide(
-                                    color: Colors.white.withValues(
-                                      alpha: 0.8,
-                                    ),
-                                    width: 1.2 * uiScale,
+                            child: Semantics(
+                              button: true,
+                              label: 'Seleccionar archivo Dart',
+                              child: InkWell(
+                                key: const Key('select-dart-file'),
+                                onTap: _pickDartFile,
+                                borderRadius: BorderRadius.circular(4),
+                                child: Container(
+                                  height: dropdownHeight,
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 8 * uiScale,
                                   ),
-                                ),
-                              ),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  value: selectedFile,
-                                  isExpanded: true,
-                                  icon: const Icon(
-                                    Icons.keyboard_arrow_down_rounded,
-                                    color: neutralWhite,
-                                    size: 16,
-                                  ),
-                                  dropdownColor: _panelBlue,
-                                  style: TextStyle(
-                                    color: neutralWhite,
-                                    fontSize: labelSize,
-                                    fontWeight: FontWeight.w600,
-                                    fontFamily: 'Poppins',
-                                  ),
-                                  items: availableFiles.map((file) {
-                                    return DropdownMenuItem(
-                                      value: file,
-                                      child: Text(
-                                        file,
-                                        overflow: TextOverflow.ellipsis,
+                                  decoration: BoxDecoration(
+                                    border: Border(
+                                      bottom: BorderSide(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.8,
+                                        ),
+                                        width: 1.2 * uiScale,
                                       ),
-                                    );
-                                  }).toList(),
-                                  onChanged: (value) {
-                                    if (value != null) {
-                                      setState(
-                                        () => selectedFile = value,
-                                      );
-                                    }
-                                  },
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          selectedFile,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            color: neutralWhite,
+                                            fontSize: labelSize,
+                                            fontWeight: FontWeight.w600,
+                                            fontFamily: 'Poppins',
+                                          ),
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.folder_open_rounded,
+                                        color: neutralWhite,
+                                        size: 16 * uiScale,
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
@@ -365,6 +394,18 @@ class _SimulatorPageState extends State<SimulatorPage> {
                         ],
                       ),
                       SizedBox(height: rowGap),
+                      Text(
+                        'Escala: 1 cuadrado = '
+                        '${SimulatorScale.gridCellCentimeters.toStringAsFixed(1)} cm '
+                        '· Robot: 1 cuadrado',
+                        style: TextStyle(
+                          color: neutralWhite.withValues(alpha: 0.72),
+                          fontSize: captionSize,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                      SizedBox(height: 6 * uiScale),
                       Expanded(
                         child: Container(
                           padding: EdgeInsets.all(gridFramePadding),

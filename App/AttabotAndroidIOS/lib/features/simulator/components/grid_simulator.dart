@@ -3,6 +3,23 @@ import 'package:flutter/material.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 import 'object_simulator.dart';
 
+/// Physical scale used by the simulator's top-down view.
+///
+/// The robot footprint is documented as 15.5 x 17.8 cm. Since the simulator
+/// uses square cells, the larger footprint dimension is used as the side of
+/// one cell so the robot is not represented smaller than its real footprint.
+class SimulatorScale {
+  static const double robotFootprintWidthCentimeters = 15.5;
+  static const double robotFootprintLengthCentimeters = 17.8;
+  static const double robotHeightCentimeters = 10.5;
+  static const double gridCellCentimeters = robotFootprintLengthCentimeters;
+  static const double robotFootprintCells = 1;
+
+  static double gridUnitsForCentimeters(double centimeters) {
+    return centimeters / gridCellCentimeters;
+  }
+}
+
 class SimulationArea extends StatefulWidget {
   final List<String> instructions;
   final double width;
@@ -53,7 +70,6 @@ class _SimulationAreaState extends State<SimulationArea> {
   static const double _defaultGridCellSize = 36;
   static const double _tabletColumns = 7;
   static const double _tabletMinGridCellSize = 68;
-  static const double _centimetersPerGridCell = 20;
   static const int _movementMillisecondsPerGridCell = 400;
   static const int _rotationMillisecondsPer90Degrees = 300;
   static const Duration _defaultAnimationDuration = Duration(milliseconds: 400);
@@ -403,7 +419,7 @@ class _SimulationAreaState extends State<SimulationArea> {
     final value = double.tryParse(match.group(1)!.replaceAll(',', '.'));
     if (value == null) return 1;
 
-    return value / _centimetersPerGridCell;
+    return SimulatorScale.gridUnitsForCentimeters(value);
   }
 
   Duration _movementAnimationDuration(String instruction) {
@@ -503,7 +519,7 @@ class _SimulationAreaState extends State<SimulationArea> {
       builder: (context, constraints) {
         final size = Size(constraints.maxWidth, constraints.maxHeight);
         _gridCellSize = _gridCellSizeFor(context, size);
-        final objectSize = _gridCellSize * 2;
+        final objectSize = _gridCellSize * SimulatorScale.robotFootprintCells;
         final robotLeft = (size.width - objectSize) / 2;
         final robotTop = (size.height - objectSize) / 2;
         const gridLineColor = Color(0xFFC8CDD8);
@@ -834,7 +850,8 @@ class _InstructionMarkerTooltip extends StatelessWidget {
         (markers.length * rowHeight) + ((markers.length - 1) * rowGap);
     final maxRequestedWidth = markers.fold<double>(
       _defaultWidth,
-      (currentMax, marker) => max(currentMax, _styleForLabel(marker.label).width),
+      (currentMax, marker) =>
+          max(currentMax, _styleForLabel(marker.label).width),
     );
     final tooltipWidth = min(
       maxRequestedWidth,
@@ -845,8 +862,9 @@ class _InstructionMarkerTooltip extends StatelessWidget {
     final canShowRight = rightCandidate + tooltipWidth <= canvasSize.width - 8;
     final left = canShowRight
         ? rightCandidate
-        : leftCandidate.clamp(8.0, canvasSize.width - tooltipWidth - 8.0)
-              .toDouble();
+        : leftCandidate
+            .clamp(8.0, canvasSize.width - tooltipWidth - 8.0)
+            .toDouble();
     final maxTop = max(8.0, canvasSize.height - estimatedHeight - 8.0);
     final top =
         (position.dy - (estimatedHeight / 2)).clamp(8.0, maxTop).toDouble();
