@@ -6,13 +6,14 @@ import 'object_simulator.dart';
 /// Physical scale used by the simulator's top-down view.
 ///
 /// The robot footprint is documented as 15.5 x 17.8 cm. Since the simulator
-/// uses square cells, the larger footprint dimension is used as the side of
-/// one cell so the robot is not represented smaller than its real footprint.
+/// uses square cells, the larger footprint dimension is rounded to 18 cm for
+/// a practical movement scale so the robot is not represented smaller than
+/// its real footprint.
 class SimulatorScale {
   static const double robotFootprintWidthCentimeters = 15.5;
   static const double robotFootprintLengthCentimeters = 17.8;
   static const double robotHeightCentimeters = 10.5;
-  static const double gridCellCentimeters = robotFootprintLengthCentimeters;
+  static const double gridCellCentimeters = 18;
   static const double robotFootprintCells = 1;
 
   static double gridUnitsForCentimeters(double centimeters) {
@@ -713,8 +714,11 @@ class GridBackgroundPainter extends CustomPainter {
       ..strokeWidth = 2.35
       ..style = PaintingStyle.stroke;
 
-    final startX = offset.dx % cellSize;
-    final startY = offset.dy % cellSize;
+    // Anchor the initial cell to the robot's edges. The robot is centered in
+    // the viewport and occupies one full cell, so the first grid lines must
+    // be half a cell away from the viewport center.
+    final startX = (size.width / 2 - cellSize / 2 + offset.dx) % cellSize;
+    final startY = (size.height / 2 - cellSize / 2 + offset.dy) % cellSize;
 
     for (double x = startX; x <= size.width; x += cellSize) {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), linePaint);
