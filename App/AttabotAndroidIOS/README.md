@@ -26,6 +26,30 @@ code .
 flutter run
 ```
 
+## Programas para el simulador
+
+El selector del simulador admite archivos `.dart` con las instrucciones
+educativas que la aplicación reconoce. El archivo se interpreta como una lista
+limitada de comandos; no ejecuta código Dart arbitrario. Si hay un error, la
+app indica la línea y mantiene intacta la simulación anterior.
+
+```dart
+void main() {
+  activarDeteccion();
+  repetir(2, () {
+    avanzar(18);
+    girarDerecha(90);
+  });
+  desactivarDeteccion();
+}
+```
+
+Comandos disponibles: `avanzar(cm)`, `retroceder(cm)`,
+`girarIzquierda(grados)`, `girarDerecha(grados)`, `activarDeteccion()`,
+`desactivarDeteccion()`, `activarLapiz()`, `desactivarLapiz()` y
+`repetir(veces, () { ... })`. Las distancias deben estar entre 1 y 999 cm; los
+giros, entre 1 y 360 grados; y los ciclos, entre 1 y 999 repeticiones.
+
 ## Estructura del proyecto
 El proyecto utiliza una estructura basada en Screaming Architecture y componentes, la cual se divide en tres capas principales:
 
@@ -93,5 +117,4 @@ Ya que el tiempo para documentar adecuadamente el proyecto fue limitado se recom
 - [Flutter Blue Plus](https://pub.dev/documentation/flutter_blue_plus/latest/)
 
 > **Nota:** Es posible que la documentacion de alguna de las dependencias no coincida con la version utilizada en este proyecto, para ello se recomienda revisar la documentacion de la version especifica en el archivo `pubspec.yaml`
-
 

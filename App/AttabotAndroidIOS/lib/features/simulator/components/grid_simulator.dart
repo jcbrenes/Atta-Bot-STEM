@@ -3,6 +3,24 @@ import 'package:flutter/material.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 import 'object_simulator.dart';
 
+/// Physical scale used by the simulator's top-down view.
+///
+/// The robot footprint is documented as 15.5 x 17.8 cm. Since the simulator
+/// uses square cells, the larger footprint dimension is rounded to 18 cm for
+/// a practical movement scale so the robot is not represented smaller than
+/// its real footprint.
+class SimulatorScale {
+  static const double robotFootprintWidthCentimeters = 15.5;
+  static const double robotFootprintLengthCentimeters = 17.8;
+  static const double robotHeightCentimeters = 10.5;
+  static const double gridCellCentimeters = 18;
+  static const double robotFootprintCells = 1;
+
+  static double gridUnitsForCentimeters(double centimeters) {
+    return centimeters / gridCellCentimeters;
+  }
+}
+
 class SimulationArea extends StatefulWidget {
   final List<String> instructions;
   final double width;
@@ -53,11 +71,12 @@ class _SimulationAreaState extends State<SimulationArea> {
   static const double _defaultGridCellSize = 36;
   static const double _tabletColumns = 7;
   static const double _tabletMinGridCellSize = 68;
-  static const double _centimetersPerGridCell = 20;
   static const int _movementMillisecondsPerGridCell = 400;
   static const int _rotationMillisecondsPer90Degrees = 300;
   static const Duration _defaultAnimationDuration = Duration(milliseconds: 400);
   double _gridCellSize = _defaultGridCellSize;
+  Offset _visibleWorldPosition = Offset.zero;
+  double _visibleRotation = 0;
   int _runVersion = 0;
   Duration _currentMovementAnimationDuration = _defaultAnimationDuration;
   Duration _currentRotationAnimationDuration = _defaultAnimationDuration;
@@ -67,6 +86,8 @@ class _SimulationAreaState extends State<SimulationArea> {
     super.initState();
     previousRotation = rotation;
     previousWorldPosition = worldPosition;
+    _visibleWorldPosition = worldPosition;
+    _visibleRotation = rotation;
     _startRun();
   }
 
@@ -170,6 +191,29 @@ class _SimulationAreaState extends State<SimulationArea> {
 
   void _stopRun() {
     _runVersion++;
+    if (mounted) {
+      setState(() {
+        final targetWorldPosition = worldPosition;
+        if (trailSegments.isNotEmpty &&
+            trailSegments.last.end == targetWorldPosition) {
+          final lastSegment = trailSegments.last;
+          trailSegments[trailSegments.length - 1] = _TrailSegment(
+            start: lastSegment.start,
+            end: _visibleWorldPosition,
+            penActive: lastSegment.penActive,
+          );
+          trailSegmentCount++;
+        }
+
+        worldPosition = _visibleWorldPosition;
+        previousWorldPosition = _visibleWorldPosition;
+        rotation = _visibleRotation;
+        previousRotation = _visibleRotation;
+        _currentMovementAnimationDuration = _defaultAnimationDuration;
+        _currentRotationAnimationDuration = _defaultAnimationDuration;
+        obstacleDetectionActive = false;
+      });
+    }
     widget.onInstructionChange?.call('');
     widget.onExecutionStateChanged?.call(false);
     widget.onCycleExecutionStateChanged?.call(false);
@@ -184,6 +228,8 @@ class _SimulationAreaState extends State<SimulationArea> {
       previousWorldPosition = Offset.zero;
       rotation = 0;
       previousRotation = 0;
+      _visibleWorldPosition = Offset.zero;
+      _visibleRotation = 0;
       obstacleDetectionActive = false;
       penActive = false;
       trailSegments.clear();
@@ -364,7 +410,11 @@ class _SimulationAreaState extends State<SimulationArea> {
       });
 
       if (stateChanged) {
-        final completedAnimation = await _waitFor(animationDuration, runId);
+        final completedAnimation = await _waitFor(
+          animationDuration,
+          runId,
+          allowPause: true,
+        );
         if (!completedAnimation || !_isRunActive(runId)) return;
       }
     }
@@ -372,6 +422,7 @@ class _SimulationAreaState extends State<SimulationArea> {
     final finishedCleanly = await _waitFor(
       const Duration(milliseconds: 50),
       runId,
+      allowPause: true,
     );
     if (!finishedCleanly || !_isRunActive(runId)) return;
 
@@ -403,7 +454,7 @@ class _SimulationAreaState extends State<SimulationArea> {
     final value = double.tryParse(match.group(1)!.replaceAll(',', '.'));
     if (value == null) return 1;
 
-    return value / _centimetersPerGridCell;
+    return SimulatorScale.gridUnitsForCentimeters(value);
   }
 
   Duration _movementAnimationDuration(String instruction) {
@@ -503,7 +554,7 @@ class _SimulationAreaState extends State<SimulationArea> {
       builder: (context, constraints) {
         final size = Size(constraints.maxWidth, constraints.maxHeight);
         _gridCellSize = _gridCellSizeFor(context, size);
-        final objectSize = _gridCellSize * 2;
+        final objectSize = _gridCellSize * SimulatorScale.robotFootprintCells;
         final robotLeft = (size.width - objectSize) / 2;
         final robotTop = (size.height - objectSize) / 2;
         const gridLineColor = Color(0xFFC8CDD8);
@@ -522,120 +573,128 @@ class _SimulationAreaState extends State<SimulationArea> {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              TweenAnimationBuilder<Offset>(
-                tween: Tween<Offset>(
-                  begin: previousWorldPosition,
-                  end: worldPosition,
-                ),
-                duration: _currentMovementAnimationDuration,
-                builder: (context, animatedWorldPosition, child) {
-                  return SizedBox(
-                    width: size.width,
-                    height: size.height,
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        ClipRect(
-                          child: Stack(
-                            children: [
-                              CustomPaint(
-                                size: size,
-                                painter: GridBackgroundPainter(
-                                  cellSize: _gridCellSize,
-                                  offset: Offset(
-                                    -animatedWorldPosition.dx,
-                                    -animatedWorldPosition.dy,
+              TickerMode(
+                enabled: !widget.paused,
+                child: TweenAnimationBuilder<Offset>(
+                  tween: Tween<Offset>(
+                    begin: previousWorldPosition,
+                    end: worldPosition,
+                  ),
+                  duration: _currentMovementAnimationDuration,
+                  builder: (context, animatedWorldPosition, child) {
+                    _visibleWorldPosition = animatedWorldPosition;
+                    return SizedBox(
+                      width: size.width,
+                      height: size.height,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          ClipRect(
+                            child: Stack(
+                              children: [
+                                CustomPaint(
+                                  size: size,
+                                  painter: GridBackgroundPainter(
+                                    cellSize: _gridCellSize,
+                                    offset: Offset(
+                                      -animatedWorldPosition.dx,
+                                      -animatedWorldPosition.dy,
+                                    ),
+                                    lineColor: gridLineColor,
+                                    backgroundColor: Colors.white,
                                   ),
-                                  lineColor: gridLineColor,
-                                  backgroundColor: Colors.white,
                                 ),
-                              ),
-                              CustomPaint(
-                                size: size,
-                                painter: _PenTrailPainter(
-                                  segments: trailSegments,
-                                  segmentCount: trailSegmentCount,
-                                  cycleBoundaryMarkers: cycleBoundaryMarkers,
-                                  cycleBoundaryMarkerCount:
-                                      cycleBoundaryMarkerCount,
-                                  markers: instructionMarkers,
-                                  markerCount: instructionMarkerCount,
-                                  worldPosition: animatedWorldPosition,
-                                  targetWorldPosition: worldPosition,
+                                CustomPaint(
+                                  size: size,
+                                  painter: _PenTrailPainter(
+                                    segments: trailSegments,
+                                    segmentCount: trailSegmentCount,
+                                    cycleBoundaryMarkers: cycleBoundaryMarkers,
+                                    cycleBoundaryMarkerCount:
+                                        cycleBoundaryMarkerCount,
+                                    markers: instructionMarkers,
+                                    markerCount: instructionMarkerCount,
+                                    worldPosition: animatedWorldPosition,
+                                    targetWorldPosition: worldPosition,
+                                  ),
                                 ),
-                              ),
-                              GestureDetector(
-                                behavior: HitTestBehavior.translucent,
-                                onTapDown: (details) {
-                                  final markerIndex =
-                                      _findTappedInstructionMarker(
-                                    details.localPosition,
-                                    size,
-                                    animatedWorldPosition,
-                                  );
+                                GestureDetector(
+                                  behavior: HitTestBehavior.translucent,
+                                  onTapDown: (details) {
+                                    final markerIndex =
+                                        _findTappedInstructionMarker(
+                                      details.localPosition,
+                                      size,
+                                      animatedWorldPosition,
+                                    );
 
-                                  setState(() {
-                                    selectedInstructionMarkerIndex =
-                                        markerIndex;
-                                  });
-                                },
-                                child: SizedBox(
-                                  width: size.width,
-                                  height: size.height,
+                                    setState(() {
+                                      selectedInstructionMarkerIndex =
+                                          markerIndex;
+                                    });
+                                  },
+                                  child: SizedBox(
+                                    width: size.width,
+                                    height: size.height,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (selectedInstructionMarkerIndex != null &&
-                            selectedInstructionMarkerIndex! <
-                                instructionMarkers.length)
-                          _InstructionMarkerTooltip(
-                            markers: _markersAtPosition(instructionMarkers[
-                                    selectedInstructionMarkerIndex!]
-                                .position),
-                            position: _worldToScreen(
-                              instructionMarkers[
-                                      selectedInstructionMarkerIndex!]
-                                  .position,
-                              size,
-                              animatedWorldPosition,
+                              ],
                             ),
-                            canvasSize: size,
                           ),
-                      ],
-                    ),
-                  );
-                },
+                          if (selectedInstructionMarkerIndex != null &&
+                              selectedInstructionMarkerIndex! <
+                                  instructionMarkers.length)
+                            _InstructionMarkerTooltip(
+                              markers: _markersAtPosition(instructionMarkers[
+                                      selectedInstructionMarkerIndex!]
+                                  .position),
+                              position: _worldToScreen(
+                                instructionMarkers[
+                                        selectedInstructionMarkerIndex!]
+                                    .position,
+                                size,
+                                animatedWorldPosition,
+                              ),
+                              canvasSize: size,
+                            ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ),
               Positioned(
                 left: robotLeft,
                 top: robotTop,
-                child: TweenAnimationBuilder<double>(
-                  tween: Tween<double>(
-                    begin: previousRotation,
-                    end: rotation,
+                child: TickerMode(
+                  enabled: !widget.paused,
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween<double>(
+                      begin: previousRotation,
+                      end: rotation,
+                    ),
+                    duration: _currentRotationAnimationDuration,
+                    builder: (context, angleDegrees, child) {
+                      _visibleRotation = angleDegrees;
+                      return SizedBox(
+                        width: objectSize,
+                        height: objectSize,
+                        child: ObjectSimulator(
+                          size: objectSize,
+                          useImage: widget.useImage,
+                          botImagePath: widget.botImagePath ?? '',
+                          penActive: penActive,
+                          obstacleDetectionActive: obstacleDetectionActive,
+                          rotationRadians: _radians(angleDegrees),
+                        ),
+                      );
+                    },
+                    onEnd: () {
+                      setState(() {
+                        previousRotation = rotation;
+                      });
+                    },
                   ),
-                  duration: _currentRotationAnimationDuration,
-                  builder: (context, angleDegrees, child) {
-                    return SizedBox(
-                      width: objectSize,
-                      height: objectSize,
-                      child: ObjectSimulator(
-                        size: objectSize,
-                        useImage: widget.useImage,
-                        botImagePath: widget.botImagePath ?? '',
-                        penActive: penActive,
-                        obstacleDetectionActive: obstacleDetectionActive,
-                        rotationRadians: _radians(angleDegrees),
-                      ),
-                    );
-                  },
-                  onEnd: () {
-                    setState(() {
-                      previousRotation = rotation;
-                    });
-                  },
                 ),
               ),
             ],
@@ -697,8 +756,11 @@ class GridBackgroundPainter extends CustomPainter {
       ..strokeWidth = 2.35
       ..style = PaintingStyle.stroke;
 
-    final startX = offset.dx % cellSize;
-    final startY = offset.dy % cellSize;
+    // Anchor the initial cell to the robot's edges. The robot is centered in
+    // the viewport and occupies one full cell, so the first grid lines must
+    // be half a cell away from the viewport center.
+    final startX = (size.width / 2 - cellSize / 2 + offset.dx) % cellSize;
+    final startY = (size.height / 2 - cellSize / 2 + offset.dy) % cellSize;
 
     for (double x = startX; x <= size.width; x += cellSize) {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), linePaint);
@@ -834,7 +896,8 @@ class _InstructionMarkerTooltip extends StatelessWidget {
         (markers.length * rowHeight) + ((markers.length - 1) * rowGap);
     final maxRequestedWidth = markers.fold<double>(
       _defaultWidth,
-      (currentMax, marker) => max(currentMax, _styleForLabel(marker.label).width),
+      (currentMax, marker) =>
+          max(currentMax, _styleForLabel(marker.label).width),
     );
     final tooltipWidth = min(
       maxRequestedWidth,
@@ -845,8 +908,9 @@ class _InstructionMarkerTooltip extends StatelessWidget {
     final canShowRight = rightCandidate + tooltipWidth <= canvasSize.width - 8;
     final left = canShowRight
         ? rightCandidate
-        : leftCandidate.clamp(8.0, canvasSize.width - tooltipWidth - 8.0)
-              .toDouble();
+        : leftCandidate
+            .clamp(8.0, canvasSize.width - tooltipWidth - 8.0)
+            .toDouble();
     final maxTop = max(8.0, canvasSize.height - estimatedHeight - 8.0);
     final top =
         (position.dy - (estimatedHeight / 2)).clamp(8.0, maxTop).toDouble();

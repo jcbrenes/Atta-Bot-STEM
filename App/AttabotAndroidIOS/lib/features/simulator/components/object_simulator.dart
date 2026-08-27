@@ -40,8 +40,8 @@ class _ObjectSimulatorState extends State<ObjectSimulator>
       parent: _glowController,
       curve: Curves.easeInOut,
     );
-    _glowScale = Tween<double>(begin: 1, end: 1).animate(curved);
-    _glowOpacity = Tween<double>(begin: 1, end: 1).animate(curved);
+    _glowScale = Tween<double>(begin: 0.9, end: 1.08).animate(curved);
+    _glowOpacity = Tween<double>(begin: 0.55, end: 0.95).animate(curved);
 
     if (widget.obstacleDetectionActive) {
       _glowController.repeat(reverse: true);
