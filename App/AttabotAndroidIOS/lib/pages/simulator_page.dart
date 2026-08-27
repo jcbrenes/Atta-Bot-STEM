@@ -1,12 +1,15 @@
-import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'dart:convert';
+
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_tec/pages/bot_control_page.dart';
 import 'package:proyecto_tec/features/simulator/dialogs/simulator_actions_dialog.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
 import 'package:proyecto_tec/features/commands/models/command.dart';
 import 'package:proyecto_tec/features/commands/enums/command_types.dart';
+import 'package:proyecto_tec/features/simulator/services/simulator_program_parser.dart';
 import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
 import 'package:proyecto_tec/shared/features/navigation/services/navigation.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
@@ -35,6 +38,7 @@ class _SimulatorPageState extends State<SimulatorPage> {
   static const Color _panelBlue = Color(0xFF1A3564);
   static const Color _panelBorder = Color(0xFFF5F6F9);
   static const Color _gridFrame = Color(0xFFE5E9F2);
+  static const int _maximumProgramFileBytes = 100 * 1024;
 
   bool _hasOpenCycleLabel(String instruction) {
     return instruction.toLowerCase().contains('ciclo abierto');
@@ -43,9 +47,12 @@ class _SimulatorPageState extends State<SimulatorPage> {
   Future<void> _pickDartFile() async {
     try {
       final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['dart'],
+        // Android does not register a MIME type for .dart, so a custom
+        // extension filter prevents the native selector from opening.
+        // The extension is validated immediately after the user selects it.
+        type: FileType.any,
         allowMultiple: false,
+        withData: true,
       );
 
       if (!mounted || result == null || result.files.isEmpty) return;
@@ -65,14 +72,59 @@ class _SimulatorPageState extends State<SimulatorPage> {
         return;
       }
 
+      if (file.size > _maximumProgramFileBytes) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('El programa debe pesar menos de 100 KB'),
+          ),
+        );
+        return;
+      }
+
+      final bytes = file.bytes;
+      if (bytes == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se pudo leer el archivo seleccionado'),
+          ),
+        );
+        return;
+      }
+
+      final program = SimulatorProgramParser().parse(utf8.decode(bytes));
+      if (!mounted) return;
+
+      context.read<CommandService>().replaceCommands(program);
       setState(() {
         selectedFile = fileName;
       });
+      restartSimulation();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Programa cargado: ${program.length} instrucciones',
+          ),
+        ),
+      );
+    } on SimulatorProgramParseException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error en línea ${error.line}: ${error.message}'),
+        ),
+      );
+    } on FormatException {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('El archivo no contiene texto UTF-8 válido'),
+        ),
+      );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('No se pudo abrir el explorador de archivos'),
+          content: Text('No se pudo cargar el archivo .dart'),
         ),
       );
     }

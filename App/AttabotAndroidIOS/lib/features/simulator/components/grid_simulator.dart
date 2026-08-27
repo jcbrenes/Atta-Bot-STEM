@@ -75,6 +75,8 @@ class _SimulationAreaState extends State<SimulationArea> {
   static const int _rotationMillisecondsPer90Degrees = 300;
   static const Duration _defaultAnimationDuration = Duration(milliseconds: 400);
   double _gridCellSize = _defaultGridCellSize;
+  Offset _visibleWorldPosition = Offset.zero;
+  double _visibleRotation = 0;
   int _runVersion = 0;
   Duration _currentMovementAnimationDuration = _defaultAnimationDuration;
   Duration _currentRotationAnimationDuration = _defaultAnimationDuration;
@@ -84,6 +86,8 @@ class _SimulationAreaState extends State<SimulationArea> {
     super.initState();
     previousRotation = rotation;
     previousWorldPosition = worldPosition;
+    _visibleWorldPosition = worldPosition;
+    _visibleRotation = rotation;
     _startRun();
   }
 
@@ -187,6 +191,29 @@ class _SimulationAreaState extends State<SimulationArea> {
 
   void _stopRun() {
     _runVersion++;
+    if (mounted) {
+      setState(() {
+        final targetWorldPosition = worldPosition;
+        if (trailSegments.isNotEmpty &&
+            trailSegments.last.end == targetWorldPosition) {
+          final lastSegment = trailSegments.last;
+          trailSegments[trailSegments.length - 1] = _TrailSegment(
+            start: lastSegment.start,
+            end: _visibleWorldPosition,
+            penActive: lastSegment.penActive,
+          );
+          trailSegmentCount++;
+        }
+
+        worldPosition = _visibleWorldPosition;
+        previousWorldPosition = _visibleWorldPosition;
+        rotation = _visibleRotation;
+        previousRotation = _visibleRotation;
+        _currentMovementAnimationDuration = _defaultAnimationDuration;
+        _currentRotationAnimationDuration = _defaultAnimationDuration;
+        obstacleDetectionActive = false;
+      });
+    }
     widget.onInstructionChange?.call('');
     widget.onExecutionStateChanged?.call(false);
     widget.onCycleExecutionStateChanged?.call(false);
@@ -201,6 +228,8 @@ class _SimulationAreaState extends State<SimulationArea> {
       previousWorldPosition = Offset.zero;
       rotation = 0;
       previousRotation = 0;
+      _visibleWorldPosition = Offset.zero;
+      _visibleRotation = 0;
       obstacleDetectionActive = false;
       penActive = false;
       trailSegments.clear();
@@ -381,7 +410,11 @@ class _SimulationAreaState extends State<SimulationArea> {
       });
 
       if (stateChanged) {
-        final completedAnimation = await _waitFor(animationDuration, runId);
+        final completedAnimation = await _waitFor(
+          animationDuration,
+          runId,
+          allowPause: true,
+        );
         if (!completedAnimation || !_isRunActive(runId)) return;
       }
     }
@@ -389,6 +422,7 @@ class _SimulationAreaState extends State<SimulationArea> {
     final finishedCleanly = await _waitFor(
       const Duration(milliseconds: 50),
       runId,
+      allowPause: true,
     );
     if (!finishedCleanly || !_isRunActive(runId)) return;
 
@@ -539,120 +573,128 @@ class _SimulationAreaState extends State<SimulationArea> {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              TweenAnimationBuilder<Offset>(
-                tween: Tween<Offset>(
-                  begin: previousWorldPosition,
-                  end: worldPosition,
-                ),
-                duration: _currentMovementAnimationDuration,
-                builder: (context, animatedWorldPosition, child) {
-                  return SizedBox(
-                    width: size.width,
-                    height: size.height,
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        ClipRect(
-                          child: Stack(
-                            children: [
-                              CustomPaint(
-                                size: size,
-                                painter: GridBackgroundPainter(
-                                  cellSize: _gridCellSize,
-                                  offset: Offset(
-                                    -animatedWorldPosition.dx,
-                                    -animatedWorldPosition.dy,
+              TickerMode(
+                enabled: !widget.paused,
+                child: TweenAnimationBuilder<Offset>(
+                  tween: Tween<Offset>(
+                    begin: previousWorldPosition,
+                    end: worldPosition,
+                  ),
+                  duration: _currentMovementAnimationDuration,
+                  builder: (context, animatedWorldPosition, child) {
+                    _visibleWorldPosition = animatedWorldPosition;
+                    return SizedBox(
+                      width: size.width,
+                      height: size.height,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          ClipRect(
+                            child: Stack(
+                              children: [
+                                CustomPaint(
+                                  size: size,
+                                  painter: GridBackgroundPainter(
+                                    cellSize: _gridCellSize,
+                                    offset: Offset(
+                                      -animatedWorldPosition.dx,
+                                      -animatedWorldPosition.dy,
+                                    ),
+                                    lineColor: gridLineColor,
+                                    backgroundColor: Colors.white,
                                   ),
-                                  lineColor: gridLineColor,
-                                  backgroundColor: Colors.white,
                                 ),
-                              ),
-                              CustomPaint(
-                                size: size,
-                                painter: _PenTrailPainter(
-                                  segments: trailSegments,
-                                  segmentCount: trailSegmentCount,
-                                  cycleBoundaryMarkers: cycleBoundaryMarkers,
-                                  cycleBoundaryMarkerCount:
-                                      cycleBoundaryMarkerCount,
-                                  markers: instructionMarkers,
-                                  markerCount: instructionMarkerCount,
-                                  worldPosition: animatedWorldPosition,
-                                  targetWorldPosition: worldPosition,
+                                CustomPaint(
+                                  size: size,
+                                  painter: _PenTrailPainter(
+                                    segments: trailSegments,
+                                    segmentCount: trailSegmentCount,
+                                    cycleBoundaryMarkers: cycleBoundaryMarkers,
+                                    cycleBoundaryMarkerCount:
+                                        cycleBoundaryMarkerCount,
+                                    markers: instructionMarkers,
+                                    markerCount: instructionMarkerCount,
+                                    worldPosition: animatedWorldPosition,
+                                    targetWorldPosition: worldPosition,
+                                  ),
                                 ),
-                              ),
-                              GestureDetector(
-                                behavior: HitTestBehavior.translucent,
-                                onTapDown: (details) {
-                                  final markerIndex =
-                                      _findTappedInstructionMarker(
-                                    details.localPosition,
-                                    size,
-                                    animatedWorldPosition,
-                                  );
+                                GestureDetector(
+                                  behavior: HitTestBehavior.translucent,
+                                  onTapDown: (details) {
+                                    final markerIndex =
+                                        _findTappedInstructionMarker(
+                                      details.localPosition,
+                                      size,
+                                      animatedWorldPosition,
+                                    );
 
-                                  setState(() {
-                                    selectedInstructionMarkerIndex =
-                                        markerIndex;
-                                  });
-                                },
-                                child: SizedBox(
-                                  width: size.width,
-                                  height: size.height,
+                                    setState(() {
+                                      selectedInstructionMarkerIndex =
+                                          markerIndex;
+                                    });
+                                  },
+                                  child: SizedBox(
+                                    width: size.width,
+                                    height: size.height,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (selectedInstructionMarkerIndex != null &&
-                            selectedInstructionMarkerIndex! <
-                                instructionMarkers.length)
-                          _InstructionMarkerTooltip(
-                            markers: _markersAtPosition(instructionMarkers[
-                                    selectedInstructionMarkerIndex!]
-                                .position),
-                            position: _worldToScreen(
-                              instructionMarkers[
-                                      selectedInstructionMarkerIndex!]
-                                  .position,
-                              size,
-                              animatedWorldPosition,
+                              ],
                             ),
-                            canvasSize: size,
                           ),
-                      ],
-                    ),
-                  );
-                },
+                          if (selectedInstructionMarkerIndex != null &&
+                              selectedInstructionMarkerIndex! <
+                                  instructionMarkers.length)
+                            _InstructionMarkerTooltip(
+                              markers: _markersAtPosition(instructionMarkers[
+                                      selectedInstructionMarkerIndex!]
+                                  .position),
+                              position: _worldToScreen(
+                                instructionMarkers[
+                                        selectedInstructionMarkerIndex!]
+                                    .position,
+                                size,
+                                animatedWorldPosition,
+                              ),
+                              canvasSize: size,
+                            ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ),
               Positioned(
                 left: robotLeft,
                 top: robotTop,
-                child: TweenAnimationBuilder<double>(
-                  tween: Tween<double>(
-                    begin: previousRotation,
-                    end: rotation,
+                child: TickerMode(
+                  enabled: !widget.paused,
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween<double>(
+                      begin: previousRotation,
+                      end: rotation,
+                    ),
+                    duration: _currentRotationAnimationDuration,
+                    builder: (context, angleDegrees, child) {
+                      _visibleRotation = angleDegrees;
+                      return SizedBox(
+                        width: objectSize,
+                        height: objectSize,
+                        child: ObjectSimulator(
+                          size: objectSize,
+                          useImage: widget.useImage,
+                          botImagePath: widget.botImagePath ?? '',
+                          penActive: penActive,
+                          obstacleDetectionActive: obstacleDetectionActive,
+                          rotationRadians: _radians(angleDegrees),
+                        ),
+                      );
+                    },
+                    onEnd: () {
+                      setState(() {
+                        previousRotation = rotation;
+                      });
+                    },
                   ),
-                  duration: _currentRotationAnimationDuration,
-                  builder: (context, angleDegrees, child) {
-                    return SizedBox(
-                      width: objectSize,
-                      height: objectSize,
-                      child: ObjectSimulator(
-                        size: objectSize,
-                        useImage: widget.useImage,
-                        botImagePath: widget.botImagePath ?? '',
-                        penActive: penActive,
-                        obstacleDetectionActive: obstacleDetectionActive,
-                        rotationRadians: _radians(angleDegrees),
-                      ),
-                    );
-                  },
-                  onEnd: () {
-                    setState(() {
-                      previousRotation = rotation;
-                    });
-                  },
                 ),
               ),
             ],

@@ -160,6 +160,18 @@ class CommandService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Replaces the command history with an already validated program.
+  ///
+  /// This keeps file loading atomic: callers can parse and validate a program
+  /// first, then replace the simulator history only when there are no errors.
+  void replaceCommands(List<Command> commands) {
+    _commands
+      ..clear()
+      ..addAll(commands);
+    _syncFlagsFromHistory();
+    notifyListeners();
+  }
+
   // Syncs the state flags with the current command history, this is O(n) so perhaps in the future we can optimize it
   void _syncFlagsFromHistory() {
     bool cycle = false, detection = false, pencil = false, claw = false;
