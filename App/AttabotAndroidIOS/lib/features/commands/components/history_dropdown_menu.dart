@@ -48,13 +48,13 @@ class _InstructionHistoryDropdownState
           value: 5,
           child: Text('Definir parámetros', style: titleTextStyle),
         ),
+        // PopupMenuItem(
+        //   value: 6,
+        //   child: Text('Exportar Instrucciones', style: titleTextStyle),
+        // ),
         PopupMenuItem(
           value: 6,
-          child: Text('Exportar Instrucciones', style: titleTextStyle),
-        ),
-        PopupMenuItem(
-          value: 7,
-          child: Text('Exportar a json', style: titleTextStyle),
+          child: Text('Exportar instrucciones', style: titleTextStyle),
         ),
       ];
 
@@ -355,96 +355,69 @@ class _InstructionHistoryDropdownState
         });
   }
 
-  Future<void> openExportFileDialog() async {
-    List<String> fileNames;
-    try {
-      fileNames = await fmService.getSavedFilesList();
-    } catch (e) {
-      fileNames = [];
-    }
-    if (!mounted) return;
-    final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
-    showDialog(
-      context: context,
-      useRootNavigator: !isLandscape,
-      builder: (context) => AlertDialog(
-            title: Text('Exportar Instrucciones', style: titleTextStyle),
-            backgroundColor: neutralDarkBlueAD,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24.0),
-              side: const BorderSide(color: neutralWhite, width: 4.0),
-            ),
-            content: SizedBox(
-                width: double.maxFinite,
-                child: SingleChildScrollView(
-                  child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: fileNames.length,
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          title:
-                              Text(fileNames[index], style: contentTextStyle),
-                          onTap: () async {
-                            String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
-                            if (selectedDirectory == null) {
-                              Navigator.of(context).pop();
-                              return;
-                            } try {
-                                await fmService.exportFile(fileNames[index], selectedDirectory!);
-                                Navigator.of(context).pop();
-                                showSnackBar('Archivo exportado a la carpeta seleccionada');
-                              } catch (e) {
-                                Navigator.of(context).pop();
-                                showSnackBar('Error al exportar archivo');
-                              }
-                          },
-                        );
-                      }),
-                ))));
-  }
+  // Future<void> openExportFileDialog() async {
+  //   List<String> fileNames;
+  //   try {
+  //     fileNames = await fmService.getSavedFilesList();
+  //   } catch (e) {
+  //     fileNames = [];
+  //   }
+  //   if (!mounted) return;
+  //   final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+  //   showDialog(
+  //     context: context,
+  //     useRootNavigator: !isLandscape,
+  //     builder: (context) => AlertDialog(
+  //           title: Text('Exportar Instrucciones', style: titleTextStyle),
+  //           backgroundColor: neutralDarkBlueAD,
+  //           shape: RoundedRectangleBorder(
+  //             borderRadius: BorderRadius.circular(24.0),
+  //             side: const BorderSide(color: neutralWhite, width: 4.0),
+  //           ),
+  //           content: SizedBox(
+  //               width: double.maxFinite,
+  //               child: SingleChildScrollView(
+  //                 child: ListView.builder(
+  //                     shrinkWrap: true,
+  //                     itemCount: fileNames.length,
+  //                     itemBuilder: (context, index) {
+  //                       return ListTile(
+  //                         title:
+  //                             Text(fileNames[index], style: contentTextStyle),
+  //                         onTap: () async {
+  //                           String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
+  //                           if (selectedDirectory == null) {
+  //                             Navigator.of(context).pop();
+  //                             return;
+  //                           } try {
+  //                               await fmService.exportFile(fileNames[index], selectedDirectory!);
+  //                               Navigator.of(context).pop();
+  //                               showSnackBar('Archivo exportado a la carpeta seleccionada');
+  //                             } catch (e) {
+  //                               Navigator.of(context).pop();
+  //                               showSnackBar('Error al exportar archivo');
+  //                             }
+  //                         },
+  //                       );
+  //                     }),
+  //               ))));
+  // }
 
-  Future<void> openExportFileToFolderDialog() async {
-    List<String> fileNames;
+  Future<void> openExportInstructionsToFolderDialog() async {
     try {
-      fileNames = await fmService.getSavedFilesList();
+      await fmService.saveFileToFolder(
+        context
+            .read<CommandService>()
+            .commandHistory
+            .map((Command e) => e.toBotString())
+            .toList(),
+      );
+      if (!mounted) return;
+      showSnackBar('Archivo exportado a la carpeta seleccionada');
     } catch (e) {
-      fileNames = [];
+      if (!mounted) return;
+      showSnackBar('Error al exportar archivo');
     }
-    if (!mounted) return;
-    final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
-    showDialog(
-      context: context,
-      useRootNavigator: !isLandscape,
-      builder: (context) => AlertDialog(
-            title: Text('Exportar a json', style: titleTextStyle),
-            backgroundColor: neutralDarkBlueAD,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24.0),
-              side: const BorderSide(color: neutralWhite, width: 4.0),
-            ),
-            content: SizedBox(
-                width: double.maxFinite,
-                child: SingleChildScrollView(
-                  child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: fileNames.length,
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          title:
-                              Text(fileNames[index], style: contentTextStyle),
-                          onTap: () async {
-                            try {
-                                await fmService.saveFileToFolder(fileNames[index]);
-                                Navigator.of(context).pop();
-                                showSnackBar('Archivo exportado a la carpeta seleccionada');
-                              } catch (e) {
-                                Navigator.of(context).pop();
-                                showSnackBar('Error al exportar archivo');
-                              }
-                          },
-                        );
-                      }),
-                ))));
   }
 
   void onSaveFile() async {
@@ -619,11 +592,11 @@ class _InstructionHistoryDropdownState
               ),
             );
             break;
+          // case 6:
+          //   openExportFileDialog();
+          //   break;
           case 6:
-            openExportFileDialog();
-            break;
-          case 7:
-            openExportFileToFolderDialog();
+            openExportInstructionsToFolderDialog();
             break;
           default:
             break;
