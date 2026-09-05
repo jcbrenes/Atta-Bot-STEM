@@ -4,6 +4,17 @@
 #include <BLEUtils.h>
 #include <string>
 #include <Preferences.h> // Librería de almacenamiento de preferencias/credenciales para ESP32
+
+#include <FastLED.h> //Nota: Se debe instalar la librería FastLED desde el gestor de librerías de Arduino IDE
+
+#define LED_PIN     2   // IO02, connected to DIN
+#define NUM_LEDS    1   // single onboard WS2812B
+#define LED_TYPE    WS2812B
+#define COLOR_ORDER GRB
+
+CRGB leds[NUM_LEDS];
+
+
 using namespace std;
 
 // Robot constants
@@ -37,7 +48,7 @@ const float distanceWheelToWheel = 120; // actualizado a chasís v2.4
 const float distanceCenterToWheel = distanceWheelToWheel / 2 ; // Turning radius of the robot, distance in mm between the center and one wheel
 
 // Constants for PID control with samplingTime = 25ms
-const float targetSpeed = 120.0; // Target speed for the robot in mm/s
+const float targetSpeed = 90.0; // Target speed for the robot in mm/s
 //const float kpSpeed = 2; // Proportional constant for speed control 0.75, 1.1
 //const float kiSpeed = 2; // Integral constant for speed control
 //const float kdSpeed = 0.0; // Derivative constant for speed control (set to zero for no derivative action)
@@ -128,10 +139,10 @@ const int leftMotorM2 = 15;   // Direction control pin 1 for the left motor
 
 // Obstacle sensors setup
 const int rightInfraredSensor = 4; // Pin for the right infrared obstacle sensor
-const int leftInfraredSensor = 34;  // Pin for the left infrared obstacle sensor
+const int leftInfraredSensor = 25;  // Pin for the left infrared obstacle sensor
 
 // Tracker sensors setup
-const int rightTrackerSensor = 36;  // Pin for the right tracker sensor
+const int rightTrackerSensor = 34;  // Pin for the right tracker sensor
 const int leftTrackerSensor = 39;   // Pin for the left tracker sensor
 
 // LED RGB setup
@@ -304,6 +315,8 @@ void leftUpdateEncoder() {
 
 void setup() {
 
+  FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS);
+  FastLED.setBrightness(255); 
 
   // Set the PWM properties (50 Hz is typical for servos)
   myServo.setPeriodHertz(50);    // Standard 50Hz servo
@@ -1604,6 +1617,9 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
       analogWrite(pinLedRgbRojo, 255);
       analogWrite(pinLedRgbVerde, 0);
       analogWrite(pinLedRgbAzul, 0);
+      // Internal WS2812B mirrors external: red on
+      leds[0] = CRGB(255, 0, 0);
+      FastLED.show();
 
     } else if (tiempoActual > tiempoDeEncendidoDeLed + 2*duracionParpadeoLed) {
       //Se reinicia el "ciclo" de parpadeo
@@ -1613,12 +1629,18 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
       analogWrite(pinLedRgbRojo, 0);
       analogWrite(pinLedRgbVerde, 0);
       analogWrite(pinLedRgbAzul, 0);
+      // Internal WS2812B mirrors external: off
+      leds[0] = CRGB::Black;
+      FastLED.show();
     }
    
   } else if (flagObstaculo == 1 || flagParar == 1) { //Obstaculo o paro de emergencia -> rojo fijo
     analogWrite(pinLedRgbRojo, 255);
     analogWrite(pinLedRgbVerde, 0);
     analogWrite(pinLedRgbAzul, 0);
+    // Internal WS2812B mirrors external: red fixed
+    leds[0] = CRGB(255, 0, 0);
+    FastLED.show();
 
   } else if (flagBluetooth == 0) { //Bluetooth no conectado -> azul y verde intercalados
     // setear el tiempo de Encendido de LED en el momento de activar la flag
@@ -1626,6 +1648,9 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
       analogWrite(pinLedRgbRojo, 0);
       analogWrite(pinLedRgbVerde, 255);
       analogWrite(pinLedRgbAzul, 0);
+      // Internal WS2812B mirrors external: green
+      leds[0] = CRGB(0, 255, 0);
+      FastLED.show();
 
     } else if (tiempoActual > tiempoDeEncendidoDeLed + 2*duracionParpadeoLed) {
       //Se reinicia el "ciclo" de parpadeo
@@ -1635,6 +1660,9 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
       analogWrite(pinLedRgbRojo, 0);
       analogWrite(pinLedRgbVerde, 0);
       analogWrite(pinLedRgbAzul, 255);
+      // Internal WS2812B mirrors external: blue
+      leds[0] = CRGB(0, 0, 255);
+      FastLED.show();
     } 
 
   } else if (recibeProgra == 1) { //Recibe progra de la App -> azul parpadeante
@@ -1643,6 +1671,9 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
       analogWrite(pinLedRgbRojo, 0);
       analogWrite(pinLedRgbVerde, 0);
       analogWrite(pinLedRgbAzul, 255);
+      // Internal WS2812B mirrors external: blue
+      leds[0] = CRGB(0, 0, 255);
+      FastLED.show();
 
     } else if (tiempoActual > tiempoDeEncendidoDeLed + 2*duracionParpadeoLed) {
       //Se reinicia el "ciclo" de parpadeo
@@ -1652,18 +1683,26 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
       analogWrite(pinLedRgbRojo, 0);
       analogWrite(pinLedRgbVerde, 0);
       analogWrite(pinLedRgbAzul, 0);
+      // Internal WS2812B mirrors external: off
+      leds[0] = CRGB::Black;
+      FastLED.show();
     }
 
   } else if (flagEjecucion == 1) { //Robot ejecutando progra -> verde fijo
     analogWrite(pinLedRgbRojo, 0);
     analogWrite(pinLedRgbVerde, 255);
     analogWrite(pinLedRgbAzul, 0);
+    // Internal WS2812B mirrors external: green fixed
+    leds[0] = CRGB(0, 255, 0);
+    FastLED.show();
     
   } else if (flagBluetooth == 1) { //Bluetooth conectado -> azul fijo
     analogWrite(pinLedRgbRojo, 0);
     analogWrite(pinLedRgbVerde, 0);
     analogWrite(pinLedRgbAzul, 255);
+    // Internal WS2812B mirrors external: blue fixed
+    leds[0] = CRGB(0, 0, 255);
+    FastLED.show();
   }
 }
-
 

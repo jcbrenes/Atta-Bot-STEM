@@ -47,7 +47,7 @@ void setup() {
   Serial.begin(115200);
   Serial.println();
 
-    saveConfig("Atta-Bot-Alfa01", 849.6, 853.0, 2.0, 2.0, 0.0);
+    saveConfig("Atta-Amarillo-01", 849.6, 853.0, 2.0, 2.0, 0.0);
   Serial.println("Atta Credentials Saved using Preferences");
 
 
