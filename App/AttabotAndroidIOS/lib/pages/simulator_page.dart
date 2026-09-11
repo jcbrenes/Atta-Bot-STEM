@@ -446,18 +446,6 @@ class _SimulatorPageState extends State<SimulatorPage> {
                         ],
                       ),
                       SizedBox(height: rowGap),
-                      Text(
-                        'Escala: 1 cuadrado = '
-                        '${SimulatorScale.gridCellCentimeters.toStringAsFixed(1)} cm '
-                        '· Robot: 1 cuadrado',
-                        style: TextStyle(
-                          color: neutralWhite.withValues(alpha: 0.72),
-                          fontSize: captionSize,
-                          fontWeight: FontWeight.w500,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                      SizedBox(height: 6 * uiScale),
                       Expanded(
                         child: Container(
                           padding: EdgeInsets.all(gridFramePadding),
@@ -586,9 +574,12 @@ class _SimulatorPageState extends State<SimulatorPage> {
                 color: neutralWhite,
                 onPressed: () {
                   if (simplifiedProvider.simplifiedMode) {
-                    HelpDialogForSimplifiedMode.show(context);
+                    HelpDialogForSimplifiedMode.show(
+                      context,
+                      showSimulatorScale: true,
+                    );
                   } else {
-                    HelpDialog.show(context);
+                    HelpDialog.show(context, showSimulatorScale: true);
                   }
                 },
               );

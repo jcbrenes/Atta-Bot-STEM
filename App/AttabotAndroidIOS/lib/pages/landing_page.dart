@@ -40,8 +40,7 @@ class _LandingPageState extends State<LandingPage> {
   // Navigator key for the left pane in landscape
   GlobalKey<NavigatorState> _leftPaneNavKey = GlobalKey<NavigatorState>();
   // Navigator key for the right pane in landscape
-  GlobalKey<NavigatorState> _rightPaneNavKey =
-      GlobalKey<NavigatorState>();
+  GlobalKey<NavigatorState> _rightPaneNavKey = GlobalKey<NavigatorState>();
   final List<NavigationDestination> destinations = [
     const NavigationDestination(
       icon: Icon(
@@ -227,7 +226,9 @@ class _LandingPageState extends State<LandingPage> {
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
     final double landscapeSwitchWidth =
-      (MediaQuery.of(context).size.width * 0.42).clamp(260.0, 520.0).toDouble();
+        (MediaQuery.of(context).size.width * 0.42)
+            .clamp(260.0, 520.0)
+            .toDouble();
 
     return WillPopScope(
       onWillPop: _handleBackNavigation,
@@ -374,10 +375,17 @@ class _LandingPageState extends State<LandingPage> {
                             ),
                             color: neutralWhite,
                             onPressed: () {
+                              final showSimulatorScale = _selectedIndex == 9;
                               if (widget.initialSimplifiedMode) {
-                                HelpDialogForSimplifiedMode.show(context);
+                                HelpDialogForSimplifiedMode.show(
+                                  context,
+                                  showSimulatorScale: showSimulatorScale,
+                                );
                               } else {
-                                HelpDialog.show(context);
+                                HelpDialog.show(
+                                  context,
+                                  showSimulatorScale: showSimulatorScale,
+                                );
                               }
                             },
                           );
