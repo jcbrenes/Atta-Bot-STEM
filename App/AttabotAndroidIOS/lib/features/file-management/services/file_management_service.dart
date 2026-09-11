@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:file_saver/file_saver.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:proyecto_tec/config/app_config.dart';
@@ -11,6 +12,7 @@ enum FileManagementErrors {
   saveDataEmpty,
   fileAlreadyExists,
   noFilesFound,
+  invalidFileFormat
 }
 
 class FileManagementService {
@@ -68,58 +70,32 @@ class FileManagementService {
   /// throws [FileManagementErrors.noFilesFound] if no files are found
   /// returns a list of file names if files are found
   Future<List<String>> getSavedFilesList() async {
-    final List<Directory> directories = [];
+    final Directory workingDirectory = await getApplicationDocumentsDirectory();
+    final Directory loadDir = Directory('${workingDirectory.path}$savePath');
 
-    final Directory appDir = await getApplicationDocumentsDirectory();
-    directories.add(Directory('${appDir.path}$savePath'));
+    if (!await loadDir.exists()) throw FileManagementErrors.noFilesFound;
 
-    // Downloads directory
-    final Directory downloadsDir = Directory('/storage/emulated/0/Download');
-    directories.add(downloadsDir);
+    final List<FileSystemEntity> fileList =
+        loadDir.listSync()
+        .where((file) => file.path.endsWith('.dat'))
+        .toList();
 
-    final Set<String> seen = {};
-    final List<String> files = [];
+    if (fileList.isEmpty) throw FileManagementErrors.noFilesFound;
 
-    for (final dir in directories) {
-      if (!await dir.exists()) continue;
-
-      final List<FileSystemEntity> fileList = dir
-          .listSync()
-          .whereType<File>()
-          .where((file) => file.path.toLowerCase().endsWith('.dat'))
-          .toList();
-
-      for (final file in fileList) {
-        final String fileName = file.uri.pathSegments.last;
-        if (seen.add(fileName)) {
-          files.add(fileName);
-        }
-      }
-    }
-
-    if (files.isEmpty) {
-      throw FileManagementErrors.noFilesFound;
-    }
-
-    return files;
-  }
-
-  /// checks if the file exists in the app's save directory or in the Downloads folder
-  Future<File> _resolveFile(String fileName) async {
-    final Directory appDir = await getApplicationDocumentsDirectory();
-    final Directory appSaveDir = Directory('${appDir.path}$savePath');
-
-    final File appFile = File('${appSaveDir.path}/$fileName');
-    if (await appFile.exists()) return appFile;
-
-    final File downloadFile = File('/storage/emulated/0/Download/$fileName');
-    if (await downloadFile.exists()) return downloadFile;
-
-    throw FileManagementErrors.fileNotFound;
+    final List<String> fileNames = fileList
+        .map((file) => file.path.split('/').last)
+        .toList();
+      
+    return fileNames;
   }
 
   Future<List<String>> loadFile(String fileName) async {
-    final File file = await _resolveFile(fileName);
+    final Directory workingDirectory = await getApplicationDocumentsDirectory();
+    final Directory loadDir = Directory('${workingDirectory.path}$savePath');
+
+    final File file = File('${loadDir.path}/$fileName');
+
+    if (!await file.exists()) throw FileManagementErrors.fileNotFound;
 
     final String fileData = await file.readAsString();
     return jsonDecode(fileData).cast<String>();
@@ -134,35 +110,50 @@ class FileManagementService {
     return true;
   }
 
-// Future<void> exportFile(String fileName, String exportPath) async {
-//     final Directory workingDirectory = await getApplicationDocumentsDirectory();
-//     final Directory loadDir = Directory('${workingDirectory.path}$savePath');
+  // This method is used to load a file from bytes, which is useful when the file is obtained from a different source
+  Future<List<String>> loadFileFromBytes(Uint8List bytes) async {
+    try {
+      final String fileData = utf8
+          .decode(bytes)
+          .replaceFirst('\uFEFF', '')
+          .trim();
 
-//     final File file = File('${loadDir.path}/$fileName');
+      final dynamic decoded = jsonDecode(fileData);
 
-//     if (!await file.exists()) throw FileManagementErrors.fileNotFound;
+      if (decoded is! List || decoded.any((item) => item is! String)) {
+        throw FileManagementErrors.invalidFileFormat;
+      }
 
-//     final String fileData = await file.readAsString();
+      return List<String>.from(decoded);
+    } on FileManagementErrors {
+      rethrow;
+    } on FormatException {
+      throw FileManagementErrors.invalidFileFormat;
+    }
+  }
 
-//     final File exportFile = File('$exportPath/$fileName');
-//     await exportFile.writeAsString(fileData);
-//   }
+// This method is used to save a file to a folder selected by the user, using the FileSaver package
+Future<void> saveFileToFolder(String fileName) async {
+    final Directory workingDirectory = await getApplicationDocumentsDirectory();
+    final Directory loadDir = Directory('${workingDirectory.path}$savePath');
 
-Future<void> saveFileToFolder(List<String> saveData) async {
-    
-    final fileBytes = utf8.encode(jsonEncode(saveData));
+    final File file = File('${loadDir.path}/$fileName');
 
-    if (saveData.isEmpty) throw FileManagementErrors.saveDataEmpty;
+    if (!await file.exists()) throw FileManagementErrors.fileNotFound;
 
 
-    // Use FileSaver to save the file to the folder selected by the user
+    final fileBytes = await file.readAsBytes();
+
+    String cleanName = fileName;
+    if (fileName.toLowerCase().endsWith('.dat')) {
+      cleanName = fileName.substring(0, fileName.length - 4);
+    }
+
     await FileSaver.instance.saveAs(
-      name: "instructions",
+      name: cleanName,
       bytes: fileBytes,
-      fileExtension: "dat",
-      mimeType: MimeType.custom,
-      customMimeType: "application/octet-stream"
+      fileExtension: "json", 
+      mimeType: MimeType.json, 
     );
   }
-    
 }
