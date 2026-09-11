@@ -119,7 +119,7 @@ class SaveInstructionsDialog {
                 Navigator.of(ctx).pop();
                 if (reopenSaveDialog != null) {
                   await Future.delayed(const Duration(milliseconds: 50));
-                  await reopenSaveDialog.call();
+                  await reopenSaveDialog?.call();
                 }
               },
             ),
