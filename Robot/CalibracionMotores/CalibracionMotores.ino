@@ -32,14 +32,14 @@ int estado = 0;
 
 int seleccionMotor = 1; // 1 para motor derecho y 2 para izquierdo
 
-int pwmMinimo = 40; //pwm mínimo para mantener cualquier motor en movimiento 40
-const int velArranqueInicial = 35; // pwm mínimo que podría arrancar algún motor
+int pwmMinimo = 80; //pwm mínimo para mantener cualquier motor en movimiento 40
+const int velArranqueInicial = 50; // pwm mínimo que podría arrancar algún motor
 const int numMedicionesPorRealizar = 10;
 
 int numMedicion = 0;
 int mediciones[numMedicionesPorRealizar];
 
-int pwmMotores = 30;
+int pwmMotores = 70;
 unsigned long waitTime = 1000; //1000
 
 unsigned long tUltimaLecturaDerecha;
@@ -247,7 +247,7 @@ void loop() {
         // Para los motores de alrededor de 800 PPR se utilizan estas variables que permiten mejor medicion
         if (numMedicion == 0 & PPR > 700) {
           factorVel = 0.5;
-          pwmMinimo = 34;
+          pwmMinimo = 80;
         }
         rightCount = 0;
         leftCount = 0;

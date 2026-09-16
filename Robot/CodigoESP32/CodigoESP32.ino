@@ -84,7 +84,6 @@ float sumErrorVelLeft = 0; // Accumulated integral error for the left wheel
 float prevErrorVelLeft = 0; // Previous error value for the left wheel (used for derivative calculation)
 
 int distanceTraveled = 0; // Variable to track the total distance traveled by the robot
-const float correctionFactorLines = 0.95; //0.92 
 
 
 int prevPWMRight = 0;
@@ -94,6 +93,12 @@ bool prevReverse = 0;
 
 // For speed sampling
 unsigned long previousTime = 0;
+
+// Cambio del delay
+// Keeping it explicit makes it safe to tune from measurements without blocking the loop.
+const unsigned long stopSettlingTime = 500;
+unsigned long stopStartTime = 0;
+bool waitingForStopSettle = false;
 
 // Variables to keep track of the encoder state
 volatile long leftEncoderPos = 0; // Current position of the left encoder (in ticks)
@@ -605,22 +610,31 @@ void loop() {
     }
 
     case DETENERSE: {
-      
-      if (paro_emergencia || obstaculo_detectado) { //en caso de apretar STOP o detectar obstaculo
-        flagEjecucion = 0;
-        configureHBridge(false, 3, 0, 0); //Detiene el robot 
-      } // Ojo que la funcion avanzar y girar ya detiene el robot al final
-        //configureHBridgeTurn(false, 3, 0, 0);
-      delay(500);
-      flagParar = 0;
-            
+      if (!waitingForStopSettle) {
+        if (paro_emergencia || obstaculo_detectado) { //en caso de apretar STOP o detectar obstaculo
+          flagEjecucion = 0;
+          configureHBridge(false, 3, 0, 0); //Detiene el robot
+        } // Ojo que la funcion avanzar y girar ya detiene el robot al final
+
+        stopStartTime = millis();
+        waitingForStopSettle = true;
+        flagParar = 0;
+      }
+
+      // Keep the firmware responsive while the chassis settles after stopping.
+      if (millis() - stopStartTime < stopSettlingTime) {
+        break;
+      }
+
+      waitingForStopSettle = false;
+
       //Lógica estado siguiente
       if (paro_emergencia){
         paro_emergencia=false;
-        estado = ESPERA;     
+        estado = ESPERA;
       } else if (obstaculo_detectado){
         // Se reinician los valores de posición para que no tome en cuenta el movimiento recién interrumpido
-        rightEncoderPos = 0; 
+        rightEncoderPos = 0;
         leftEncoderPos = 0;
         estado = MOVIMIENTO_OBSTACULO;
       } else {
@@ -740,7 +754,6 @@ void loop() {
   // Se asigna el color del LED RGB
   ConfigurarEstadoLedRgb(flagBateriaBaja, flagBluetooth, flagEjecucion, flagObstaculo, recibeProgra, flagParar);
 
-  delay(5);
 }
 
 //*****************************************************************
@@ -1310,7 +1323,7 @@ bool advanceDesiredDistance(int desiredDistance) {
     float distanceTraveled = calculateLinearDistanceTraveled(leftEncoderPos, rightEncoderPos);
 
     // Check if the robot has traveled the desired distance
-    if (abs(distanceTraveled) >= correctionFactorLines * abs(desiredDistance)) {
+    if (abs(distanceTraveled) >= abs(desiredDistance)) {
 
       // If the desired distance is reached, stop the robot
       configureHBridge(reverse, 3, 0, 0);
@@ -1588,7 +1601,7 @@ float calculateLinearDistanceDesired(int desiredAngle) {
 
   // Calculate the linear distance based on the desired angle, assuming a circular path
   // Formula: (desiredAngle / 360) * π * distanceWheelToWheel
-  float linearDesiredDistance = (desiredAngle / 360.0) * PI * distanceWheelToWheel * correctionFactorLines;
+  float linearDesiredDistance = (desiredAngle / 360.0) * PI * distanceWheelToWheel;
 
   // Return the calculated linear distance
   return linearDesiredDistance;
@@ -1705,4 +1718,3 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
     FastLED.show();
   }
 }
-
