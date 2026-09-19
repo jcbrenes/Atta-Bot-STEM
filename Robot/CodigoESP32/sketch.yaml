@@ -25,3 +25,6 @@ default_fqbn: esp32:esp32:esp32
 # NOTE: this can change between machines/USB ports, so if compiling
 # works but upload fails with a port error, check this value first.
 default_port: /dev/ttyUSB0
+
+
+# Creado por Aaron Valerín, 2024-06-05. Esto es para poder compilar y subir el código al ESP32 sin tener que poner el FQBN y el puerto cada vez.  

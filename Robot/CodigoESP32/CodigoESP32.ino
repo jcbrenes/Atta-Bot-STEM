@@ -28,19 +28,65 @@ float kiSpeed = 0;
 float kdSpeed = 0.0;
 String deviceName = "";
 
+// Valores seguros usados solamente cuando el ESP32 aún no tiene una
+// configuración guardada. Después de la primera ejecución los valores viven
+// en la memoria no volátil (NVS) y una nueva carga del firmware no los borra.
+const char *defaultDeviceName = "Atta-V-02";
+const float defaultRightPulsesPerRev = 820.0;
+const float defaultLeftPulsesPerRev = 820.0;
+const float defaultKpSpeed = 2.0;
+const float defaultKiSpeed = 2.0;
+const float defaultKdSpeed = 0.0;
 
-void loadConfig() {
-  prefs.begin("Atta-Creds", true); // true = read-only
-  deviceName = prefs.getString("deviceName", "");
-  rightPulsesPerRev = prefs.getFloat("Rppr", 0.0);
-  leftPulsesPerRev = prefs.getFloat("Lppr", 0.0);
-  kpSpeed = prefs.getFloat("kp", 0.0);
-  kiSpeed = prefs.getFloat("ki", 0.0);
-  kdSpeed = prefs.getFloat("kd", 0.0);
+// Clave de acceso físico por USB. Cámbiela antes de distribuir el firmware.
+const char *developerPassword = "AttaDev2026";
+bool developerMode = false;
+String serialCommand = "";
+
+// Límites/calibración de los servos. No son const porque se cargan desde NVS.
+int neutralAngle = 75;
+int activateAngle = 85;
+int deactivateAngle = 50;
+int velocidadPositiva = 170;
+int velocidadNegativa = 135;
+int velocidadNeutra = 145;
+
+void writeDefaultConfigIfMissing() {
+  prefs.begin("Atta-Creds", false);
+  if (!prefs.isKey("deviceName")) prefs.putString("deviceName", defaultDeviceName);
+  if (!prefs.isKey("Rppr")) prefs.putFloat("Rppr", defaultRightPulsesPerRev);
+  if (!prefs.isKey("Lppr")) prefs.putFloat("Lppr", defaultLeftPulsesPerRev);
+  if (!prefs.isKey("kp")) prefs.putFloat("kp", defaultKpSpeed);
+  if (!prefs.isKey("ki")) prefs.putFloat("ki", defaultKiSpeed);
+  if (!prefs.isKey("kd")) prefs.putFloat("kd", defaultKdSpeed);
+  if (!prefs.isKey("servoNeutral")) prefs.putInt("servoNeutral", neutralAngle);
+  if (!prefs.isKey("servoActive")) prefs.putInt("servoActive", activateAngle);
+  if (!prefs.isKey("servoInactive")) prefs.putInt("servoInactive", deactivateAngle);
+  if (!prefs.isKey("servoForward")) prefs.putInt("servoForward", velocidadPositiva);
+  if (!prefs.isKey("servoReverse")) prefs.putInt("servoReverse", velocidadNegativa);
+  if (!prefs.isKey("servoStop")) prefs.putInt("servoStop", velocidadNeutra);
   prefs.end();
 }
 
-const int samplingTime = 25; // units: miliseconds
+void loadConfig() {
+  writeDefaultConfigIfMissing();
+  prefs.begin("Atta-Creds", true); // true = read-only
+  deviceName = prefs.getString("deviceName", defaultDeviceName);
+  rightPulsesPerRev = prefs.getFloat("Rppr", defaultRightPulsesPerRev);
+  leftPulsesPerRev = prefs.getFloat("Lppr", defaultLeftPulsesPerRev);
+  kpSpeed = prefs.getFloat("kp", defaultKpSpeed);
+  kiSpeed = prefs.getFloat("ki", defaultKiSpeed);
+  kdSpeed = prefs.getFloat("kd", defaultKdSpeed);
+  neutralAngle = prefs.getInt("servoNeutral", neutralAngle);
+  activateAngle = prefs.getInt("servoActive", activateAngle);
+  deactivateAngle = prefs.getInt("servoInactive", deactivateAngle);
+  velocidadPositiva = prefs.getInt("servoForward", velocidadPositiva);
+  velocidadNegativa = prefs.getInt("servoReverse", velocidadNegativa);
+  velocidadNeutra = prefs.getInt("servoStop", velocidadNeutra);
+  prefs.end();
+}
+
+const int samplingTime = 20; // units: miliseconds
 //const float rightPulsesPerRev = 834; // number of pulses from a single encoder output, for the right motor
 //const float leftPulsesPerRev = 834; // number of pulses from a single encoder output, for the left motor
 const float wheelRadius = 22; // Wheel circumference = 139.5mm
@@ -48,7 +94,7 @@ const float distanceWheelToWheel = 120; // actualizado a chasís v2.4
 const float distanceCenterToWheel = distanceWheelToWheel / 2 ; // Turning radius of the robot, distance in mm between the center and one wheel
 
 // Constants for PID control with samplingTime = 25ms
-const float targetSpeed = 90.0; // Target speed for the robot in mm/s
+const float targetSpeed = 110.0; // Target speed for the robot in mm/s
 //const float kpSpeed = 2; // Proportional constant for speed control 0.75, 1.1
 //const float kiSpeed = 2; // Integral constant for speed control
 //const float kdSpeed = 0.0; // Derivative constant for speed control (set to zero for no derivative action)
@@ -57,8 +103,8 @@ const float targetSpeed = 90.0; // Target speed for the robot in mm/s
 const int minIntegralErrorSpeed = -255; // Minimum value for integral error to avoid windup
 const int maxIntegralErrorSpeed = 255; // Maximum value for integral error to avoid windup
 
-const int upperDutyCycleLimitSpeed = 200; // Maximum allowed PWM value for speed control
-const int lowerDutyCycleLimitSpeed = 60; // Minimum allowed PWM value for speed control
+const int upperDutyCycleLimitSpeed = 255; // Maximum allowed PWM value for speed control
+const int lowerDutyCycleLimitSpeed = 90; // Minimum allowed PWM value for speed control
 
 // Constants for RGB LED configuration
 const int duracionParpadeoLed = 500;
@@ -108,16 +154,11 @@ volatile long rightEncoderPos = 0; // Current position of the right encoder (in 
 long rightTicksForSpeed = 0; // Number of encoder ticks counted for right wheel speed calculation
 long rightPrevTicks = 0; // Previous encoder tick count for the right wheel (used to calculate speed)
 
-// Variables to store the servo position
-const int activateAngle = 87;  // Activated Tool
-const int deactivateAngle = 118; // Deactivated Tool
+// Variables to store the servo position (loaded from Preferences at startup)
 int set = 0;
 
 //Variables del servomotor 360 del set de herramientas
 const int pinServo360 = 23;
-const int velocidadPositiva = 115; // ###
-const int velocidadNegativa = 70; // ###
-const int velocidadNeutra = 90; // ###
 
 // Create a Servo object to control the MG90S
 Servo myServo;
@@ -317,8 +358,143 @@ void leftUpdateEncoder() {
   leftEncoderPos ++;
 }
 
+void printDeveloperConfig() {
+  Serial.println("Configuracion guardada (NVS):");
+  Serial.printf("  device=%s  rppr=%.2f  lppr=%.2f  kp=%.3f  ki=%.3f  kd=%.3f\n",
+                deviceName.c_str(), rightPulsesPerRev, leftPulsesPerRev,
+                kpSpeed, kiSpeed, kdSpeed);
+  Serial.printf("  neutral=%d  active=%d  inactive=%d\n",
+                neutralAngle, activateAngle, deactivateAngle);
+  Serial.printf("  forward=%d  reverse=%d  stop=%d\n",
+                velocidadPositiva, velocidadNegativa, velocidadNeutra);
+}
+
+void printDeveloperHelp() {
+  Serial.println("DEV <clave>              abre el modo desarrollador");
+  Serial.println("SHOW                      muestra todos los valores guardados");
+  Serial.println("SET <campo> <valor>      guarda el valor inmediatamente");
+  Serial.println("  Campos: device, rppr, lppr, kp, ki, kd, neutral, active, inactive, forward, reverse, stop");
+  Serial.println("TEST <0-180>              mueve temporalmente el servo de lapiz");
+  Serial.println("EXIT                      cierra el modo desarrollador");
+}
+
+bool parseFloatValue(const String &text, float &value) {
+  char *end;
+  value = strtof(text.c_str(), &end);
+  return end != text.c_str() && *end == '\0';
+}
+
+bool saveDeveloperValue(String field, String value) {
+  field.toLowerCase();
+  value.trim();
+  prefs.begin("Atta-Creds", false);
+
+  if (field == "device" && value.length() > 0 && value.length() <= 31) {
+    deviceName = value;
+    prefs.putString("deviceName", deviceName);
+  } else if (field == "rppr" || field == "lppr" || field == "kp" || field == "ki" || field == "kd") {
+    float number;
+    if (!parseFloatValue(value, number) || number < 0 || ((field == "rppr" || field == "lppr") && number == 0)) {
+      prefs.end();
+      return false;
+    }
+    if (field == "rppr") { rightPulsesPerRev = number; prefs.putFloat("Rppr", number); }
+    if (field == "lppr") { leftPulsesPerRev = number; prefs.putFloat("Lppr", number); }
+    if (field == "kp") { kpSpeed = number; prefs.putFloat("kp", number); }
+    if (field == "ki") { kiSpeed = number; prefs.putFloat("ki", number); }
+    if (field == "kd") { kdSpeed = number; prefs.putFloat("kd", number); }
+  } else if (field == "neutral" || field == "active" || field == "inactive" ||
+             field == "forward" || field == "reverse" || field == "stop") {
+    float number;
+    if (!parseFloatValue(value, number) || number < 0 || number > 180 || number != (int)number) {
+      prefs.end();
+      return false;
+    }
+    int angle = (int)number;
+    if (field == "neutral") { neutralAngle = angle; prefs.putInt("servoNeutral", angle); }
+    if (field == "active") { activateAngle = angle; prefs.putInt("servoActive", angle); }
+    if (field == "inactive") { deactivateAngle = angle; prefs.putInt("servoInactive", angle); }
+    if (field == "forward") { velocidadPositiva = angle; prefs.putInt("servoForward", angle); }
+    if (field == "reverse") { velocidadNegativa = angle; prefs.putInt("servoReverse", angle); }
+    if (field == "stop") { velocidadNeutra = angle; prefs.putInt("servoStop", angle); }
+  } else {
+    prefs.end();
+    return false;
+  }
+
+  prefs.end();
+  return true;
+}
+
+void processSerialCommand(String command) {
+  command.trim();
+  if (command.length() == 0) return;
+  String upper = command;
+  upper.toUpperCase();
+
+  if (!developerMode) {
+    if (upper.startsWith("DEV ") && command.substring(4) == developerPassword) {
+      developerMode = true;
+      Serial.println("Modo desarrollador abierto.");
+      printDeveloperHelp();
+    } else {
+      Serial.println("Acceso restringido. Use DEV <clave>.");
+    }
+    return;
+  }
+
+  if (upper == "HELP" || upper == "?") {
+    printDeveloperHelp();
+  } else if (upper == "SHOW") {
+    printDeveloperConfig();
+  } else if (upper == "EXIT") {
+    developerMode = false;
+    Serial.println("Modo desarrollador cerrado.");
+  } else if (upper.startsWith("TEST ")) {
+    float angle;
+    if (parseFloatValue(command.substring(5), angle) && angle >= 0 && angle <= 180 && angle == (int)angle) {
+      myServo.write((int)angle);
+      Serial.printf("Servo de lapiz movido temporalmente a %d. No se guardo ningun cambio.\n", (int)angle);
+    } else {
+      Serial.println("TEST requiere un entero entre 0 y 180.");
+    }
+  } else if (upper.startsWith("SET ")) {
+    int separator = command.indexOf(' ', 4);
+    if (separator > 4 && saveDeveloperValue(command.substring(4, separator), command.substring(separator + 1))) {
+      Serial.println("Valor guardado en NVS. Se conservara aunque cargue firmware nuevo.");
+    } else {
+      Serial.println("SET invalido. Use HELP para ver los campos y rangos.");
+    }
+  } else {
+    Serial.println("Comando desconocido. Use HELP.");
+  }
+}
+
+void readDeveloperSerial() {
+  while (Serial.available()) {
+    char character = (char)Serial.read();
+    if (character == '\r') continue;
+    if (character == '\n') {
+      processSerialCommand(serialCommand);
+      serialCommand = "";
+    } else if (serialCommand.length() < 95) {
+      serialCommand += character;
+    } else {
+      serialCommand = "";
+      Serial.println("Comando demasiado largo.");
+    }
+  }
+}
+
 
 void setup() {
+  Serial.begin(115200);
+  loadConfig(); // Lee (o inicializa una vez) la configuracion persistente.
+
+  Serial.print("Loaded device name: [");
+  Serial.print(deviceName);
+  Serial.println("]");
+  Serial.println("Serial listo. Para configurar: DEV <clave>");
 
   FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS);
   FastLED.setBrightness(255); 
@@ -326,6 +502,7 @@ void setup() {
   // Set the PWM properties (50 Hz is typical for servos)
   myServo.setPeriodHertz(50);    // Standard 50Hz servo
   myServo.attach(servoPin, 500, 2400);  // Attach the servo on the pin with min/max pulse widths
+  myServo.write(neutralAngle);   // Lleva el lápiz a neutral al encender el Atta
 
   // Set encoder pins as inputs
   pinMode(rightEncoderA, INPUT_PULLUP);
@@ -368,13 +545,6 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(leftEncoderA), leftUpdateEncoder, CHANGE);
   attachInterrupt(digitalPinToInterrupt(leftEncoderB), leftUpdateEncoder, CHANGE);
 
-  Serial.begin(115200);
-
-   loadConfig(); //Carga Parámetros de configuración desde la memoria no volátil del ESP32. Credentials/Preferences
-
-    Serial.print("Loaded device name: [");
-    Serial.print(deviceName);
-    Serial.println("]");
     //Inicialización comunicación bluetooth BLE
 
   //***************************************************************************************
@@ -417,7 +587,7 @@ void setup() {
 
 
 void loop() {
- 
+  readDeveloperSerial();
   
 
   lecturaInfrarrojoDerecho=digitalRead(rightInfraredSensor);
