@@ -26,6 +26,9 @@ float leftPulsesPerRev = 0;
 float kpSpeed = 0;
 float kiSpeed = 0;
 float kdSpeed = 0.0;
+float targetSpeedLinear = 0; // Target speed for straight-line movement (mm/s), loaded from NVS
+float targetSpeedTurn = 0; // Target speed used while turning to a desired angle (mm/s), loaded from NVS
+float targetSpeedTurnLarge = 0; // Target speed used for turns beyond turnSpeedThresholdAngle (mm/s), loaded from NVS
 String deviceName = "";
 
 // Valores seguros usados solamente cuando el ESP32 aún no tiene una
@@ -37,6 +40,9 @@ const float defaultLeftPulsesPerRev = 820.0;
 const float defaultKpSpeed = 2.0;
 const float defaultKiSpeed = 2.0;
 const float defaultKdSpeed = 0.0;
+const float defaultTargetSpeedLinear = 110.0; // Same value the old hardcoded targetSpeed used
+const float defaultTargetSpeedTurn = 90.0; // Slower default for turning, adjustable via SET speedturn
+const float defaultTargetSpeedTurnLarge = 120.0; // Even slower default for turns beyond the threshold, adjustable via SET speedturnbig
 
 // Clave de acceso físico por USB. Cámbiela antes de distribuir el firmware.
 const char *developerPassword = "AttaDev2026";
@@ -59,6 +65,9 @@ void writeDefaultConfigIfMissing() {
   if (!prefs.isKey("kp")) prefs.putFloat("kp", defaultKpSpeed);
   if (!prefs.isKey("ki")) prefs.putFloat("ki", defaultKiSpeed);
   if (!prefs.isKey("kd")) prefs.putFloat("kd", defaultKdSpeed);
+  if (!prefs.isKey("spdLin")) prefs.putFloat("spdLin", defaultTargetSpeedLinear);
+  if (!prefs.isKey("spdTurn")) prefs.putFloat("spdTurn", defaultTargetSpeedTurn);
+  if (!prefs.isKey("spdTurnBig")) prefs.putFloat("spdTurnBig", defaultTargetSpeedTurnLarge);
   if (!prefs.isKey("servoNeutral")) prefs.putInt("servoNeutral", neutralAngle);
   if (!prefs.isKey("servoActive")) prefs.putInt("servoActive", activateAngle);
   if (!prefs.isKey("servoInactive")) prefs.putInt("servoInactive", deactivateAngle);
@@ -77,6 +86,9 @@ void loadConfig() {
   kpSpeed = prefs.getFloat("kp", defaultKpSpeed);
   kiSpeed = prefs.getFloat("ki", defaultKiSpeed);
   kdSpeed = prefs.getFloat("kd", defaultKdSpeed);
+  targetSpeedLinear = prefs.getFloat("spdLin", defaultTargetSpeedLinear);
+  targetSpeedTurn = prefs.getFloat("spdTurn", defaultTargetSpeedTurn);
+  targetSpeedTurnLarge = prefs.getFloat("spdTurnBig", defaultTargetSpeedTurnLarge);
   neutralAngle = prefs.getInt("servoNeutral", neutralAngle);
   activateAngle = prefs.getInt("servoActive", activateAngle);
   deactivateAngle = prefs.getInt("servoInactive", deactivateAngle);
@@ -94,7 +106,9 @@ const float distanceWheelToWheel = 120; // actualizado a chasís v2.4
 const float distanceCenterToWheel = distanceWheelToWheel / 2 ; // Turning radius of the robot, distance in mm between the center and one wheel
 
 // Constants for PID control with samplingTime = 25ms
-const float targetSpeed = 110.0; // Target speed for the robot in mm/s
+// targetSpeedLinear, targetSpeedTurn and targetSpeedTurnLarge replace the old single "targetSpeed" constant
+// and are loaded from Preferences (see loadConfig()) instead of being hardcoded here.
+const int turnSpeedThresholdAngle = 110; // Turns with |angle| beyond this use targetSpeedTurnLarge instead of targetSpeedTurn
 //const float kpSpeed = 2; // Proportional constant for speed control 0.75, 1.1
 //const float kiSpeed = 2; // Integral constant for speed control
 //const float kdSpeed = 0.0; // Derivative constant for speed control (set to zero for no derivative action)
@@ -104,7 +118,7 @@ const int minIntegralErrorSpeed = -255; // Minimum value for integral error to a
 const int maxIntegralErrorSpeed = 255; // Maximum value for integral error to avoid windup
 
 const int upperDutyCycleLimitSpeed = 255; // Maximum allowed PWM value for speed control
-const int lowerDutyCycleLimitSpeed = 90; // Minimum allowed PWM value for speed control
+const int lowerDutyCycleLimitSpeed = 70; // Minimum allowed PWM value for speed control
 
 // Constants for RGB LED configuration
 const int duracionParpadeoLed = 500;
@@ -185,11 +199,11 @@ const int leftMotorM2 = 15;   // Direction control pin 1 for the left motor
 
 // Obstacle sensors setup
 const int rightInfraredSensor = 4; // Pin for the right infrared obstacle sensor
-const int leftInfraredSensor = 25;  // Pin for the left infrared obstacle sensor
+const int leftInfraredSensor = 34;  // Pin for the left infrared obstacle sensor
 
 // Tracker sensors setup
-const int rightTrackerSensor = 34;  // Pin for the right tracker sensor
-const int leftTrackerSensor = 39;   // Pin for the left tracker sensor
+const int rightTrackerSensor = 39;  // Pin for the right tracker sensor
+const int leftTrackerSensor = 36;   // Pin for the left tracker sensor
 
 // LED RGB setup
 const int pinLedRgbRojo = 5; 
@@ -363,6 +377,8 @@ void printDeveloperConfig() {
   Serial.printf("  device=%s  rppr=%.2f  lppr=%.2f  kp=%.3f  ki=%.3f  kd=%.3f\n",
                 deviceName.c_str(), rightPulsesPerRev, leftPulsesPerRev,
                 kpSpeed, kiSpeed, kdSpeed);
+  Serial.printf("  speedlin=%.2f  speedturn=%.2f  speedturnbig=%.2f  (threshold=%d deg)\n",
+                targetSpeedLinear, targetSpeedTurn, targetSpeedTurnLarge, turnSpeedThresholdAngle);
   Serial.printf("  neutral=%d  active=%d  inactive=%d\n",
                 neutralAngle, activateAngle, deactivateAngle);
   Serial.printf("  forward=%d  reverse=%d  stop=%d\n",
@@ -373,7 +389,7 @@ void printDeveloperHelp() {
   Serial.println("DEV <clave>              abre el modo desarrollador");
   Serial.println("SHOW                      muestra todos los valores guardados");
   Serial.println("SET <campo> <valor>      guarda el valor inmediatamente");
-  Serial.println("  Campos: device, rppr, lppr, kp, ki, kd, neutral, active, inactive, forward, reverse, stop");
+  Serial.println("  Campos: device, rppr, lppr, kp, ki, kd, speedlin, speedturn, speedturnbig, neutral, active, inactive, forward, reverse, stop");
   Serial.println("TEST <0-180>              mueve temporalmente el servo de lapiz");
   Serial.println("EXIT                      cierra el modo desarrollador");
 }
@@ -403,6 +419,15 @@ bool saveDeveloperValue(String field, String value) {
     if (field == "kp") { kpSpeed = number; prefs.putFloat("kp", number); }
     if (field == "ki") { kiSpeed = number; prefs.putFloat("ki", number); }
     if (field == "kd") { kdSpeed = number; prefs.putFloat("kd", number); }
+  } else if (field == "speedlin" || field == "speedturn" || field == "speedturnbig") {
+    float number;
+    if (!parseFloatValue(value, number) || number <= 0) {
+      prefs.end();
+      return false;
+    }
+    if (field == "speedlin") { targetSpeedLinear = number; prefs.putFloat("spdLin", number); }
+    if (field == "speedturn") { targetSpeedTurn = number; prefs.putFloat("spdTurn", number); }
+    if (field == "speedturnbig") { targetSpeedTurnLarge = number; prefs.putFloat("spdTurnBig", number); }
   } else if (field == "neutral" || field == "active" || field == "inactive" ||
              field == "forward" || field == "reverse" || field == "stop") {
     float number;
@@ -1459,7 +1484,7 @@ bool advanceDesiredDistance(int desiredDistance) {
         reverse = true;
     }
 
-    float speedSetPoint = targetSpeed; // Define the target speed for both wheels (in mm/s)
+    float speedSetPoint = targetSpeedLinear; // Define the target speed for both wheels (in mm/s)
 
     // PID control loop for speed to calculate PWM values for both wheel
     int pwmRightWheel = controlWheelSpeed(speedSetPoint, actualSpeedRight, sumErrorVelRight, prevErrorVelRight);
@@ -1568,7 +1593,7 @@ bool turnDesiredAngle (int desiredAngle) {
 
     // Set desired speeds
 
-    float speedSetPoint = targetSpeed; // Define the target speed for both wheels (in mm/s)
+    float speedSetPoint = (abs(desiredAngle) > turnSpeedThresholdAngle) ? targetSpeedTurnLarge : targetSpeedTurn; // Slower setpoint for turns beyond the threshold angle
 
     // PID control loop for speed to calculate PWM values for both wheel
     int pwmRightWheel = controlWheelSpeed(speedSetPoint, actualSpeedRight, sumErrorVelRight, prevErrorVelRight);
