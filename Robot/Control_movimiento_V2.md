@@ -299,9 +299,11 @@ g++ -std=c++14 -Wall -Wextra -Werror Robot/tests/square_calibration_test.cpp -o 
 arduino-cli compile --fqbn esp32:esp32:esp32 --build-path /tmp/atta-motion-v2-build Robot/CodigoESP32
 ```
 
-Entorno de compilación usado: Arduino ESP32 3.3.11, ESP32Servo 3.2.1 y FastLED
-3.10.5. La API de PWM requiere Arduino ESP32 3.x. Se compiló para ESP32 clásico
-genérico; confirme la selección de IdeaBoard y sus particiones al cargar.
+Entorno de compilación usado: Arduino ESP32 3.3.11 y ESP32Servo 3.2.1. Ya no
+se requiere FastLED: el LED interno usa `rgbLedWriteOrdered()` del core (unos
+118 KB menos de flash; 87 % de la partición por defecto). La API de PWM
+requiere Arduino ESP32 3.x. Se compiló para ESP32 clásico genérico; confirme
+la selección de IdeaBoard y sus particiones al cargar.
 Las pruebas cubren unidades del PID, saturación, rampas, final por ambas ruedas,
 sentidos, parada/reinicio, fallos, desbordamiento de contadores/tiempo, motores
 simulados diferentes y migración sin pérdida de PPR/servo ni reconversión de Ki.

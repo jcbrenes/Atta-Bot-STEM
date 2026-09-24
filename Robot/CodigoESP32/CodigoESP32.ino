@@ -5,17 +5,20 @@
 #include <string>
 #include <Preferences.h> // Librería de almacenamiento de preferencias/credenciales para ESP32
 
-#include <FastLED.h> //Nota: Se debe instalar la librería FastLED desde el gestor de librerías de Arduino IDE
-
+// LED WS2812B interno (IO02) con el driver RMT del core; FastLED ocupaba ~107 KB de flash.
 #define LED_PIN     2   // IO02, connected to DIN
-#define NUM_LEDS    1   // single onboard WS2812B
-#define LED_TYPE    WS2812B
-#define COLOR_ORDER GRB
-
-CRGB leds[NUM_LEDS];
 
 
 using namespace std;
+
+// Solo escribe cuando cambia el color: la función de estado corre en cada loop().
+void ledInterno(uint8_t r, uint8_t g, uint8_t b) {
+  static int32_t anterior = -1;
+  const int32_t color = (int32_t(r) << 16) | (int32_t(g) << 8) | b;
+  if (color == anterior) return;
+  anterior = color;
+  rgbLedWriteOrdered(LED_PIN, LED_COLOR_ORDER_GRB, r, g, b);
+}
 
 // Robot constants
 
@@ -260,8 +263,7 @@ void setup() {
   Serial.println("]");
   Serial.println("Serial listo. Para configurar: DEV <clave>");
 
-  FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS);
-  FastLED.setBrightness(255); 
+  ledInterno(0, 0, 0);
 
   // Set the PWM properties (50 Hz is typical for servos)
   myServo.setPeriodHertz(50);    // Standard 50Hz servo
@@ -1174,8 +1176,7 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
       analogWrite(pinLedRgbVerde, 0);
       analogWrite(pinLedRgbAzul, 0);
       // Internal WS2812B mirrors external: red on
-      leds[0] = CRGB(255, 0, 0);
-      FastLED.show();
+      ledInterno(255, 0, 0);
 
     } else if (tiempoActual > tiempoDeEncendidoDeLed + 2*duracionParpadeoLed) {
       //Se reinicia el "ciclo" de parpadeo
@@ -1186,8 +1187,7 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
       analogWrite(pinLedRgbVerde, 0);
       analogWrite(pinLedRgbAzul, 0);
       // Internal WS2812B mirrors external: off
-      leds[0] = CRGB::Black;
-      FastLED.show();
+      ledInterno(0, 0, 0);
     }
    
   } else if (flagObstaculo == 1 || flagParar == 1) { //Obstaculo o paro de emergencia -> rojo fijo
@@ -1195,8 +1195,7 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
     analogWrite(pinLedRgbVerde, 0);
     analogWrite(pinLedRgbAzul, 0);
     // Internal WS2812B mirrors external: red fixed
-    leds[0] = CRGB(255, 0, 0);
-    FastLED.show();
+    ledInterno(255, 0, 0);
 
   } else if (flagBluetooth == 0) { //Bluetooth no conectado -> azul y verde intercalados
     // setear el tiempo de Encendido de LED en el momento de activar la flag
@@ -1205,8 +1204,7 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
       analogWrite(pinLedRgbVerde, 255);
       analogWrite(pinLedRgbAzul, 0);
       // Internal WS2812B mirrors external: green
-      leds[0] = CRGB(0, 255, 0);
-      FastLED.show();
+      ledInterno(0, 255, 0);
 
     } else if (tiempoActual > tiempoDeEncendidoDeLed + 2*duracionParpadeoLed) {
       //Se reinicia el "ciclo" de parpadeo
@@ -1217,8 +1215,7 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
       analogWrite(pinLedRgbVerde, 0);
       analogWrite(pinLedRgbAzul, 255);
       // Internal WS2812B mirrors external: blue
-      leds[0] = CRGB(0, 0, 255);
-      FastLED.show();
+      ledInterno(0, 0, 255);
     } 
 
   } else if (recibeProgra == 1) { //Recibe progra de la App -> azul parpadeante
@@ -1228,8 +1225,7 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
       analogWrite(pinLedRgbVerde, 0);
       analogWrite(pinLedRgbAzul, 255);
       // Internal WS2812B mirrors external: blue
-      leds[0] = CRGB(0, 0, 255);
-      FastLED.show();
+      ledInterno(0, 0, 255);
 
     } else if (tiempoActual > tiempoDeEncendidoDeLed + 2*duracionParpadeoLed) {
       //Se reinicia el "ciclo" de parpadeo
@@ -1240,8 +1236,7 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
       analogWrite(pinLedRgbVerde, 0);
       analogWrite(pinLedRgbAzul, 0);
       // Internal WS2812B mirrors external: off
-      leds[0] = CRGB::Black;
-      FastLED.show();
+      ledInterno(0, 0, 0);
     }
 
   } else if (flagEjecucion == 1) { //Robot ejecutando progra -> verde fijo
@@ -1249,15 +1244,13 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
     analogWrite(pinLedRgbVerde, 255);
     analogWrite(pinLedRgbAzul, 0);
     // Internal WS2812B mirrors external: green fixed
-    leds[0] = CRGB(0, 255, 0);
-    FastLED.show();
+    ledInterno(0, 255, 0);
     
   } else if (flagBluetooth == 1) { //Bluetooth conectado -> azul fijo
     analogWrite(pinLedRgbRojo, 0);
     analogWrite(pinLedRgbVerde, 0);
     analogWrite(pinLedRgbAzul, 255);
     // Internal WS2812B mirrors external: blue fixed
-    leds[0] = CRGB(0, 0, 255);
-    FastLED.show();
+    ledInterno(0, 0, 255);
   }
 }
