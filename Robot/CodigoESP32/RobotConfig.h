@@ -12,6 +12,11 @@ bool developerMode = false;
 String serialCommand;
 int neutralAngle = 75, activateAngle = 85, deactivateAngle = 50;
 int velocidadPositiva = 170, velocidadNegativa = 135, velocidadNeutra = 145;
+// PWM de motores: resolución fija de 8 bits para que maxpwm, start y las
+// ganancias conserven su significado (0..255) con cualquier frecuencia.
+const int motorPwmBits = 8, motorPwmMinHz = 200, motorPwmMaxHz = 30000;
+int motorPwmHz = 1000;       // guardado en NVS; se aplica al arrancar
+uint32_t motorPwmActiveHz = 0; // frecuencia real leída del periférico
 
 struct ServoField { const char* name; const char* key; int* value; };
 ServoField servoFields[] = {
@@ -86,6 +91,10 @@ void loadConfig() {
     if (angle < 0 || angle > 180) ok = false;
     else *f.value = angle;
   }
+  if (!prefs.isKey("pwmHz")) ok &= prefs.putInt("pwmHz", motorPwmHz) == sizeof(int32_t);
+  const int hz = prefs.getInt("pwmHz", -1);
+  if (hz < motorPwmMinHz || hz > motorPwmMaxHz) ok = false;
+  else motorPwmHz = hz;
   if (prefs.isKey("motionV2")) {
     atta::MotionConfig saved;
     const bool valid = prefs.getBytesLength("motionV2") == sizeof(saved) &&
@@ -123,11 +132,15 @@ void loadConfig() {
 }
 
 void printDeveloperConfig() {
-  Serial.printf("CONFIG schema=2 turn_schema=1 controller=3 ready=%d device=%s\n", configReady, deviceName.c_str());
+  Serial.printf("CONFIG schema=2 turn_schema=1 controller=3 ready=%d device=%s pwm_activo=%luHz\n",
+    configReady, deviceName.c_str(), (unsigned long)motorPwmActiveHz);
   for (const auto& f : motionFields) Serial.printf("SET %s %.6f\n", f.name, *f.value);
   for (const auto& f : turnFields) Serial.printf("SET %s %.6f\n", f.name, *f.value);
   for (const auto& f : servoFields) Serial.printf("SET %s %d\n", f.name, *f.value);
+  Serial.printf("SET pwmhz %d\n", motorPwmHz);
   Serial.println("Ganancias V2 en segundos. SHOW muestra RAM; VERIFY compara contra NVS.");
+  if (motorPwmActiveHz && motorPwmActiveHz != (uint32_t)motorPwmHz)
+    Serial.println("pwmhz guardado distinto del activo: reinicie para aplicarlo.");
 }
 
 bool verifyConfig() {
@@ -138,6 +151,7 @@ bool verifyConfig() {
     memcmp(&saved, &motionConfig, sizeof(saved)) == 0 &&
     prefs.getString("deviceName", "") == deviceName;
   for (const auto& f : servoFields) ok &= prefs.getInt(f.key, -1) == *f.value;
+  ok &= prefs.getInt("pwmHz", -1) == motorPwmHz;
   atta::TurnConfig savedTurn;
   ok &= prefs.getBytesLength("turnV1") == sizeof(savedTurn) &&
     prefs.getBytes("turnV1", &savedTurn, sizeof(savedTurn)) == sizeof(savedTurn) &&
@@ -165,6 +179,13 @@ bool saveDeveloperValue(String field, String value) {
         if (number >= 0 && number <= 180 && number == floorf(number)) {
           ok = prefs.putInt(f.key, (int)number) == sizeof(int32_t) && prefs.getInt(f.key, -1) == (int)number;
           if (ok) *f.value = (int)number;
+        }
+      }
+      if (field == "pwmhz") {
+        servo = true; // entero guardado aparte, como los servos
+        if (number >= motorPwmMinHz && number <= motorPwmMaxHz && number == floorf(number)) {
+          ok = prefs.putInt("pwmHz", (int)number) == sizeof(int32_t) && prefs.getInt("pwmHz", -1) == (int)number;
+          if (ok) motorPwmHz = (int)number;
         }
       }
       if (!servo) {

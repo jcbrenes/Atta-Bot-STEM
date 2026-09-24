@@ -26,6 +26,22 @@ void applyMotorOutputs(bool rightReverse, bool leftReverse, int r, int l) {
   appliedRightPWM = r; appliedLeftPWM = l;
 }
 
+// Misma frecuencia y resolución en los 4 pines: el core les asigna un único
+// temporizador LEDC, distinto del de los servos (50 Hz).
+bool attachMotorPWM() {
+  bool ok = true;
+  motorPwmActiveHz = 0;
+  for (int pin : {rightMotorM1, rightMotorM2, leftMotorM1, leftMotorM2}) {
+    if (!ledcAttach(pin, motorPwmHz, motorPwmBits)) { ok = false; continue; }
+    const uint32_t real = ledcReadFreq(pin);
+    // El divisor del temporizador redondea; más del 2 % indica otra configuración.
+    if (real == 0 || fabsf((float)real - motorPwmHz) > 0.02f * motorPwmHz) ok = false;
+    if (!motorPwmActiveHz) motorPwmActiveHz = real;
+    else if (real != motorPwmActiveHz) ok = false;
+  }
+  return ok;
+}
+
 void stopMotion() {
   motion.stop();
   motorTestActive = false;
@@ -174,6 +190,7 @@ void printDeveloperHelp() {
   Serial.println("MOTOR <R|L> <F|R> <PWM> <100..3000 ms> / ENCODERS");
   Serial.println("TELEMETRY ON|OFF / STOP / CLEAR (fallo, estando detenido)");
   Serial.println("SHOW lista campos SET. Ganancias kp/ki/kd V2 afectan ambas ruedas.");
+  Serial.println("SET pwmhz 200..30000 (8 bits): reiniciar y recalibrar start con MOTOR.");
 }
 
 void processSerialCommand(String command) {
@@ -208,7 +225,7 @@ void processSerialCommand(String command) {
   } else if (upper.startsWith("SET ")) {
     const int split = command.indexOf(' ', 4);
     const bool ok = split > 4 && saveDeveloperValue(command.substring(4, split), command.substring(split + 1));
-    Serial.println(ok ? "Guardado y verificado. Device requiere reinicio para anunciar BLE." : "SET invalido o error NVS. Revise rangos y VERIFY.");
+    Serial.println(ok ? "Guardado y verificado. device y pwmhz se aplican al reiniciar." : "SET invalido o error NVS. Revise rangos y VERIFY.");
   } else if (upper.startsWith("TEST ")) {
     float angle;
     if (parseFloatValue(command.substring(5), angle) && atta::within(angle, 0, 180) && angle == floorf(angle)) {

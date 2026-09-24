@@ -301,12 +301,12 @@ void setup() {
   servoHerramientaSet.write(velocidadNeutra);
 
   // Reservar ambos servos ANTES de que LEDC asigne canales para motores/LED.
-  // Frecuencia explícita igual al analogWrite anterior: 1 kHz, resolución 8 bits.
+  // Frecuencia configurable (SET pwmhz, por defecto 1 kHz); resolución fija de 8 bits.
   motorOutputsReady = myServo.attached() && servoHerramientaSet.attached();
-  for (int pin : {rightMotorM1, rightMotorM2, leftMotorM1, leftMotorM2})
-    motorOutputsReady = ledcAttach(pin, 1000, 8) && motorOutputsReady;
+  motorOutputsReady = attachMotorPWM() && motorOutputsReady;
   stopMotion();
-  if (!motorOutputsReady) Serial.println("ERROR PWM: no se pudieron reservar canales; movimiento bloqueado.");
+  Serial.printf("PWM motores: %lu Hz, %d bits\n", (unsigned long)motorPwmActiveHz, motorPwmBits);
+  if (!motorOutputsReady) Serial.println("ERROR PWM: canales o frecuencia no aplicados; movimiento bloqueado.");
 
   // Señal de batería baja set up
   pinMode(pinBateriaBaja, INPUT_PULLUP);

@@ -16,7 +16,8 @@ int main() {
   prefs.putInt("servoActive", 80); prefs.end();
   const auto before = prefs.writes;
   loadConfig(); assert(configReady && verifyConfig());
-  assert(prefs.writes == before+1); // solo crea turnV1
+  assert(prefs.writes == before+2); // solo crea turnV1 y pwmHz (1 kHz, como antes)
+  assert(motorPwmHz == 1000);
   assert(memcmp(&old, &motionConfig, sizeof(old)) == 0 && activateAngle == 80);
   atta::MotionConfig saved; prefs.begin("Atta-Creds", true);
   prefs.getBytes("motionV2", &saved, sizeof(saved)); prefs.end();

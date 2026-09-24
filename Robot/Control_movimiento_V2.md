@@ -233,6 +233,30 @@ En rectas, la distancia de telemetría queda en el último muestreo de la maniob
 compare cuentas acumuladas para medir avance posterior al corte. En giros del
 controlador 3, distancia y velocidad se actualizan también durante SETTLE.
 
+## Frecuencia PWM de motores (`pwmhz`)
+
+`SET pwmhz <200..30000>` guarda la frecuencia de los motores en su propia clave
+NVS (`pwmHz`, 1000 por defecto); `motionV2` y `turnV1` no cambian. Se aplica al
+**reiniciar**. La resolución queda fija en 8 bits: `maxpwm 230` sigue siendo
+el 90 % y `start`, `hold`, feedforward y ganancias conservan su significado.
+Cambiar la resolución sin reescalar esos valores es lo que descalibraba el PID
+en pruebas anteriores (con 14 bits el máximo es unos 4,9 kHz y el mismo número
+de duty equivale a otro porcentaje).
+
+Al arrancar se lee la frecuencia real de los cuatro pines. Si no coincide
+(±2 %) o falta un canal, aparece `ERROR PWM` y el movimiento queda bloqueado.
+`SHOW` muestra `pwm_activo` y avisa si el valor guardado aún no se aplicó.
+
+Prueba en un solo Atta:
+
+1. `SET pwmhz 20000`, reiniciar, `SHOW`: `pwm_activo=20000Hz` y sin `ERROR PWM`.
+2. Comprobar lápiz (`TEST <angulo>`) y herramienta: usan otro temporizador.
+3. Con `MOTOR R F <pwm> 1000` (y `R R`, `L F`, `L R`) buscar el menor PWM que
+   mueve cada rueda; actualizar `rfstart`, `rrstart`, `lfstart`, `lrstart`.
+4. `MOVE 500`, `TURN 90` y la prueba del cuadrado (`Calibracion_cuadrado.md`).
+
+Volver al comportamiento anterior: `SET pwmhz 1000` y reiniciar.
+
 ## Captura en computadora
 
 Instale `pyserial` en su entorno Python y ejecute desde la raíz del repositorio:

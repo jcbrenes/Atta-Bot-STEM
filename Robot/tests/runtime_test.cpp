@@ -14,6 +14,14 @@ uint32_t rightEncoderPos = 0, leftEncoderPos = 0;
 const int rightMotorM1 = 14, rightMotorM2 = 12, leftMotorM1 = 13, leftMotorM2 = 15;
 int pinPWM[40] = {};
 bool ledcWrite(int pin, int pwm) { pinPWM[pin] = pwm; return true; }
+// LEDC simulado: frecuencia/resolución por pin y posible desviación del divisor.
+uint32_t pinHz[40] = {}; int pinBits[40] = {};
+float ledcFreqError = 0; bool ledcAttachFails = false;
+bool ledcAttach(int pin, uint32_t hz, int bits) {
+  if (ledcAttachFails) return false;
+  pinHz[pin] = hz; pinBits[pin] = bits; return true;
+}
+uint32_t ledcReadFreq(int pin) { return (uint32_t)(pinHz[pin] * (1 + ledcFreqError)); }
 enum State { ESPERA, DETENERSE, MOVERSE, GIRAR };
 State estado = ESPERA;
 bool waitingForStopSettle = false, recibeProgra = false, flancoNegRecibeProgra = false;
@@ -30,6 +38,21 @@ void stoppedPins() { assert(pinPWM[14]==0 && pinPWM[12]==0 && pinPWM[13]==0 && p
 
 int main() {
   loadConfig(); motorOutputsReady = true;
+  // Frecuencia PWM: 1 kHz por defecto, 8 bits fijos, guardada aparte y aplicada al arrancar.
+  assert(motorPwmHz == 1000 && attachMotorPWM() && motorPwmActiveHz == 1000);
+  assert(pinBits[14] == 8 && pinHz[12] == 1000 && pinHz[13] == 1000 && pinHz[15] == 1000);
+  const atta::MotionConfig beforePwm = motionConfig;
+  assert(saveDeveloperValue("pwmhz", "20000") && motorPwmHz == 20000 && verifyConfig());
+  assert(motorPwmActiveHz == 1000); // no cambia en marcha: requiere reinicio
+  assert(memcmp(&beforePwm, &motionConfig, sizeof(beforePwm)) == 0); // perfil intacto
+  for (const char* invalid : {"100", "50000", "20000.5", "abc", "-1"})
+    assert(!saveDeveloperValue("pwmhz", invalid) && motorPwmHz == 20000);
+  motorPwmHz = 1; loadConfig(); assert(configReady && motorPwmHz == 20000); // persiste
+  assert(attachMotorPWM() && motorPwmActiveHz == 20000 && pinBits[15] == 8);
+  ledcFreqError = .05f; assert(!attachMotorPWM()); // frecuencia no aplicada: bloquear
+  ledcFreqError = 0; ledcAttachFails = true; assert(!attachMotorPWM());
+  ledcAttachFails = false;
+  assert(saveDeveloperValue("pwmhz", "1000") && attachMotorPWM() && motorPwmActiveHz == 1000);
   processSerialCommand("DEV AttaDev2026");
   processSerialCommand("MOVE 300");
   assert(estado == MOVERSE && diagnosticMove);
