@@ -560,7 +560,9 @@ void loop() {
       }
 
       // Keep the firmware responsive while the chassis settles after stopping.
-      if (millis() - stopStartTime < stopSettlingTime) {
+      const bool turnAlreadySettled = motion.turning && motion.turnSettled &&
+        motion.fault == atta::Fault::None && !paro_emergencia && !obstaculo_detectado;
+      if (!turnAlreadySettled && millis() - stopStartTime < stopSettlingTime) {
         break;
       }
 

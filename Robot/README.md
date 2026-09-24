@@ -54,3 +54,9 @@ la migración, los rangos, pruebas por motor, telemetría CSV y validación fís
 Use el modo de diagnóstico del firmware principal para calibrar. El antiguo
 `BancoDePruebasPID` se conserva como referencia histórica; sus constantes y
 su protocolo de telemetría no equivalen al controlador V2.
+
+La revisión `controller=3` añade rampas propias de giro (`turnaccel`, `turndecel`),
+aproximación final (`turnapproach`, `turnzone`) y observación de encoders durante
+la parada. Conserva el perfil `motionV2` y guarda esos ajustes en `turnV1`.
+Consulte `TURN_RESULT` para distinguir giro completado, exceso o fallo; el
+ángulo estimado por encoders no sustituye la medición física del chasis.

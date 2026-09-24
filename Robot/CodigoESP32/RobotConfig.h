@@ -4,6 +4,7 @@
 
 Preferences prefs;
 atta::MotionConfig motionConfig;
+atta::TurnConfig turnConfig;
 bool configReady = false;
 String deviceName = "Atta-V-02";
 const char* developerPassword = "AttaDev2026";
@@ -19,6 +20,10 @@ ServoField servoFields[] = {
   {"reverse", "servoReverse", &velocidadNegativa}, {"stop", "servoStop", &velocidadNeutra}
 };
 struct MotionField { const char* name; float* value; };
+MotionField turnFields[] = {
+  {"turnaccel", &turnConfig.acceleration}, {"turndecel", &turnConfig.deceleration},
+  {"turnapproach", &turnConfig.approachSpeed}, {"turnzone", &turnConfig.approachDistance}
+};
 // Los punteros siguen válidos al asignar una configuración completa.
 MotionField motionFields[] = {
   {"rppr", &motionConfig.right.ppr}, {"lppr", &motionConfig.left.ppr},
@@ -57,6 +62,15 @@ bool writeMotionProfile(const atta::MotionConfig& candidate) {
     memcmp(&candidate, &check, sizeof(check)) == 0;
 }
 
+bool writeTurnProfile(const atta::TurnConfig& candidate) {
+  if (!atta::validTurnConfig(candidate)) return false;
+  if (prefs.putBytes("turnV1", &candidate, sizeof(candidate)) != sizeof(candidate)) return false;
+  atta::TurnConfig check;
+  return prefs.getBytesLength("turnV1") == sizeof(check) &&
+    prefs.getBytes("turnV1", &check, sizeof(check)) == sizeof(check) &&
+    memcmp(&candidate, &check, sizeof(check)) == 0;
+}
+
 void loadConfig() {
   configReady = false;
   if (!prefs.begin("Atta-Creds", false)) {
@@ -90,14 +104,28 @@ void loadConfig() {
       Serial.println("Perfil V2 creado: PPR conservado; Ki anterior x0.4, Kd x0.025. Validar en robot.");
     } else ok = false;
   }
+  if (prefs.isKey("turnV1")) {
+    atta::TurnConfig saved;
+    const bool valid = prefs.getBytesLength("turnV1") == sizeof(saved) &&
+      prefs.getBytes("turnV1", &saved, sizeof(saved)) == sizeof(saved) && atta::validTurnConfig(saved);
+    if (valid) turnConfig = saved;
+    else ok = false; // no sustituir silenciosamente un perfil corrupto
+  } else if (ok) {
+    const atta::TurnConfig initial;
+    if (writeTurnProfile(initial)) {
+      turnConfig = initial;
+      Serial.println("Perfil turnV1 creado; calibracion motionV2 conservada.");
+    } else ok = false;
+  }
   prefs.end();
   configReady = ok;
   if (!ok) Serial.println("ERROR CONFIG: valores invalidos o fallo NVS; revisar SHOW y SET antes de mover.");
 }
 
 void printDeveloperConfig() {
-  Serial.printf("CONFIG schema=2 controller=2 ready=%d device=%s\n", configReady, deviceName.c_str());
+  Serial.printf("CONFIG schema=2 turn_schema=1 controller=3 ready=%d device=%s\n", configReady, deviceName.c_str());
   for (const auto& f : motionFields) Serial.printf("SET %s %.6f\n", f.name, *f.value);
+  for (const auto& f : turnFields) Serial.printf("SET %s %.6f\n", f.name, *f.value);
   for (const auto& f : servoFields) Serial.printf("SET %s %d\n", f.name, *f.value);
   Serial.println("Ganancias V2 en segundos. SHOW muestra RAM; VERIFY compara contra NVS.");
 }
@@ -110,6 +138,10 @@ bool verifyConfig() {
     memcmp(&saved, &motionConfig, sizeof(saved)) == 0 &&
     prefs.getString("deviceName", "") == deviceName;
   for (const auto& f : servoFields) ok &= prefs.getInt(f.key, -1) == *f.value;
+  atta::TurnConfig savedTurn;
+  ok &= prefs.getBytesLength("turnV1") == sizeof(savedTurn) &&
+    prefs.getBytes("turnV1", &savedTurn, sizeof(savedTurn)) == sizeof(savedTurn) &&
+    memcmp(&savedTurn, &turnConfig, sizeof(savedTurn)) == 0 && atta::validTurnConfig(turnConfig);
   prefs.end();
   return ok && atta::validConfig(motionConfig);
 }
@@ -136,17 +168,27 @@ bool saveDeveloperValue(String field, String value) {
         }
       }
       if (!servo) {
-        const atta::MotionConfig previous = motionConfig;
-        bool known = false;
-        for (auto& f : motionFields) {
-          if (field == f.name) { *f.value = number; known = true; }
+        bool turnField = false;
+        const atta::TurnConfig previousTurn = turnConfig;
+        for (auto& f : turnFields) {
+          if (field == f.name) { *f.value = number; turnField = true; }
         }
-        // Alias antiguos: ahora representan ganancias V2 para AMBAS ruedas.
-        if (field == "kp") { motionConfig.right.kp = motionConfig.left.kp = number; known = true; }
-        if (field == "ki") { motionConfig.right.ki = motionConfig.left.ki = number; known = true; }
-        if (field == "kd") { motionConfig.right.kd = motionConfig.left.kd = number; known = true; }
-        ok = known && writeMotionProfile(motionConfig);
-        if (!ok) motionConfig = previous;
+        if (turnField) {
+          ok = writeTurnProfile(turnConfig);
+          if (!ok) turnConfig = previousTurn;
+        } else {
+          const atta::MotionConfig previous = motionConfig;
+          bool known = false;
+          for (auto& f : motionFields) {
+            if (field == f.name) { *f.value = number; known = true; }
+          }
+          // Alias antiguos: ahora representan ganancias V2 para AMBAS ruedas.
+          if (field == "kp") { motionConfig.right.kp = motionConfig.left.kp = number; known = true; }
+          if (field == "ki") { motionConfig.right.ki = motionConfig.left.ki = number; known = true; }
+          if (field == "kd") { motionConfig.right.kd = motionConfig.left.kd = number; known = true; }
+          ok = known && writeMotionProfile(motionConfig);
+          if (!ok) motionConfig = previous;
+        }
       }
     }
   }

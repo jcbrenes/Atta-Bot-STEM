@@ -23,7 +23,13 @@ struct MotionConfig {
   float syncGain = 1, maxPWM = 200, tolerance = 0.5f;
   float filterMs = 50, stallMs = 1500, startMs = 200;
 };
-enum class Fault { None, RightStall, LeftStall, Timeout, Timing, Config };
+// Perfil separado: mantiene intacto el formato binario motionV2 ya instalado.
+struct TurnConfig {
+  uint32_t version = 1;
+  float acceleration = 120, deceleration = 120;
+  float approachSpeed = 20, approachDistance = 20; // mm/s y mm por rueda
+};
+enum class Fault { None, RightStall, LeftStall, Timeout, Timing, Config, Settling };
 inline const char* faultName(Fault f) {
   switch (f) {
     case Fault::RightStall: return "RIGHT_STALL";
@@ -31,10 +37,16 @@ inline const char* faultName(Fault f) {
     case Fault::Timeout: return "TIMEOUT";
     case Fault::Timing: return "CONTROL_LATE";
     case Fault::Config: return "CONFIG";
+    case Fault::Settling: return "NOT_SETTLED";
     default: return "NONE";
   }
 }
 inline bool within(float x, float lo, float hi) { return std::isfinite(x) && x >= lo && x <= hi; }
+inline bool validTurnConfig(const TurnConfig& c) {
+  return c.version == 1 && within(c.acceleration, 10, 1000) &&
+    within(c.deceleration, 10, 1000) && within(c.approachSpeed, 5, 100) &&
+    within(c.approachDistance, 1, 100);
+}
 inline bool validWheel(const WheelConfig& w, float maxPWM) {
   if (!within(w.ppr, 1, 100000) || !within(w.radius, 5, 100) ||
       !within(w.kp, 0, 100) || !within(w.ki, 0, 100) || !within(w.kd, 0, 10)) return false;
@@ -85,6 +97,10 @@ inline int wheelPWM(const WheelConfig& c, const DriveCalibration& d, WheelState&
 struct Controller {
   WheelState right, left;
   bool active = false, turning = false, reverse = false;
+  bool settling = false, turnSettled = false, turnOvershoot = false;
+  TurnConfig turnProfile;
+  uint32_t settleStart = 0, lastSettlePulse = 0;
+  float rightAtCutoff = 0, leftAtCutoff = 0;
   Fault fault = Fault::None;
   uint32_t previousTime = 0, startTime = 0, timeoutMs = 0;
   float target = 0, dt = 0;
@@ -94,6 +110,7 @@ struct Controller {
 
   void stop() {
     active = false;
+    settling = false;
     right.pwm = left.pwm = 0;
     right.integral = left.integral = 0;
     right.reference = left.reference = 0;
@@ -101,10 +118,11 @@ struct Controller {
   void fail(Fault f) { fault = f; stop(); }
   void clear() { stop(); fault = Fault::None; }
   bool begin(float amount, bool turn, uint32_t now, uint32_t r, uint32_t l,
-             const MotionConfig& c) {
+             const MotionConfig& c, const TurnConfig& turnConfig = TurnConfig{}) {
     stop();
+    turnSettled = turnOvershoot = false;
     if (fault != Fault::None) return false;
-    if (!validConfig(c) || !std::isfinite(amount) || std::fabs(amount) > 10000) {
+    if (!validConfig(c) || !validTurnConfig(turnConfig) || !std::isfinite(amount) || std::fabs(amount) > 10000) {
       fail(Fault::Config); return false;
     }
     right = WheelState{}; left = WheelState{};
@@ -112,9 +130,18 @@ struct Controller {
     right.lastProgress = left.lastProgress = now;
     previousTime = startTime = now;
     dt = 0; turning = turn; reverse = amount < 0;
+    turnProfile = turnConfig;
+    rightAtCutoff = leftAtCutoff = 0;
     target = std::fabs(amount) * (turn ? pi * c.track / 360.0f : 1.0f);
     const float nominal = turn ? c.turnSpeed : c.speed;
     timeoutMs = static_cast<uint32_t>(clamp(5000 + 4000 * target / nominal, 5000, 120000));
+    if (turn) {
+      // Incluir el tramo lento en el presupuesto, especialmente en giros cortos.
+      const float slow = clamp(turnProfile.approachDistance, 0, target);
+      const float cruise = std::fmin(nominal, turnProfile.approachSpeed);
+      timeoutMs = static_cast<uint32_t>(clamp(5000 + 4000 *
+        ((target - slow) / nominal + slow / cruise), 5000, 120000));
+    }
     active = target > c.tolerance;
     return active;
   }
@@ -133,13 +160,34 @@ struct Controller {
     const uint32_t elapsed = now - previousTime;
     if (elapsed < 25) return false;
     if (elapsed > 250) { fail(Fault::Timing); return true; }
-    if (now - startTime > timeoutMs) { fail(Fault::Timeout); return true; }
+    if (!settling && now - startTime > timeoutMs) { fail(Fault::Timeout); return true; }
     previousTime = now; dt = elapsed / 1000.0f;
+    const bool newPulses = r != right.previous || l != left.previous;
     sample(right, c.right, r, now, dt, c.filterMs);
     sample(left, c.left, l, now, dt, c.filterMs);
+    if (settling) {
+      if (newPulses) lastSettlePulse = now;
+      // Reposo observado en encoders, no garantia de ausencia de deslizamiento.
+      if (now - settleStart >= 500 && now - lastSettlePulse >= 150) {
+        turnSettled = true;
+        turnOvershoot = right.distance > target + c.tolerance || left.distance > target + c.tolerance;
+        stop();
+      } else if (now - settleStart >= 2000) {
+        fail(Fault::Settling);
+      }
+      return true;
+    }
     right.arrived = right.arrived || target - right.distance <= c.tolerance;
     left.arrived = left.arrived || target - left.distance <= c.tolerance;
-    if (right.arrived && left.arrived) { stop(); return true; }
+    if (right.arrived && left.arrived) {
+      if (turning) {
+        rightAtCutoff = right.distance; leftAtCutoff = left.distance;
+        right.pwm = left.pwm = 0;
+        right.reference = left.reference = right.integral = left.integral = 0;
+        settling = true; settleStart = lastSettlePulse = now;
+      } else stop();
+      return true;
+    }
     if (!right.arrived && now - right.lastProgress >= c.stallMs) { fail(Fault::RightStall); return true; }
     if (!left.arrived && now - left.lastProgress >= c.stallMs) { fail(Fault::LeftStall); return true; }
     const float limit = turning ? c.turnSpeed : c.speed;
@@ -156,10 +204,18 @@ struct Controller {
   void reference(WheelState& s, const MotionConfig& c, float requested) {
     if (s.arrived) { s.reference = 0; return; }
     const float remaining = clamp(target - s.distance, 0, target);
-    const float braking = std::sqrt(2 * c.deceleration * remaining);
-    const float desired = clamp(requested, 0, braking);
-    s.reference = clamp(desired, s.reference - c.deceleration * dt,
-                       s.reference + c.acceleration * dt);
+    const float accel = turning ? turnProfile.acceleration : c.acceleration;
+    const float decel = turning ? turnProfile.deceleration : c.deceleration;
+    const float braking = std::sqrt(2 * decel * remaining);
+    // Llegar al tramo final lento mediante una rampa, no un salto de referencia.
+    const float approach = !turning ? requested :
+      (remaining < turnProfile.approachDistance ?
+       turnProfile.approachSpeed * std::sqrt(remaining / turnProfile.approachDistance) :
+       std::sqrt(turnProfile.approachSpeed * turnProfile.approachSpeed +
+         2 * decel * (remaining - turnProfile.approachDistance)));
+    const float desired = clamp(requested, 0, std::fmin(braking, approach));
+    s.reference = clamp(desired, s.reference - decel * dt,
+                       s.reference + accel * dt);
     // Nunca mantener más velocidad que la admitida por distancia restante.
     s.reference = clamp(s.reference, 0, braking);
   }

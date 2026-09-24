@@ -56,6 +56,19 @@ void requestMotionStop() {
 
 void reportMotionFault() {
   Serial.printf("FAULT,%s\n", atta::faultName(motion.fault));
+  const bool recoverable = motion.fault == atta::Fault::RightStall ||
+    motion.fault == atta::Fault::LeftStall || motion.fault == atta::Fault::Timeout ||
+    motion.fault == atta::Fault::Timing || motion.fault == atta::Fault::Settling;
+  if (recoverable && (estado == MOVERSE || estado == GIRAR) &&
+      !diagnosticMove && !motorTestActive && !paro_emergencia && !obstaculo_detectado &&
+      configReady && motorOutputsReady) {
+    // La instruccion ya fue consumida: conservar indices, ciclos y ramas.
+    stopMotion();
+    motion.clear();
+    estado = DETENERSE; // el sketch espera asentamiento y vuelve a LEE_MEMORIA
+    Serial.println("PROGRAM_CONTINUE: maniobra incompleta; se omite y sigue la siguiente instruccion.");
+    return;
+  }
   requestMotionStop();
 }
 
@@ -68,7 +81,7 @@ void emitTelemetry() {
   const int length = snprintf(row, sizeof(row),
     "T,%lu,%s,%s,%d,%.4f,%lu,%lu,%.3f,%.3f,%.2f,%.2f,%.2f,%.2f,%d,%d,%.3f,%.3f,%d,%d,%s\n",
     (unsigned long)millis(), deviceName.c_str(), motorTestActive ? "MOTOR" :
-      (motion.active ? (motion.turning ? "TURN" : "MOVE") : "IDLE"),
+      (motion.settling ? "SETTLE" : (motion.active ? (motion.turning ? "TURN" : "MOVE") : "IDLE")),
     motion.reverse, motion.dt, (unsigned long)r, (unsigned long)l,
     motion.right.distance, motion.left.distance, motion.right.reference, motion.left.reference,
     motion.right.speed, motion.left.speed, appliedRightPWM, appliedLeftPWM,
@@ -87,12 +100,22 @@ bool runMotion(float amount, bool turning) {
   const uint32_t now = millis();
   if (!motion.active) {
     applyMotorOutputs(false, false, 0, 0);
-    motion.begin(amount, turning, now, r, l, motionConfig);
+    motion.begin(amount, turning, now, r, l, motionConfig, turnConfig);
     if (motion.fault != atta::Fault::None) reportMotionFault();
     return !motion.active;
   }
   if (motion.update(now, r, l, motionConfig)) {
     applyMotorOutputs(motion.rightReverse(), motion.leftReverse(), motion.right.pwm, motion.left.pwm);
+    if (turning && !motion.active) {
+      // Magnitud estimada por ruedas; no mide orientacion externa del chasis.
+      const float angle = (motion.right.distance + motion.left.distance) * 180 / (atta::pi * motionConfig.track);
+      Serial.printf("TURN_RESULT,%s,target_deg=%.3f,encoder_deg=%.3f,r_mm=%.3f,l_mm=%.3f,coast_r_mm=%.3f,coast_l_mm=%.3f,fault=%s\n",
+        motion.fault != atta::Fault::None ? "INCOMPLETE" : (motion.turnOvershoot ? "OVERSHOOT" : "COMPLETE"),
+        fabsf(amount), angle, motion.right.distance, motion.left.distance,
+        motion.turnSettled || motion.fault == atta::Fault::Settling ? motion.right.distance - motion.rightAtCutoff : 0.f,
+        motion.turnSettled || motion.fault == atta::Fault::Settling ? motion.left.distance - motion.leftAtCutoff : 0.f,
+        atta::faultName(motion.fault));
+    }
     if (motion.fault != atta::Fault::None) reportMotionFault();
   }
   return !motion.active;

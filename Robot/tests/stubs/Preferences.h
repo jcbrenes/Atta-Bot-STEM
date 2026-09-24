@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cctype>
+#include <cstdio>
 class String {
   std::string s;
  public:
@@ -27,10 +28,13 @@ class String {
   bool operator!=(const String& b) const { return s != b.s; }
 };
 struct SerialStub {
-  void println(const char*) {}
-  template<class... T> void printf(const char*, T...) {}
+  std::string output;
+  void println(const char* text) { output += text; output += '\n'; }
+  template<class... T> void printf(const char* format, T... args) {
+    char buffer[1024]; std::snprintf(buffer, sizeof(buffer), format, args...); output += buffer;
+  }
   int availableForWrite() const { return 1024; }
-  size_t write(const uint8_t*, size_t n) { return n; }
+  size_t write(const uint8_t* data, size_t n) { output.append(reinterpret_cast<const char*>(data), n); return n; }
   int available() const { return 0; }
   int read() const { return -1; }
 };

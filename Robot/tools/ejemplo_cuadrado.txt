@@ -1,0 +1,20 @@
+# Mediciones de la prueba del cuadrado. Todo en mm. '#' inicia un comentario.
+# Puede pegar aquí la salida completa de SHOW: solo se usan rppr, lppr y track.
+robot Atta-A-02
+SET rppr 822.000000
+SET lppr 808.000000
+SET track 125.000000
+
+lado 500      # lado del cuadrado programado (Avanzar 50 cm)
+lapiz 0       # mm del lápiz por delante del eje de las ruedas (negativo si va detrás)
+
+# Posición final del lápiz respecto al punto de inicio:
+#   x = hacia donde miraba el robot al empezar (+ adelante, - atrás)
+#   y = lateral (+ a la izquierda del robot al empezar, - a la derecha)
+# Una línea por corrida; se promedian. Ideal: 3 por sentido.
+horario      -64  -87
+horario      -67  -84
+horario      -67  -87
+antihorario  -10   11
+antihorario  -13   14
+antihorario  -13   11

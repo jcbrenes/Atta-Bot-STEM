@@ -4,6 +4,58 @@ Implementación del 18 de septiembre de 2026. Firmware común para los 13 Attas,
 con perfil persistente por robot y parámetros separados por rueda/sentido.
 Los valores nuevos son puntos de partida que requieren validación en suelo.
 
+## Mejora de giros — controlador 3
+
+Esta revisión conserva `motionV2` byte por byte y crea un perfil independiente
+`turnV1` al primer arranque. No borre NVS. `SHOW` indica `controller=3` y
+`turn_schema=1`; `VERIFY` comprueba ambos perfiles. No convierte de nuevo las
+ganancias ni cambia PPR, radios, track, velocidad, servos o ajustes de recta.
+Si el perfil de giro existe pero es inválido, bloquea la configuración en vez
+de reemplazarlo. Volver al firmware V2 ignora `turnV1` y conserva `motionV2`.
+
+Valores iniciales comunes del nuevo perfil (no hace falta enviarlos si acaba
+de crearse; use SHOW para confirmar):
+
+```text
+SET turnaccel 120
+SET turndecel 120
+SET turnapproach 20
+SET turnzone 20
+```
+
+Las rampas de giro ya no dependen de `accel/decel`. La referencia se reduce
+antes de los últimos `turnzone` mm por rueda para llegar a `turnapproach` mm/s,
+y sigue reduciéndose dentro de esa zona según la raíz de la distancia restante.
+Esto prioriza precisión; puede aumentar el tiempo del giro. No introduce
+inversión correctiva ni cambia el modo eléctrico del puente.
+
+Al llegar ambas ruedas se corta PWM, pero se mantiene el muestreo: la telemetría
+muestra `SETTLE` con distancias y velocidades actualizadas. Se espera un mínimo
+de 500 ms y 150 ms sin nuevas cuentas en ninguna rueda; a los 2000 ms sin lograr
+ese criterio se reporta `NOT_SETTLED`. La espera de 500 ms no se repite después
+de un giro asentado. STOP y obstáculos siguen atendidos durante esa observación.
+Ausencia de cuentas no equivale a comprobar orientación externa o deslizamiento.
+
+Al finalizar se imprime `TURN_RESULT` con uno de estos resultados:
+
+- `COMPLETE`: reposo observado y ambas distancias dentro de la tolerancia.
+- `OVERSHOOT`: reposo observado, pero alguna rueda superó objetivo + tolerancia.
+  Se continúa la secuencia; no se oculta ni se intenta corregir invirtiendo.
+- `INCOMPLETE`: se interrumpió el giro por un fallo del controlador. El mensaje
+  incluye su causa; la app continúa según la política de fallos recuperables.
+
+`target_deg` y `encoder_deg` son magnitudes, sin signo. `encoder_deg` estima
+ángulo por recorrido de ruedas; no es una medición independiente del chasis.
+`coast_r_mm/coast_l_mm` miden avance desde que ambas ruedas llegaron y se inició
+asentamiento; no incluyen el avance previo de la rueda que llegó primero.
+STOP explícito cancela sin prometer un resultado de giro completo.
+
+Para validar, guarde SHOW/VERIFY, active TELEMETRY y pruebe TURN 90 / TURN -90
+por separado, esperando su resultado. Compare orientación real y TURN_RESULT.
+Use el mismo perfil inicial en varios Attas y compruebe también MOVE 100/-100.
+No cambie track para ocultar un OVERSHOOT. Esta versión no garantiza precisión
+física universal y todavía requiere ensayos en los robots.
+
 ## Respaldo y retorno al código anterior
 
 La copia anterior a estas modificaciones está en
@@ -97,8 +149,16 @@ usen el puerto. Abra el acceso con `DEV AttaDev2026` (o la clave configurada).
 | `EXIT` | Cerrar acceso y telemetría; no sustituye a STOP |
 
 Los comandos de configuración y pruebas se ignoran durante movimiento o espera
-de asentamiento. STOP y TELEMETRY siguen disponibles. Después de un fallo, revise
-la causa y use CLEAR; no se reanuda automáticamente el programa interrumpido.
+de asentamiento. STOP y TELEMETRY siguen disponibles. En avances y giros de un
+programa de la app, `RIGHT_STALL`, `LEFT_STALL`, `TIMEOUT`, `CONTROL_LATE` y `NOT_SETTLED`
+detienen la maniobra actual, imprimen `FAULT,...` y `PROGRAM_CONTINUE`, y despejan
+el fallo automáticamente. Tras los 500 ms de asentamiento se ejecuta la siguiente
+instrucción, conservando ciclos y bifurcaciones. No se reintenta ni se completa
+el recorrido omitido, por lo que puede cambiar la posición final del dibujo.
+El fallo queda registrado por Serial; la telemetría posterior muestra `NONE`.
+STOP y `CONFIG` siguen cancelando el programa. Los fallos de pruebas Serial
+(`MOVE`, `TURN`, `MOTOR`) y del retroceso por obstáculo siguen requiriendo revisar
+la causa y usar `CLEAR`; no reanudan el programa interrumpido.
 `SET device ...` requiere reiniciar para cambiar el nombre anunciado por BLE.
 
 `MOTOR` admite PWM entre 0 y `maxpwm`, y duración 100–3000 ms. Se detiene al
@@ -125,7 +185,10 @@ es atrás: `rfstart` = derecha adelante; `rrstart` = derecha atrás.
 | `rfff/rrff/lfff/lrff` | 0–10 PWM/(mm/s), aporte base proporcional a velocidad; inicial 0 |
 | `maxpwm` | 1–255; inicial 200; no puede quedar por debajo de umbrales existentes |
 | `speed`, `turnspeed` | 10–300; iniciales 90 y 60 |
-| `accel`, `decel` | 10–1000; iniciales 120 y 180 |
+| `accel`, `decel` | 10–1000 mm/s²; rectas; iniciales 120 y 180 |
+| `turnaccel`, `turndecel` | 10–1000 mm/s²; giros; iniciales 120 y 120 |
+| `turnapproach` | 5–100 mm/s; velocidad de aproximación de giro; inicial 20; limitada también por turnspeed |
+| `turnzone` | 1–100 mm por rueda; zona de aproximación de giro; inicial 20 |
 | `sync` | 0–10 (mm/s)/mm; inicial 1; reduce referencia de rueda adelantada |
 | `tolerance` | 0.1–5 mm por rueda; inicial 0.5; no es una garantía de precisión final |
 | `filterms` | 0–200 ms; inicial 50; cero desactiva filtro |
@@ -134,7 +197,7 @@ es atrás: `rfstart` = derecha adelante; `rrstart` = derecha atrás.
 | `neutral/active/inactive` | Enteros 0–180, servo del pilot |
 | `forward/reverse/stop` | Enteros 0–180, servo continuo del set |
 
-Fallos: `RIGHT_STALL`, `LEFT_STALL`, `TIMEOUT`, `CONTROL_LATE` y `CONFIG`.
+Fallos: `RIGHT_STALL`, `LEFT_STALL`, `TIMEOUT`, `CONTROL_LATE`, `NOT_SETTLED` y `CONFIG`.
 El control corre cada 25 ms o más; si una ventana supera 250 ms, se aborta.
 Cada maniobra tiene límite total derivado de distancia y velocidad, entre
 5 y 120 segundos. Aumentar umbrales no corrige un encoder desconectado.
@@ -166,9 +229,9 @@ Cada maniobra tiene límite total derivado de distancia y velocidad, entre
    Use las metas y registro de la auditoría. Guarde SHOW/VERIFY finales, reinicie
    y confirme persistencia. Extienda a los 13 cuando los resultados sean repetibles.
 
-La distancia de telemetría queda en el último muestreo de la maniobra. Para
-medir avance por inercia tras la parada, compare cuentas acumuladas al parar y
-tras asentamiento; no interprete esa distancia congelada como posición física final.
+En rectas, la distancia de telemetría queda en el último muestreo de la maniobra;
+compare cuentas acumuladas para medir avance posterior al corte. En giros del
+controlador 3, distancia y velocidad se actualizan también durante SETTLE.
 
 ## Captura en computadora
 
@@ -203,6 +266,12 @@ g++ -std=c++11 -Wall -Wextra -Werror -IRobot/tests/stubs Robot/tests/config_test
 /tmp/atta-config-test
 g++ -std=c++11 -Wall -Wextra -Werror -IRobot/tests/stubs Robot/tests/runtime_test.cpp -o /tmp/atta-runtime-test
 /tmp/atta-runtime-test
+g++ -std=c++11 -Wall -Wextra -Werror Robot/tests/turn_control_test.cpp -o /tmp/atta-turn-test
+/tmp/atta-turn-test
+g++ -std=c++11 -Wall -Wextra -Werror -IRobot/tests/stubs Robot/tests/turn_config_test.cpp -o /tmp/atta-turn-config-test
+/tmp/atta-turn-config-test
+g++ -std=c++14 -Wall -Wextra -Werror Robot/tests/square_calibration_test.cpp -o /tmp/atta-square-test
+/tmp/atta-square-test
 arduino-cli compile --fqbn esp32:esp32:esp32 --build-path /tmp/atta-motion-v2-build Robot/CodigoESP32
 ```
 
@@ -213,5 +282,8 @@ Las pruebas cubren unidades del PID, saturación, rampas, final por ambas ruedas
 sentidos, parada/reinicio, fallos, desbordamiento de contadores/tiempo, motores
 simulados diferentes y migración sin pérdida de PPR/servo ni reconversión de Ki.
 Las de integración comprueban salidas de ambos motores al cambiar de sentido,
-STOP, bloqueo de SET durante marcha, fallos enclavados y duración de MOTOR.
+STOP, bloqueo de SET durante marcha, continuación del programa tras fallos de
+movimiento, fallos enclavados en diagnóstico y duración de MOTOR.
+Las pruebas de giro añaden movimiento posterior al corte, exceso final, falta
+de reposo, STOP durante SETTLE, wrap temporal y conservación del perfil V2.
 No se ha cargado ni validado físicamente esta versión en los Attas.

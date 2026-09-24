@@ -64,5 +64,63 @@ int main() {
   idle(); processSerialCommand("MOVE 100"); assert(estado==ESPERA);
   processSerialCommand("CLEAR"); assert(motion.fault==atta::Fault::None);
   processSerialCommand("MOVE 0"); assert(advanceDesiredDistance(0)); stoppedPins();
+  diagnosticMove = false;
+  // Los fallos recuperables de la app conservan el programa y su flujo.
+  for (auto fault : {atta::Fault::RightStall, atta::Fault::LeftStall,
+                     atta::Fault::Timeout, atta::Fault::Timing, atta::Fault::Settling}) {
+    for (auto state : {MOVERSE, GIRAR}) {
+      idle(); estado = state; flagEjecucion = true;
+      inst_actual = 3; inst_final = 8; primer_ciclo = false;
+      anidamientoWhile = 1; indicesWhile[0] = 2;
+      anidamientoIF = 1; ejecutandoRamaIf[1] = true;
+      applyMotorOutputs(false, false, 80, 80);
+      motion.fail(fault); reportMotionFault();
+      stoppedPins();
+      assert(estado == DETENERSE && !paro_emergencia && flagEjecucion);
+      assert(motion.fault == atta::Fault::None && !motion.active);
+      assert(inst_actual == 3 && inst_final == 8 && !primer_ciclo);
+      assert(anidamientoWhile == 1 && indicesWhile[0] == 2);
+      assert(anidamientoIF == 1 && ejecutandoRamaIf[1]);
+      // Despues del asentamiento, la siguiente maniobra puede arrancar sin CLEAR.
+      estado = MOVERSE;
+      assert(!advanceDesiredDistance(100));
+      fakeNow += 25; assert(!advanceDesiredDistance(100));
+      assert(pinPWM[14] > 0 && pinPWM[13] > 0);
+      // STOP conserva la cancelacion completa aun despues de una recuperacion.
+      processSerialCommand("STOP"); stoppedPins();
+      assert(paro_emergencia && inst_actual == 0 && inst_final == 0);
+      assert(anidamientoWhile == 0 && anidamientoIF == 0 && !flagEjecucion);
+    }
+  }
+  // Fallo real de temporizacion en una maniobra de la app.
+  idle(); estado = MOVERSE; inst_actual = 1; inst_final = 4;
+  assert(!advanceDesiredDistance(100));
+  fakeNow += 300; assert(advanceDesiredDistance(100));
+  stoppedPins(); assert(!paro_emergencia && inst_final == 4 && estado == DETENERSE);
+  // Perfil persistente usado por runtime y resultado de giro tras observar reposo.
+  idle(); processSerialCommand("SET turnaccel 80"); processSerialCommand("TURN 90");
+  assert(!turnDesiredAngle(90)); fakeNow += 25; turnDesiredAngle(90);
+  assert(motion.right.reference <= 2.001f);
+  rightEncoderPos += uint32_t(std::ceil(motion.target * motionConfig.right.ppr / (2*atta::pi*motionConfig.right.radius))) + 5;
+  leftEncoderPos += uint32_t(std::ceil(motion.target * motionConfig.left.ppr / (2*atta::pi*motionConfig.left.radius)));
+  fakeNow += 25; assert(!turnDesiredAngle(90));
+  stoppedPins(); assert(motion.settling);
+  telemetryEnabled = true; Serial.output.clear(); fakeNow += 100; emitTelemetry();
+  assert(Serial.output.find(",SETTLE,") != std::string::npos);
+  for (int i=0; i<16; ++i) { fakeNow += 25; turnDesiredAngle(90); }
+  assert(!motion.active && motion.turnSettled && motion.turnOvershoot);
+  assert(Serial.output.find("TURN_RESULT,OVERSHOOT") != std::string::npos);
+  // STOP durante el asentamiento no deja continuar la secuencia.
+  idle(); diagnosticMove=false; estado=GIRAR; inst_actual=2; inst_final=8;
+  turnDesiredAngle(90);
+  rightEncoderPos += uint32_t(std::ceil(motion.target * motionConfig.right.ppr / (2*atta::pi*motionConfig.right.radius)));
+  leftEncoderPos += uint32_t(std::ceil(motion.target * motionConfig.left.ppr / (2*atta::pi*motionConfig.left.radius)));
+  fakeNow+=25; turnDesiredAngle(90); assert(motion.settling);
+  processSerialCommand("STOP"); stoppedPins();
+  assert(!motion.active && !motion.settling && paro_emergencia && inst_final==0);
+  // CONFIG sigue cancelando y bloqueando, aunque sea una secuencia de la app.
+  idle(); estado = MOVERSE; motorOutputsReady = false;
+  assert(advanceDesiredDistance(100)); stoppedPins();
+  assert(motion.fault == atta::Fault::Config && paro_emergencia && inst_final == 0);
   std::cout << "runtime_test: OK\n";
 }
