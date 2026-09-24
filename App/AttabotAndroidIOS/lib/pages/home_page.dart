@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:proyecto_tec/features/bot-control/dialogs/select_mode_dialog.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
 import 'package:proyecto_tec/features/home-page/components/home_page_title.dart';
+import 'package:proyecto_tec/pages/admin_page.dart';
 import 'package:proyecto_tec/pages/bot_control_page.dart';
 import 'package:proyecto_tec/pages/landing_page.dart';
 import 'package:proyecto_tec/pages/simplified_mode_page.dart';
@@ -30,6 +31,20 @@ class _HomePageState extends State<HomePage> {
 
   String get version => 'v.1.2';
   String get pageTitle => 'atta bot';
+
+  // Menú oculto: 5 toques seguidos sobre el título.
+  int _titleTaps = 0;
+  DateTime _lastTitleTap = DateTime.fromMillisecondsSinceEpoch(0);
+
+  void _titleTapped() {
+    final now = DateTime.now();
+    _titleTaps = now.difference(_lastTitleTap) < const Duration(seconds: 1) ? _titleTaps + 1 : 1;
+    _lastTitleTap = now;
+    if (_titleTaps >= 5) {
+      _titleTaps = 0;
+      openAdminMenu(context);
+    }
+  }
 
   @override
   void initState() {
@@ -103,7 +118,7 @@ class _HomePageState extends State<HomePage> {
             children: [
               Text('grupo GIROM', style: TextStyle(color: neutralWhite)),
               Spacer(),
-              HomePageTitle(version: version),
+              GestureDetector(onTap: _titleTapped, child: HomePageTitle(version: version)),
               Spacer(),
               DefaultButtonFactory.getButton(
                   buttonType: ButtonType.primaryIcon,

@@ -19,6 +19,11 @@ https://developer.android.com/about/versions/12/features/bluetooth-permissions -
 
 <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
 
+<!-- Actualización desde el menú de administración -->
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+<uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
+
 
         
  <application
@@ -52,6 +57,13 @@ https://developer.android.com/about/versions/12/features/bluetooth-permissions -
                 android:resource="@xml/device_admin_policies" />
             <intent-filter>
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+            </intent-filter>
+        </receiver>
+
+        <receiver android:name=".InstallResultReceiver" android:exported="false" />
+        <receiver android:name=".PackageReplacedReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
 
