@@ -19,11 +19,12 @@ TIPO=(--latest)
 BUILD_TOOLS=$(ls -d ~/Android/Sdk/build-tools/*/ 2>/dev/null | tail -n1)
 [ -f "$APK" ] || { echo "No existe $APK" >&2; exit 1; }
 
-INFO=$("${BUILD_TOOLS}aapt" dump badging "$APK" | head -n1)
+# awk lee toda la salida: head/grep -m1 cortarían el pipe y pipefail abortaría.
+INFO=$("${BUILD_TOOLS}aapt" dump badging "$APK" | awk 'NR==1')
 NOMBRE=$(sed -n "s/.*name='\([^']*\)'.*versionCode.*/\1/p" <<<"$INFO")
 CODIGO=$(sed -n "s/.*versionCode='\([0-9]*\)'.*/\1/p" <<<"$INFO")
 VERSION=$(sed -n "s/.*versionName='\([^']*\)'.*/\1/p" <<<"$INFO")
-FIRMA=$("${BUILD_TOOLS}apksigner" verify --print-certs "$APK" 2>/dev/null | grep -m1 'SHA-256' | awk '{print $NF}')
+FIRMA=$("${BUILD_TOOLS}apksigner" verify --print-certs "$APK" 2>/dev/null | awk '/SHA-256/ && !f {print $NF; f=1}')
 
 [ "$NOMBRE" = "$PAQUETE" ] || { echo "Paquete inesperado: $NOMBRE" >&2; exit 1; }
 [ "$FIRMA" = "$FIRMA_ESPERADA" ] || { echo "Firma distinta ($FIRMA): las tabletas la rechazarían." >&2; exit 1; }
@@ -38,8 +39,14 @@ cat > "$DESTINO/latest.json" <<EOF
 {"versionName": "$VERSION", "versionCode": $CODIGO, "apk": "$ARCHIVO", "sha256": "$SHA"}
 EOF
 
+# Si la etiqueta ya está en GitHub se usa tal cual; si no, se crea en HEAD (debe estar publicado).
+if git ls-remote --exit-code --tags "https://github.com/$REPO" "refs/tags/$TAG" >/dev/null; then
+  ORIGEN=(--verify-tag)
+else
+  ORIGEN=(--target "$(git rev-parse HEAD)")
+fi
 echo "Publicando $TAG en $REPO (versionCode $CODIGO, sha256 $SHA)"
-gh release create "$TAG" -R "$REPO" --target "$(git rev-parse HEAD)" "${TIPO[@]}" \
+gh release create "$TAG" -R "$REPO" "${ORIGEN[@]}" "${TIPO[@]}" \
   --title "Atta-Bot app $VERSION" \
   --notes "APK $VERSION (versionCode $CODIGO). Firma SHA-256: \`$FIRMA\`. APK SHA-256: \`$SHA\`." \
   "$DESTINO/$ARCHIVO" "$DESTINO/latest.json"
