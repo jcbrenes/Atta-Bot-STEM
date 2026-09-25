@@ -13,8 +13,7 @@ class BluetoothDevicesPage extends StatefulWidget {
 class _BluetoothDevicesPageState extends State<BluetoothDevicesPage> {
   BluetoothServiceInterface btService =
       DependencyManager().getBluetoothService();
-  NavigationService navService =
-      DependencyManager().getNavigationService();
+  NavigationService navService = DependencyManager().getNavigationService();
 
   @override
   void initState() {
@@ -32,20 +31,21 @@ class _BluetoothDevicesPageState extends State<BluetoothDevicesPage> {
         child: Column(
           children: [
             btService.isConnected
-            ?Card(
-                child: ListTile(
-                  title: const Text('Conectado'),
-                  subtitle: Text(btService.connectedDevice!.platformName),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.bluetooth_disabled),
-                    onPressed: () {
-                      btService.disconnectDevice(btService.connectedDevice!);
-                      navService.goBack(context);
-                    },
-                  ),
-                ),
-              )
-            : const SizedBox.shrink(),
+                ? Card(
+                    child: ListTile(
+                      title: const Text('Conectado'),
+                      subtitle: Text(btService.connectedDevice!.platformName),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.bluetooth_disabled),
+                        onPressed: () {
+                          btService
+                              .disconnectDevice(btService.connectedDevice!);
+                          navService.goBack(context);
+                        },
+                      ),
+                    ),
+                  )
+                : const SizedBox.shrink(),
             const SizedBox(height: 20),
             StreamBuilder(
                 stream: btService.devices$,
@@ -62,11 +62,22 @@ class _BluetoothDevicesPageState extends State<BluetoothDevicesPage> {
                           return Card(
                             child: ListTile(
                               title: Text(snapshot.data![index].platformName),
-                              subtitle:
-                                  Text(snapshot.data![index].remoteId.toString()),
-                              onTap: () {
-                                btService.connectToDevice(snapshot.data![index]);
-                                navService.goBack(context);
+                              subtitle: Text(
+                                  snapshot.data![index].remoteId.toString()),
+                              onTap: () async {
+                                final bool connected = await btService
+                                    .connectToDevice(snapshot.data![index]);
+                                if (!context.mounted) return;
+                                if (connected) {
+                                  navService.goBack(context);
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                          'No se pudo conectar al dispositivo'),
+                                    ),
+                                  );
+                                }
                               },
                             ),
                           );
