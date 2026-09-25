@@ -4,6 +4,8 @@
 #
 # Uso (desde la raíz del repositorio, con el commit del build ya en GitHub):
 #   bash App/publicar_release_apk.sh App/AttabotAndroidIOS/build/app/outputs/flutter-apk/app-release.apk
+# Con --prerelease no pasa a ser "latest": las tabletas solo la ven si se escribe
+# su dirección exacta en el menú (…/releases/download/app-vX.Y.Z/latest.json).
 set -euo pipefail
 
 REPO="${ATTA_REPO:-eduardo00-fv/Atta-Bot-STEM}"
@@ -11,7 +13,9 @@ REPO="${ATTA_REPO:-eduardo00-fv/Atta-Bot-STEM}"
 FIRMA_ESPERADA="34f0efd4fb561de69dcaad826487fa6f1c06db4bb3eda7eb4ac1520b7da5f84b"
 PAQUETE="com.example.proyecto_tec"
 
-APK="${1:?Uso: $0 ruta/al.apk}"
+APK="${1:?Uso: $0 ruta/al.apk [--prerelease]}"
+TIPO=(--latest)
+[ "${2:-}" = "--prerelease" ] && TIPO=(--prerelease --latest=false)
 BUILD_TOOLS=$(ls -d ~/Android/Sdk/build-tools/*/ 2>/dev/null | tail -n1)
 [ -f "$APK" ] || { echo "No existe $APK" >&2; exit 1; }
 
@@ -35,7 +39,8 @@ cat > "$DESTINO/latest.json" <<EOF
 EOF
 
 echo "Publicando $TAG en $REPO (versionCode $CODIGO, sha256 $SHA)"
-gh release create "$TAG" -R "$REPO" --target "$(git rev-parse HEAD)" --latest \
+gh release create "$TAG" -R "$REPO" --target "$(git rev-parse HEAD)" "${TIPO[@]}" \
   --title "Atta-Bot app $VERSION" \
   --notes "APK $VERSION (versionCode $CODIGO). Firma SHA-256: \`$FIRMA\`. APK SHA-256: \`$SHA\`." \
   "$DESTINO/$ARCHIVO" "$DESTINO/latest.json"
+echo "latest.json: https://github.com/$REPO/releases/download/$TAG/latest.json"
