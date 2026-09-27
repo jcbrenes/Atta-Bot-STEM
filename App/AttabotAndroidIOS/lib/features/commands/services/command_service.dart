@@ -200,6 +200,10 @@ class CommandService extends ChangeNotifier {
       }
     }
     cycleActive = cycle;
+    // Si se borró el ciclo simplificado, lo nuevo ya no debe insertarse en él
+    if (!_commands.any((c) => c.action == CommandType.endCycle)) {
+      simplifiedCycleActive = false;
+    }
     obstacleDetection = detection;
     pencilActive = pencil;
     clawActive = claw;
@@ -319,9 +323,9 @@ class CommandService extends ChangeNotifier {
 
   void deactivateObjectDetection() {
     obstacleDetection = false;
-    Command command = Command(CommandType.deactivateObjectDetection, null);
-    _commands.add(command);
-    notifyListeners();
+    _addCommandRespectingSimplifiedCycle(
+      Command(CommandType.deactivateObjectDetection, null),
+    );
   }
 
   void activateTool() {
@@ -333,9 +337,9 @@ class CommandService extends ChangeNotifier {
 
   void deactivateTool() {
     pencilActive = false;
-    Command command = Command(CommandType.deactivateTool, null);
-    _commands.add(command);
-    notifyListeners();
+    _addCommandRespectingSimplifiedCycle(
+      Command(CommandType.deactivateTool, null),
+    );
   }
 
 // =============================================================================

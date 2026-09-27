@@ -31,21 +31,24 @@ class _BluetoothDevicesPageState extends State<BluetoothDevicesPage> {
       body: Center(
         child: Column(
           children: [
-            btService.isConnected
-            ?Card(
-                child: ListTile(
-                  title: const Text('Conectado'),
-                  subtitle: Text(btService.connectedDevice!.platformName),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.bluetooth_disabled),
-                    onPressed: () {
-                      btService.disconnectDevice(btService.connectedDevice!);
-                      navService.goBack(context);
-                    },
-                  ),
-                ),
-              )
-            : const SizedBox.shrink(),
+            ValueListenableBuilder(
+              valueListenable: btService.connectedDeviceListenable,
+              builder: (context, device, _) => device != null
+                  ? Card(
+                      child: ListTile(
+                        title: const Text('Conectado'),
+                        subtitle: Text(device.platformName),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.bluetooth_disabled),
+                          onPressed: () {
+                            btService.disconnectDevice(device);
+                            navService.goBack(context);
+                          },
+                        ),
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
             const SizedBox(height: 20),
             StreamBuilder(
                 stream: btService.devices$,

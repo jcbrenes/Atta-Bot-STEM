@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
+import 'package:proyecto_tec/shared/features/navigation/services/navigation.dart';
 import 'package:proyecto_tec/shared/interfaces/bluetooth/bluetooth_service_interface.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 
@@ -10,8 +11,8 @@ class BotControlHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final BluetoothServiceInterface btService =
         DependencyManager().getBluetoothService();
-    final String connectionName =
-        btService.connectedDevice?.platformName ?? 'No conectado';
+    final NavigationService navService =
+        DependencyManager().getNavigationService();
 
     return Container(
       decoration: BoxDecoration(
@@ -21,24 +22,44 @@ class BotControlHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(width: 8),
-          Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Baseline(
-              baseline: 14,
-              baselineType: TextBaseline.alphabetic,
-              child: Text(
-                'Conexión: $connectionName',
-                style: const TextStyle(
-                  shadows: [Shadow(color: neutralWhite, offset: Offset(0, -6))],
-                  fontSize: 12,
-                  color: Colors.transparent,
-                  fontWeight: FontWeight.w500,
-                  decorationColor: neutralGray,
-                  decorationThickness: 3,
-                  decoration: TextDecoration.underline,
+          // Todo el campo abre la lista de robots y se actualiza al conectar
+          ListenableBuilder(
+            listenable: Listenable.merge([
+              btService.connectedDeviceListenable,
+              btService.connectingDeviceListenable,
+            ]),
+            builder: (context, _) {
+              final connecting = btService.connectingDeviceListenable.value;
+              final connected = btService.connectedDeviceListenable.value;
+              final connectionName = connecting != null
+                  ? 'conectando a ${connecting.platformName}…'
+                  : connected?.platformName ?? 'No conectado';
+              return InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () => navService.goToBluetoothDevicesPage(context),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 12, 4, 8),
+                  child: Baseline(
+                    baseline: 14,
+                    baselineType: TextBaseline.alphabetic,
+                    child: Text(
+                      'Conexión: $connectionName',
+                      style: const TextStyle(
+                        shadows: [
+                          Shadow(color: neutralWhite, offset: Offset(0, -6))
+                        ],
+                        fontSize: 12,
+                        color: Colors.transparent,
+                        fontWeight: FontWeight.w500,
+                        decorationColor: neutralGray,
+                        decorationThickness: 3,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
           const Spacer(),
           Padding(
