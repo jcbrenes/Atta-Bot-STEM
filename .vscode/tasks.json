@@ -29,7 +29,7 @@
       // The actual command executed. Compiling here uses arduino-cli,
       // which will look for sketch.yaml in "cwd" (below) to know
       // the board (FQBN) and port automatically.
-      "command": "arduino-cli compile .",
+      "command": "/opt/arduino-ide/resources/app/lib/backend/resources/arduino-cli compile .",
 
       "options": {
         // Working directory the command runs from.
@@ -42,12 +42,7 @@
       // Leave empty unless you want VS Code to parse compiler
       // output and highlight specific error lines automatically
       "problemMatcher": [],
-
-      "group": {
-        "kind": "build",
-        // Makes this the task that runs when pressing Ctrl+Shift+B
-        "isDefault": true
-      }
+      "group": "build"
     },
     {
       "label": "Arduino: Upload",
@@ -55,7 +50,7 @@
 
       // Uploads the last compiled binary to the board connected
       // at the port defined in sketch.yaml
-      "command": "arduino-cli upload .",
+      "command": "/opt/arduino-ide/resources/app/lib/backend/resources/arduino-cli upload .",
 
       "options": {
       "cwd": "${workspaceFolder}/Robot/CodigoESP32"
@@ -79,7 +74,9 @@
       "label": "Attas: Compilar binario",
       "type": "shell",
       "command": "bash Robot/cargar_firmware_attas.sh compilar",
-      "problemMatcher": []
+      "problemMatcher": [],
+      // Ctrl+Shift+B
+      "group": { "kind": "build", "isDefault": true }
     },
     {
       // Carga el binario a cada Atta que se conecte (Ctrl+C para terminar)
