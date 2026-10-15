@@ -8,6 +8,9 @@
 #   bash Robot/cargar_firmware_attas.sh compilar   # genera Robot/Binarios/
 #   bash Robot/cargar_firmware_attas.sh            # carga a todos los conectados
 #   bash Robot/cargar_firmware_attas.sh continuo   # carga cada Atta que se conecte
+#   bash Robot/cargar_firmware_attas.sh configurar [campo=valor ...]
+#       sin cargar firmware: respaldo SHOW + PERFIL + valores extra a cada Atta
+#       que se conecte (p. ej. track=120 para todos, una sola vez)
 set -u
 
 FQBN="esp32:esp32:esp32"
@@ -51,6 +54,10 @@ cargar() {  # $1 = puerto
     0xe000 "$BIN/boot_app0.bin" \
     0x10000 "$BIN/CodigoESP32.ino.bin" > "/tmp/attas_$(basename "$1").log" 2>&1 || return 1
   fijar_config "$1" >> "/tmp/attas_$(basename "$1").log" 2>&1
+}
+
+configurar() {  # $1 = puerto
+  fijar_config "$1" > "/tmp/attas_$(basename "$1").log" 2>&1
 }
 
 # Aplica PERFIL y pwmhz por serie; reinicia para aplicar pwmhz y falla si el
@@ -97,11 +104,19 @@ if [ "${1:-}" = "compilar" ]; then
   exit 0
 fi
 
-if [ ! -f "$BIN/CodigoESP32.ino.bin" ]; then
+ACCION=cargar
+if [ "${1:-}" = "configurar" ]; then
+  shift
+  PERFIL="$PERFIL $*"  # los valores extra van después y prevalecen
+  ACCION=configurar
+  echo "Configurar sin cargar firmware: $PERFIL"
+  set -- continuo
+elif [ ! -f "$BIN/CodigoESP32.ino.bin" ]; then
   echo "No hay binarios. Corre primero: bash $0 compilar" >&2
   exit 1
+else
+  echo "Firmware: $(head -n1 "$BIN/version.txt")"
 fi
-echo "Firmware: $(head -n1 "$BIN/version.txt")"
 
 if [ "${1:-}" = "continuo" ]; then
   echo "Conecta los Attas uno por uno (Ctrl+C para terminar)."
@@ -112,8 +127,8 @@ if [ "${1:-}" = "continuo" ]; then
     for p in $actuales; do
       [ -n "${hecho[$p]:-}" ] && continue
       hecho[$p]=1
-      echo -n "[$p] cargando... "
-      if cargar "$p"; then n=$((n+1)); echo "OK (#$n) $(grep -ao 'Respaldo SHOW: .*' "/tmp/attas_$(basename "$p").log"). Desconéctalo."
+      echo -n "[$p] $ACCION... "
+      if "$ACCION" "$p"; then n=$((n+1)); echo "OK (#$n) $(grep -ao 'Respaldo SHOW: .*' "/tmp/attas_$(basename "$p").log"). Desconéctalo."
       else echo "FALLÓ (ver /tmp/attas_$(basename "$p").log)"; fi
     done
     # Un puerto que desaparece queda libre para el siguiente Atta.
@@ -131,8 +146,8 @@ if [ -z "$PUERTOS" ]; then
 fi
 declare -A pid
 for p in $PUERTOS; do
-  echo "[$p] cargando..."
-  cargar "$p" & pid[$p]=$!
+  echo "[$p] $ACCION..."
+  "$ACCION" "$p" & pid[$p]=$!
 done
 fallos=0
 for p in $PUERTOS; do
