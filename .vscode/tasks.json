@@ -73,6 +73,27 @@
       // (without this, VS Code might run both at the same time)
       "dependsOrder": "sequence",
       "problemMatcher": []
+    },
+    {
+      // Compila una sola vez a Robot/Binarios/ para cargar varios Attas
+      "label": "Attas: Compilar binario",
+      "type": "shell",
+      "command": "bash Robot/cargar_firmware_attas.sh compilar",
+      "problemMatcher": []
+    },
+    {
+      // Carga el binario a cada Atta que se conecte (Ctrl+C para terminar)
+      "label": "Attas: Cargar continuo",
+      "type": "shell",
+      "command": "bash Robot/cargar_firmware_attas.sh continuo",
+      "problemMatcher": []
+    },
+    {
+      // Carga el binario a todos los Attas conectados a la vez
+      "label": "Attas: Cargar conectados",
+      "type": "shell",
+      "command": "bash Robot/cargar_firmware_attas.sh",
+      "problemMatcher": []
     }
   ]
 }

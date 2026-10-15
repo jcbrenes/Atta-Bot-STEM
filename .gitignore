@@ -24,3 +24,6 @@ migrate_working_dir/
 /App/AttabotAndroidIOS/android/app/.cxx/Debug
 
 .vscode/tasks.json
+Robot/Binarios/
+Robot/CodigoESP32/build/
+Robot/Respaldos_SHOW/

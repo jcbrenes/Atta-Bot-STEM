@@ -168,6 +168,10 @@ En telemetría de esta prueba las referencias son cero porque el PWM es manual.
 
 ## Parámetros
 
+Explicación práctica de cada campo y cuándo tocarlo: `Guia_parametros_SET.md`.
+Los iniciales solo aplican a un Atta sin perfil guardado; `cargar_firmware_attas.sh`
+fija el perfil común de velocidad y `pwmhz` en cada robot al cargar.
+
 Las unidades de distancia son mm; velocidad mm/s; aceleración mm/s².
 `r` es derecha y `l` izquierda. En umbrales, `f` es adelante y el segundo `r`
 es atrás: `rfstart` = derecha adelante; `rrstart` = derecha atrás.
@@ -183,12 +187,12 @@ es atrás: `rfstart` = derecha adelante; `rrstart` = derecha atrás.
 | `rfstart/rrstart/lfstart/lrstart` | 0–`maxpwm`; impulso inicial si aún no hay avance; inicial 60 |
 | `rfhold/rrhold/lfhold/lrhold` | 0–`start` del mismo sentido; piso solo mientras falta velocidad; inicial 0 |
 | `rfff/rrff/lfff/lrff` | 0–10 PWM/(mm/s), aporte base proporcional a velocidad; inicial 0 |
-| `maxpwm` | 1–255; inicial 200; no puede quedar por debajo de umbrales existentes |
-| `speed`, `turnspeed` | 10–300; iniciales 90 y 60 |
-| `accel`, `decel` | 10–1000 mm/s²; rectas; iniciales 120 y 180 |
+| `maxpwm` | 1–255; inicial 230; no puede quedar por debajo de umbrales existentes |
+| `speed`, `turnspeed` | 10–300; iniciales 150 y 120 |
+| `accel`, `decel` | 10–1000 mm/s²; rectas; iniciales 350 y 400 |
 | `turnaccel`, `turndecel` | 10–1000 mm/s²; giros; iniciales 120 y 120 |
-| `turnapproach` | 5–100 mm/s; velocidad de aproximación de giro; inicial 20; limitada también por turnspeed |
-| `turnzone` | 1–100 mm por rueda; zona de aproximación de giro; inicial 20 |
+| `turnapproach` | 5–100 mm/s; velocidad de aproximación de giro; inicial 40; limitada también por turnspeed |
+| `turnzone` | 1–100 mm por rueda; zona de aproximación de giro; inicial 5 |
 | `sync` | 0–10 (mm/s)/mm; inicial 1; reduce referencia de rueda adelantada |
 | `tolerance` | 0.1–5 mm por rueda; inicial 0.5; no es una garantía de precisión final |
 | `filterms` | 0–200 ms; inicial 50; cero desactiva filtro |
@@ -236,7 +240,7 @@ controlador 3, distancia y velocidad se actualizan también durante SETTLE.
 ## Frecuencia PWM de motores (`pwmhz`)
 
 `SET pwmhz <200..30000>` guarda la frecuencia de los motores en su propia clave
-NVS (`pwmHz`, 1000 por defecto); `motionV2` y `turnV1` no cambian. Se aplica al
+NVS (`pwmHz`, 20000 por defecto); `motionV2` y `turnV1` no cambian. Se aplica al
 **reiniciar**. La resolución queda fija en 8 bits: `maxpwm 230` sigue siendo
 el 90 % y `start`, `hold`, feedforward y ganancias conservan su significado.
 Cambiar la resolución sin reescalar esos valores es lo que descalibraba el PID
