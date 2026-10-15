@@ -70,26 +70,34 @@
       "problemMatcher": []
     },
     {
-      // Compila una sola vez a Robot/Binarios/ para cargar varios Attas
-      "label": "Attas: Compilar binario",
+      // Solo compila a Robot/Binarios/; no sube nada
+      "label": "Attas: Compilar",
       "type": "shell",
       "command": "bash Robot/cargar_firmware_attas.sh compilar",
-      "problemMatcher": [],
-      // Ctrl+Shift+B
-      "group": { "kind": "build", "isDefault": true }
-    },
-    {
-      // Carga el binario a cada Atta que se conecte (Ctrl+C para terminar)
-      "label": "Attas: Cargar continuo",
-      "type": "shell",
-      "command": "bash Robot/cargar_firmware_attas.sh continuo",
       "problemMatcher": []
     },
     {
-      // Carga el binario a todos los Attas conectados a la vez
-      "label": "Attas: Cargar conectados",
+      // Sube el último binario compilado a los Attas conectados ahora,
+      // con respaldo SHOW, perfil estándar y pwmhz
+      "label": "Attas: Subir",
       "type": "shell",
       "command": "bash Robot/cargar_firmware_attas.sh",
+      "problemMatcher": []
+    },
+    {
+      // Ctrl+Shift+B: compila y sube a los Attas conectados
+      "label": "Attas: Compilar y subir",
+      "dependsOn": ["Attas: Compilar", "Attas: Subir"],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "group": { "kind": "build", "isDefault": true }
+    },
+    {
+      // Sube el último binario a cada Atta que se conecte, uno tras otro
+      // (Ctrl+C para terminar). Para cargar varios sin recompilar.
+      "label": "Attas: Subir continuo",
+      "type": "shell",
+      "command": "bash Robot/cargar_firmware_attas.sh continuo",
       "problemMatcher": []
     }
   ]
