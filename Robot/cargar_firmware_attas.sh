@@ -126,6 +126,9 @@ if [ "${1:-}" = "continuo" ]; then
     actuales=$(puertos)
     for p in $actuales; do
       [ -n "${hecho[$p]:-}" ] && continue
+      # udev asigna permisos al puerto un instante después de crearlo.
+      [ -r "$p" ] && [ -w "$p" ] || continue
+      sleep 1
       hecho[$p]=1
       echo -n "[$p] $ACCION... "
       if "$ACCION" "$p"; then n=$((n+1)); echo "OK (#$n) $(grep -ao 'Respaldo SHOW: .*' "/tmp/attas_$(basename "$p").log"). Desconéctalo."
