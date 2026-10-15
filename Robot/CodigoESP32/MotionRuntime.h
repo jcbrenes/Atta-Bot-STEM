@@ -33,7 +33,7 @@ bool attachMotorPWM() {
   motorPwmActiveHz = 0;
   for (int pin : {rightMotorM1, rightMotorM2, leftMotorM1, leftMotorM2}) {
     if (!ledcAttach(pin, motorPwmHz, motorPwmBits)) { ok = false; continue; }
-    const uint32_t real = ledcReadFreq(pin);
+    const uint32_t real = ledcTimerHz(pin);
     // El divisor del temporizador redondea; más del 2 % indica otra configuración.
     if (real == 0 || fabsf((float)real - motorPwmHz) > 0.02f * motorPwmHz) ok = false;
     if (!motorPwmActiveHz) motorPwmActiveHz = real;
@@ -53,6 +53,17 @@ bool calibrationIdle() {
     !recibeProgra && !flancoNegRecibeProgra;
 }
 
+// Estado de flujo de un programa (ciclos, ramas, detección). Un programa
+// interrumpido (STOP u obstáculo) no llega a CIFIN/OBFIN; sin este reinicio
+// el siguiente programa heredaría la detección activa y el contador de ciclos.
+void resetProgramFlow() {
+  primer_ciclo = true;
+  obstaculos_activo = false;
+  ignorarHastaIFFIN = ignorarHastaElse = ignorarHastaWHILEFIN = false;
+  anidamientoWhile = anidamientoWhileIgnorar = anidamientoIF = anidamientoIFIgnorar = 0;
+  for (int i = 0; i < 5; ++i) { indicesWhile[i] = 0; ejecutandoRamaIf[i] = false; }
+}
+
 void requestMotionStop() {
   stopMotion();
   paro_emergencia = true;
@@ -62,10 +73,7 @@ void requestMotionStop() {
   recibeProgra = flancoNegRecibeProgra = false;
   diagnosticMove = false;
   // Cancelar también bucles/bifurcaciones del programa interrumpido.
-  primer_ciclo = true;
-  ignorarHastaIFFIN = ignorarHastaElse = ignorarHastaWHILEFIN = false;
-  anidamientoWhile = anidamientoWhileIgnorar = anidamientoIF = anidamientoIFIgnorar = 0;
-  for (int i = 0; i < 5; ++i) { indicesWhile[i] = 0; ejecutandoRamaIf[i] = false; }
+  resetProgramFlow();
   inst_actual = inst_final = 0;
   estado = DETENERSE;
 }

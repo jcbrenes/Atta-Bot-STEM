@@ -21,12 +21,12 @@ bool ledcAttach(int pin, uint32_t hz, int bits) {
   if (ledcAttachFails) return false;
   pinHz[pin] = hz; pinBits[pin] = bits; return true;
 }
-uint32_t ledcReadFreq(int pin) { return (uint32_t)(pinHz[pin] * (1 + ledcFreqError)); }
+uint32_t ledcTimerHz(int pin) { return (uint32_t)(pinHz[pin] * (1 + ledcFreqError)); }
 enum State { ESPERA, DETENERSE, MOVERSE, GIRAR };
 State estado = ESPERA;
 bool waitingForStopSettle = false, recibeProgra = false, flancoNegRecibeProgra = false;
 bool paro_emergencia = false, obstaculo_detectado = false, flagParar = false, flagEjecucion = false;
-bool primer_ciclo = true, ignorarHastaIFFIN = false, ignorarHastaElse = false, ignorarHastaWHILEFIN = false;
+bool primer_ciclo = true, obstaculos_activo = false, ignorarHastaIFFIN = false, ignorarHastaElse = false, ignorarHastaWHILEFIN = false;
 int anidamientoWhile = 0, anidamientoWhileIgnorar = 0, anidamientoIF = 0, anidamientoIFIgnorar = 0;
 int indicesWhile[5] = {}, inst_actual = 0, inst_final = 0;
 bool ejecutandoRamaIf[5] = {};
@@ -38,17 +38,17 @@ void stoppedPins() { assert(pinPWM[14]==0 && pinPWM[12]==0 && pinPWM[13]==0 && p
 
 int main() {
   loadConfig(); motorOutputsReady = true;
-  // Frecuencia PWM: 1 kHz por defecto, 8 bits fijos, guardada aparte y aplicada al arrancar.
-  assert(motorPwmHz == 1000 && attachMotorPWM() && motorPwmActiveHz == 1000);
-  assert(pinBits[14] == 8 && pinHz[12] == 1000 && pinHz[13] == 1000 && pinHz[15] == 1000);
+  // Frecuencia PWM: 20 kHz por defecto, 8 bits fijos, guardada aparte y aplicada al arrancar.
+  assert(motorPwmHz == 20000 && attachMotorPWM() && motorPwmActiveHz == 20000);
+  assert(pinBits[14] == 8 && pinHz[12] == 20000 && pinHz[13] == 20000 && pinHz[15] == 20000);
   const atta::MotionConfig beforePwm = motionConfig;
-  assert(saveDeveloperValue("pwmhz", "20000") && motorPwmHz == 20000 && verifyConfig());
-  assert(motorPwmActiveHz == 1000); // no cambia en marcha: requiere reinicio
+  assert(saveDeveloperValue("pwmhz", "25000") && motorPwmHz == 25000 && verifyConfig());
+  assert(motorPwmActiveHz == 20000); // no cambia en marcha: requiere reinicio
   assert(memcmp(&beforePwm, &motionConfig, sizeof(beforePwm)) == 0); // perfil intacto
-  for (const char* invalid : {"100", "50000", "20000.5", "abc", "-1"})
-    assert(!saveDeveloperValue("pwmhz", invalid) && motorPwmHz == 20000);
-  motorPwmHz = 1; loadConfig(); assert(configReady && motorPwmHz == 20000); // persiste
-  assert(attachMotorPWM() && motorPwmActiveHz == 20000 && pinBits[15] == 8);
+  for (const char* invalid : {"100", "50000", "25000.5", "abc", "-1"})
+    assert(!saveDeveloperValue("pwmhz", invalid) && motorPwmHz == 25000);
+  motorPwmHz = 1; loadConfig(); assert(configReady && motorPwmHz == 25000); // persiste
+  assert(attachMotorPWM() && motorPwmActiveHz == 25000 && pinBits[15] == 8);
   ledcFreqError = .05f; assert(!attachMotorPWM()); // frecuencia no aplicada: bloquear
   ledcFreqError = 0; ledcAttachFails = true; assert(!attachMotorPWM());
   ledcAttachFails = false;
@@ -61,7 +61,7 @@ int main() {
   assert(pinPWM[14] > 0 && pinPWM[13] > 0 && pinPWM[12]==0 && pinPWM[15]==0);
   const auto writes = prefs.writes;
   processSerialCommand("SET rppr 900");
-  assert(prefs.writes == writes && motionConfig.right.ppr == 820);
+  assert(prefs.writes == writes && motionConfig.right.ppr == 822);
   processSerialCommand("STOP");
   stoppedPins(); assert(estado==DETENERSE && !motion.active && !diagnosticMove);
   idle(); fakeNow = 1000;
@@ -74,7 +74,7 @@ int main() {
   fakeNow=2025; turnDesiredAngle(diagnosticAmount);
   assert(pinPWM[14]>0 && pinPWM[15]>0 && pinPWM[12]==0 && pinPWM[13]==0);
   processSerialCommand("STOP"); idle();
-  processSerialCommand("SET rppr nan"); assert(motionConfig.right.ppr==820);
+  processSerialCommand("SET rppr nan"); assert(motionConfig.right.ppr==822);
   processSerialCommand("SET rppr 900"); assert(motionConfig.right.ppr==900 && verifyConfig());
   processSerialCommand("MOTOR R F 80 100");
   assert(motorTestActive && pinPWM[14]==80 && pinPWM[13]==0);
@@ -93,7 +93,7 @@ int main() {
                      atta::Fault::Timeout, atta::Fault::Timing, atta::Fault::Settling}) {
     for (auto state : {MOVERSE, GIRAR}) {
       idle(); estado = state; flagEjecucion = true;
-      inst_actual = 3; inst_final = 8; primer_ciclo = false;
+      inst_actual = 3; inst_final = 8; primer_ciclo = false; obstaculos_activo = true;
       anidamientoWhile = 1; indicesWhile[0] = 2;
       anidamientoIF = 1; ejecutandoRamaIf[1] = true;
       applyMotorOutputs(false, false, 80, 80);
@@ -101,7 +101,7 @@ int main() {
       stoppedPins();
       assert(estado == DETENERSE && !paro_emergencia && flagEjecucion);
       assert(motion.fault == atta::Fault::None && !motion.active);
-      assert(inst_actual == 3 && inst_final == 8 && !primer_ciclo);
+      assert(inst_actual == 3 && inst_final == 8 && !primer_ciclo && obstaculos_activo);
       assert(anidamientoWhile == 1 && indicesWhile[0] == 2);
       assert(anidamientoIF == 1 && ejecutandoRamaIf[1]);
       // Despues del asentamiento, la siguiente maniobra puede arrancar sin CLEAR.
@@ -113,6 +113,7 @@ int main() {
       processSerialCommand("STOP"); stoppedPins();
       assert(paro_emergencia && inst_actual == 0 && inst_final == 0);
       assert(anidamientoWhile == 0 && anidamientoIF == 0 && !flagEjecucion);
+      assert(primer_ciclo && !obstaculos_activo);
     }
   }
   // Fallo real de temporizacion en una maniobra de la app.

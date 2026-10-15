@@ -7,6 +7,10 @@ uint32_t ticks(float mm, const WheelConfig& c) {
 }
 int main() {
   MotionConfig c; TurnConfig tc; Controller m;
+  // Perfil conservador fijo: las cotas de la planta simulada se ajustaron con él,
+  // no con los valores por defecto de campo (que pueden cambiar).
+  c.speed = 90; c.turnSpeed = 60; c.acceleration = 120; c.deceleration = 180; c.maxPWM = 200;
+  tc.approachSpeed = 20; tc.approachDistance = 20;
   c.right.ppr = 822; c.left.ppr = 808;
   c.speed = 110; c.turnSpeed = 90; c.acceleration = 250; c.deceleration = 300;
   c.maxPWM = 230;

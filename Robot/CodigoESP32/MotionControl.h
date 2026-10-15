@@ -15,19 +15,21 @@ struct WheelConfig {
   float kp = 2, ki = 0.8f, kd = 0; // integral/derivada en segundos
   DriveCalibration forward, reverse;
 };
+// Valores por defecto: los más repetidos entre los Attas calibrados (hoja control-attas, 2026-10-15),
+// con velocidad y aceleraciones del escalón 2 validado en V-02 (octágono 20 cm: 1.2 cm de cierre).
 struct MotionConfig {
   uint32_t version = 2;
   WheelConfig right, left;
-  float track = 120, speed = 90, turnSpeed = 60;
-  float acceleration = 120, deceleration = 180;
-  float syncGain = 1, maxPWM = 200, tolerance = 0.5f;
+  float track = 120, speed = 150, turnSpeed = 120;
+  float acceleration = 350, deceleration = 400;
+  float syncGain = 1, maxPWM = 230, tolerance = 0.5f;
   float filterMs = 50, stallMs = 1500, startMs = 200;
 };
 // Perfil separado: mantiene intacto el formato binario motionV2 ya instalado.
 struct TurnConfig {
   uint32_t version = 1;
   float acceleration = 120, deceleration = 120;
-  float approachSpeed = 20, approachDistance = 20; // mm/s y mm por rueda
+  float approachSpeed = 40, approachDistance = 5; // mm/s y mm por rueda
 };
 enum class Fault { None, RightStall, LeftStall, Timeout, Timing, Config, Settling };
 inline const char* faultName(Fault f) {

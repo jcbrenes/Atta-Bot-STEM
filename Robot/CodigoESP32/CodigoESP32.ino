@@ -3,6 +3,8 @@
 #include <BLEServer.h>
 #include <BLEUtils.h>
 #include <string>
+#include "esp32-hal-periman.h" // perimanGetPinBus: temporizador LEDC de cada pin
+#include "driver/ledc.h"
 #include <Preferences.h> // Librería de almacenamiento de preferencias/credenciales para ESP32
 
 // LED WS2812B interno (IO02) con el driver RMT del core; FastLED ocupaba ~107 KB de flash.
@@ -240,6 +242,15 @@ const short tiempoGrua = 4000;//###;
 short tiempoDeAccion=0;
 short velocidad=velocidadNeutra; 
 
+// Frecuencia real del temporizador LEDC de un pin. ledcReadFreq() del core 3.x
+// devuelve 0 mientras el duty sea 0 (siempre al arrancar), así que no sirve
+// para verificar la configuración de los motores.
+uint32_t ledcTimerHz(uint8_t pin) {
+  auto* bus = (ledc_channel_handle_t*)perimanGetPinBus(pin, ESP32_BUS_TYPE_LEDC);
+  if (!bus) return 0;
+  return ledc_get_freq((ledc_mode_t)(bus->channel / SOC_LEDC_CHANNEL_NUM), (ledc_timer_t)bus->timer_num);
+}
+
 #include "MotionRuntime.h"
 
 void ARDUINO_ISR_ATTR rightUpdateEncoder() {
@@ -288,8 +299,9 @@ void setup() {
   pinMode(leftInfraredSensor, INPUT);
 
   // Tracker sensors set up
-  pinMode(rightTrackerSensor, INPUT_PULLDOWN);
-  pinMode(leftTrackerSensor, INPUT_PULLDOWN);
+  // GPIO 34 y 39 son solo de entrada y no tienen pulldown interno.
+  pinMode(rightTrackerSensor, INPUT);
+  pinMode(leftTrackerSensor, INPUT);
 
   // LED RGB set up
   pinMode(pinLedRgbRojo, OUTPUT);
@@ -303,7 +315,7 @@ void setup() {
   servoHerramientaSet.write(velocidadNeutra);
 
   // Reservar ambos servos ANTES de que LEDC asigne canales para motores/LED.
-  // Frecuencia configurable (SET pwmhz, por defecto 1 kHz); resolución fija de 8 bits.
+  // Frecuencia configurable (SET pwmhz, por defecto 20 kHz); resolución fija de 8 bits.
   motorOutputsReady = myServo.attached() && servoHerramientaSet.attached();
   motorOutputsReady = attachMotorPWM() && motorOutputsReady;
   stopMotion();
@@ -390,9 +402,10 @@ void loop() {
 
       //Lógica de estado siguiente
       if (flancoNegRecibeProgra) {
-          flagEjecucion = 1; 
+          flagEjecucion = 1;
           estado = LEE_MEMORIA;
           inst_actual = 0;
+          resetProgramFlow(); // cada programa arranca sin detección ni ciclos heredados
       } else if (paro_emergencia) { // si se recibe un comando de detener mientras está en ESPERA, se ignora
         flagParar = 0; 
         paro_emergencia = 0;
@@ -638,6 +651,7 @@ void loop() {
       } else if (retroceso_listo) {
         diagnosticMove = false;
         flagEjecucion = false;
+        resetProgramFlow(); // el programa termina aquí: no se llega a OBFIN/CIFIN
         estado = ESPERA;
       } 
       break;

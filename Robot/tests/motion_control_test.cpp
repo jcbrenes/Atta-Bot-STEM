@@ -6,6 +6,9 @@
 using namespace atta;
 int main() {
   MotionConfig c;
+  // Perfil conservador fijo: las cotas de la planta simulada se ajustaron con él,
+  // no con los valores por defecto de campo (que pueden cambiar).
+  c.speed = 90; c.turnSpeed = 60; c.acceleration = 120; c.deceleration = 180; c.maxPWM = 200;
   assert(validConfig(c));
   WheelConfig legacy;
   migrateGains(legacy, 2, 2, 0.4f);
@@ -96,8 +99,9 @@ int main() {
 
   // Planta simulada con dos motores diferentes, fricción y retardo.
   // Comprueba terminación/rampas; no sustituye calibración física.
+  TurnConfig simTurn; simTurn.approachSpeed = 20; simTurn.approachDistance = 20;
   for (bool turn : {false, true}) for (float amount : {100.f, -100.f, 300.f}) {
-    m.clear(); m.begin(amount, turn, 0, 0, 0, c);
+    m.clear(); m.begin(amount, turn, 0, 0, 0, c, simTurn);
     float rDistance = 0, lDistance = 0, rSpeed = 0, lSpeed = 0;
     for (uint32_t t = 25; t <= 20000 && m.active; t += 25) {
       const float rTarget = std::fmax(0.f, (m.right.pwm - 35.f) * 1.1f);

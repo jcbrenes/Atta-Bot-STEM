@@ -15,7 +15,7 @@ int velocidadPositiva = 170, velocidadNegativa = 135, velocidadNeutra = 145;
 // PWM de motores: resolución fija de 8 bits para que maxpwm, start y las
 // ganancias conserven su significado (0..255) con cualquier frecuencia.
 const int motorPwmBits = 8, motorPwmMinHz = 200, motorPwmMaxHz = 30000;
-int motorPwmHz = 1000;       // guardado en NVS; se aplica al arrancar
+int motorPwmHz = 20000;      // guardado en NVS; se aplica al arrancar
 uint32_t motorPwmActiveHz = 0; // frecuencia real leída del periférico
 
 struct ServoField { const char* name; const char* key; int* value; };
@@ -103,8 +103,8 @@ void loadConfig() {
     else ok = false; // no sobrescribir un perfil inválido con valores por defecto
   } else {
     atta::MotionConfig migrated;
-    migrated.right.ppr = prefs.getFloat("Rppr", 820);
-    migrated.left.ppr = prefs.getFloat("Lppr", 820);
+    migrated.right.ppr = prefs.getFloat("Rppr", 822); // PPR más repetidos entre los Attas
+    migrated.left.ppr = prefs.getFloat("Lppr", 828);
     const float kp = prefs.getFloat("kp", 2), ki = prefs.getFloat("ki", 2), kd = prefs.getFloat("kd", 0);
     atta::migrateGains(migrated.right, kp, ki, kd);
     atta::migrateGains(migrated.left, kp, ki, kd);
