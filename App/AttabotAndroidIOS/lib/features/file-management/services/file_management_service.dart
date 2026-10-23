@@ -152,8 +152,8 @@ Future<void> saveFileToFolder(String fileName) async {
     await FileSaver.instance.saveAs(
       name: cleanName,
       bytes: fileBytes,
-      fileExtension: "json", 
-      mimeType: MimeType.json, 
+      fileExtension: "dat",
+      mimeType: MimeType.other,
     );
   }
 }
