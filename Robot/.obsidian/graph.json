@@ -1,0 +1,55 @@
+{
+  "colorGroups": [
+    {
+      "query": "tag:#funcion",
+      "color": {
+        "a": 1,
+        "rgb": 4886745
+      }
+    },
+    {
+      "query": "tag:#metodo",
+      "color": {
+        "a": 1,
+        "rgb": 8369126
+      }
+    },
+    {
+      "query": "tag:#estado",
+      "color": {
+        "a": 1,
+        "rgb": 15105570
+      }
+    },
+    {
+      "query": "tag:#instruccion",
+      "color": {
+        "a": 1,
+        "rgb": 9323693
+      }
+    },
+    {
+      "query": "tag:#comando",
+      "color": {
+        "a": 1,
+        "rgb": 2600544
+      }
+    },
+    {
+      "query": "tag:#mensaje",
+      "color": {
+        "a": 1,
+        "rgb": 12597547
+      }
+    },
+    {
+      "query": "tag:#parametro",
+      "color": {
+        "a": 1,
+        "rgb": 15844367
+      }
+    }
+  ],
+  "search": "-tag:#indice",
+  "showTags": false
+}

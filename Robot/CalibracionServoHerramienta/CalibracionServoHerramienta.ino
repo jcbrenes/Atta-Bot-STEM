@@ -11,6 +11,12 @@
 //   +              aumenta 5 grados desde el valor actual
 //   -              disminuye 5 grados desde el valor actual
 //   ?              muestra esta ayuda
+//
+// "Herramienta" es el lápiz: el servo de GPIO 26 que CodigoESP32.ino mueve en el estado
+// HERRAMIENTA (no el servo continuo de garra/grúa, GPIO 23). Los ángulos encontrados se
+// guardan en el firmware principal con SET active (lápiz abajo), SET inactive (lápiz
+// arriba) y SET neutral (al encender). Con el firmware principal también se pueden probar
+// sin cargar este sketch: modo DEV y TEST <ángulo>.
 
 #include <ESP32Servo.h>
 
@@ -23,6 +29,11 @@ const int pasoCalibracion = 5;
 Servo servoHerramienta;
 int valorActual = valorInicial;
 
+//***************************************************************************************
+// Mueve el servo a un ángulo (acotado a 0..180) e imprime el valor actual.
+//
+// @param nuevoValor Ángulo pedido en grados.
+//***************************************************************************************
 void moverServo(int nuevoValor) {
   valorActual = constrain(nuevoValor, valorMinimo, valorMaximo);
   servoHerramienta.write(valorActual);
@@ -30,11 +41,19 @@ void moverServo(int nuevoValor) {
   Serial.println(valorActual);
 }
 
+//***************************************************************************************
+// Imprime la lista de comandos.
+//***************************************************************************************
 void imprimirAyuda() {
   Serial.println();
   Serial.println("Comandos: r (reiniciar a 90), + (subir 5), - (bajar 5), ?");
 }
 
+//***************************************************************************************
+// Interpreta un comando del Monitor Serie: r, +, - o ?/ayuda.
+//
+// @param comando Línea recibida.
+//***************************************************************************************
 void procesarComando(String comando) {
   comando.trim();
   comando.toLowerCase();
@@ -62,6 +81,9 @@ void procesarComando(String comando) {
   imprimirAyuda();
 }
 
+//***************************************************************************************
+// Inicia Serial y el servo (50 Hz, pulsos de 500 a 2400 us, como el firmware principal) en 90°.
+//***************************************************************************************
 void setup() {
   Serial.begin(115200);
   servoHerramienta.setPeriodHertz(50);
@@ -73,6 +95,9 @@ void setup() {
   imprimirAyuda();
 }
 
+//***************************************************************************************
+// Lee una línea del Monitor Serie cuando llega y la procesa.
+//***************************************************************************************
 void loop() {
   if (Serial.available() > 0) {
     procesarComando(Serial.readStringUntil('\n'));

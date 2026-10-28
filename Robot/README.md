@@ -6,6 +6,18 @@
  Ambiente de programación: Arduino IDE
  Microncontrolador usado: IdeaBoard (basada en ESP32)
 
+## Documentación
+
+- **Empezar aquí:** [Calibración paso a paso](Calibracion_paso_a_paso.md): qué se calibra, en
+  qué orden y con qué comando, y qué tocar al modificar el firmware.
+- **Mapa del firmware (Obsidian):** abrir la carpeta `Robot/` como vault en Obsidian. `Mapa/`
+  tiene una nota por función, estado, instrucción BLE, comando serie, mensaje y campo `SET`,
+  enlazadas entre sí; la vista de grafo muestra el sistema entero. Se genera desde el código,
+  no se edita a mano: tras cambiar el firmware, correr
+  `python3 Robot/tools/mapa_obsidian.py --revisar` desde la raíz del repositorio.
+- **En el código:** cada función tiene encima un recuadro `//****` con qué hace, por qué,
+  `@param` y `@return`. Al agregar o cambiar una función, mantener su recuadro: de ahí sale el mapa.
+
 ## Calibración persistente desde el firmware principal
 
 Abra `CodigoESP32/CodigoESP32.ino` conservando los archivos `.h` de su carpeta. En el primer arranque crea los

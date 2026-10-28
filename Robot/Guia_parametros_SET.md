@@ -121,7 +121,7 @@ MOVE <mm>            recta (negativo: atrás)
 TURN <grados>        giro (negativo: izquierda)
 MOTOR <R|L> <F|R> <PWM> <ms>   mover una rueda directamente (sin control)
 ENCODERS             cuentas actuales
-TELEMETRY ON|OFF     datos del controlador cada 25 ms
+TELEMETRY ON|OFF     datos del controlador cada 100 ms
 STOP / CLEAR / EXIT
 ```
 

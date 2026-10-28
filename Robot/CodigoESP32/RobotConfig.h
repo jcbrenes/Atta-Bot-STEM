@@ -1,3 +1,24 @@
+//***************************************************************************************
+// Configuración persistente del Atta: lee, valida y guarda en la NVS del ESP32
+// (namespace "Atta-Creds") todo lo que se calibra robot por robot.
+//
+// Hay cuatro grupos de valores:
+// - nombre Bluetooth ("deviceName") y frecuencia PWM de motores ("pwmHz");
+// - ángulos de los servos, una clave entera por campo (servoFields);
+// - perfil de movimiento "motionV2": el struct atta::MotionConfig completo, guardado como
+//   un solo bloque binario (PPR, radios, ganancias, start/hold/ff, track, velocidades...);
+// - perfil de giro "turnV1": el struct atta::TurnConfig (rampas y aproximación de los giros),
+//   separado para no cambiar el formato binario de motionV2 ya instalado en los robots.
+//
+// Cada campo que se puede cambiar con "SET <campo> <valor>" está en una de las tablas
+// servoFields, turnFields o motionFields (nombre del campo → variable en RAM), más los casos
+// especiales device, pwmhz y los alias kp/ki/kd de saveDeveloperValue. Para agregar un
+// parámetro nuevo basta con sumarlo a la tabla y al struct; SHOW y SET lo toman solos.
+// Qué significa cada campo y cuándo tocarlo: Guia_parametros_SET.md.
+//
+// Se compila tanto en el ESP32 como en PC (tests/config_test.cpp usa un Preferences falso
+// de tests/stubs), por eso no depende de nada del sketch.
+//***************************************************************************************
 #pragma once
 #include <Preferences.h>
 #include "MotionControl.h"
@@ -18,12 +39,25 @@ const int motorPwmBits = 8, motorPwmMinHz = 200, motorPwmMaxHz = 30000;
 int motorPwmHz = 20000;      // guardado en NVS; se aplica al arrancar
 uint32_t motorPwmActiveHz = 0; // frecuencia real leída del periférico
 
+//***************************************************************************************
+// Campo entero guardado en su propia clave NVS: los ángulos de los servos.
+//
+// name es lo que se escribe en SET, key la clave en NVS y value la variable global que usa el
+// firmware. Las claves son las mismas que usaba el firmware anterior a V2, así que un cambio
+// de servo hecho aquí se ve también en ese firmware.
+//***************************************************************************************
 struct ServoField { const char* name; const char* key; int* value; };
 ServoField servoFields[] = {
   {"neutral", "servoNeutral", &neutralAngle}, {"active", "servoActive", &activateAngle},
   {"inactive", "servoInactive", &deactivateAngle}, {"forward", "servoForward", &velocidadPositiva},
   {"reverse", "servoReverse", &velocidadNegativa}, {"stop", "servoStop", &velocidadNeutra}
 };
+//***************************************************************************************
+// Campo float de un perfil binario (motionV2 o turnV1): nombre de SET → miembro del struct.
+//
+// No tiene clave propia: al cambiar uno se reescribe el perfil entero (writeMotionProfile o
+// writeTurnProfile).
+//***************************************************************************************
 struct MotionField { const char* name; float* value; };
 MotionField turnFields[] = {
   {"turnaccel", &turnConfig.acceleration}, {"turndecel", &turnConfig.deceleration},
@@ -50,14 +84,34 @@ MotionField motionFields[] = {
   {"stallms", &motionConfig.stallMs}, {"startms", &motionConfig.startMs}
 };
 
+//***************************************************************************************
+// Convierte el texto de un SET a número, rechazando basura.
+//
+// A diferencia de toFloat(), falla si sobra texto ("12xyz"), si no hay número o si el
+// resultado es nan/inf; así un error de tipeo no se guarda como 0.
+//
+// @param text Texto del valor, ya sin espacios alrededor.
+// @param value Salida: el número leído (solo válido si devuelve true).
+//
+// @return true si el texto completo es un número finito.
+//***************************************************************************************
 bool parseFloatValue(const String& text, float& value) {
   char* end;
   value = strtof(text.c_str(), &end);
   return end != text.c_str() && *end == '\0' && std::isfinite(value);
 }
 
-// Namespace abierto por el llamador. Una sola escritura del perfil evita
-// combinaciones de ganancias de dos calibraciones tras un corte de alimentación.
+//***************************************************************************************
+// Guarda el perfil de movimiento completo en la clave "motionV2" y lo relee para verificarlo.
+//
+// El namespace NVS lo abre el llamador. Una sola escritura del bloque entero evita que un
+// corte de alimentación deje combinadas ganancias de dos calibraciones distintas. No escribe
+// nada si el perfil no pasa atta::validConfig.
+//
+// @param candidate Perfil a guardar.
+//
+// @return true si quedó guardado y lo leído coincide byte por byte.
+//***************************************************************************************
 bool writeMotionProfile(const atta::MotionConfig& candidate) {
   if (!atta::validConfig(candidate)) return false;
   if (prefs.putBytes("motionV2", &candidate, sizeof(candidate)) != sizeof(candidate)) return false;
@@ -67,6 +121,15 @@ bool writeMotionProfile(const atta::MotionConfig& candidate) {
     memcmp(&candidate, &check, sizeof(check)) == 0;
 }
 
+//***************************************************************************************
+// Guarda el perfil de giro en la clave "turnV1" y lo relee para verificarlo.
+//
+// Igual que writeMotionProfile, pero para atta::TurnConfig. El namespace lo abre el llamador.
+//
+// @param candidate Perfil de giro a guardar.
+//
+// @return true si quedó guardado y lo leído coincide byte por byte.
+//***************************************************************************************
 bool writeTurnProfile(const atta::TurnConfig& candidate) {
   if (!atta::validTurnConfig(candidate)) return false;
   if (prefs.putBytes("turnV1", &candidate, sizeof(candidate)) != sizeof(candidate)) return false;
@@ -76,6 +139,21 @@ bool writeTurnProfile(const atta::TurnConfig& candidate) {
     memcmp(&candidate, &check, sizeof(check)) == 0;
 }
 
+//***************************************************************************************
+// Carga la configuración desde NVS al arrancar; crea una sola vez lo que falte.
+//
+// Un Atta recién cargado no tiene claves: se guardan los valores por defecto del firmware
+// (nombre Atta-V-02, ángulos, 20 kHz). Si no existe motionV2 pero sí las claves del firmware
+// anterior (Rppr, Lppr, kp, ki, kd), se migra: el PPR se conserva y las ganancias se
+// convierten a segundos con atta::migrateGains. Si no existe turnV1 se crea con los valores
+// por defecto de atta::TurnConfig, sin tocar motionV2.
+//
+// Un perfil guardado pero inválido o de otro tamaño NO se reemplaza por valores por defecto:
+// se deja como está y configReady queda en false, lo que bloquea el movimiento hasta
+// corregirlo con SET (así no se pierde en silencio la calibración de un robot).
+//
+// Deja configReady en true solo si todo quedó cargado y válido, y lo informa por Serial.
+//***************************************************************************************
 void loadConfig() {
   configReady = false;
   if (!prefs.begin("Atta-Creds", false)) {
@@ -131,6 +209,15 @@ void loadConfig() {
   if (!ok) Serial.println("ERROR CONFIG: valores invalidos o fallo NVS; revisar SHOW y SET antes de mover.");
 }
 
+//***************************************************************************************
+// Responde al comando SHOW: imprime toda la configuración en RAM como líneas SET.
+//
+// La salida se puede guardar como respaldo y volver a pegar en el Monitor Serie para
+// restaurar el robot (cargar_firmware_attas.sh guarda una en Respaldos_SHOW/). La primera
+// línea dice las versiones de los perfiles (schema, turn_schema, controller) y la frecuencia
+// PWM que el periférico aplicó de verdad. Muestra la RAM, no la NVS: para comparar con lo
+// guardado está VERIFY.
+//***************************************************************************************
 void printDeveloperConfig() {
   Serial.printf("CONFIG schema=2 turn_schema=1 controller=3 ready=%d device=%s pwm_activo=%luHz\n",
     configReady, deviceName.c_str(), (unsigned long)motorPwmActiveHz);
@@ -143,6 +230,15 @@ void printDeveloperConfig() {
     Serial.println("pwmhz guardado distinto del activo: reinicie para aplicarlo.");
 }
 
+//***************************************************************************************
+// Responde a VERIFY: compara la configuración en RAM con la guardada en NVS.
+//
+// Revisa nombre, servos, pwmHz y los dos perfiles binarios byte por byte, y que ambos
+// perfiles sigan dentro de rango. También la usa saveDeveloperValue después de cada SET para
+// detectar una escritura que falló a medias.
+//
+// @return true si RAM y NVS coinciden y la configuración es válida.
+//***************************************************************************************
 bool verifyConfig() {
   if (!prefs.begin("Atta-Creds", true)) return false;
   atta::MotionConfig saved;
@@ -160,6 +256,23 @@ bool verifyConfig() {
   return ok && atta::validConfig(motionConfig);
 }
 
+//***************************************************************************************
+// Atiende "SET <campo> <valor>": valida, guarda en NVS y verifica un campo.
+//
+// Busca el campo en este orden: device (texto, máx. 31 caracteres, sin comas), servoFields
+// (entero 0..180), pwmhz (entero motorPwmMinHz..motorPwmMaxHz), turnFields, motionFields y
+// los alias kp/ki/kd, que escriben la misma ganancia en las dos ruedas. Para los campos de
+// perfil se cambia la RAM, se reescribe el perfil entero y, si no pasa la validación o falla
+// la escritura, la RAM vuelve al valor anterior: un SET inválido no deja nada a medias.
+//
+// device y pwmhz se guardan pero recién se aplican al reiniciar (el nombre BLE y el PWM se
+// configuran en setup). Al final recalcula configReady con verifyConfig.
+//
+// @param field Nombre del campo, sin importar mayúsculas.
+// @param value Texto del valor.
+//
+// @return true si el valor se guardó y toda la configuración quedó verificada.
+//***************************************************************************************
 bool saveDeveloperValue(String field, String value) {
   field.toLowerCase(); value.trim();
   if (!prefs.begin("Atta-Creds", false)) return false;

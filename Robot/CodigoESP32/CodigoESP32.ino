@@ -13,7 +13,17 @@
 
 using namespace std;
 
-// Solo escribe cuando cambia el color: la función de estado corre en cada loop().
+//***************************************************************************************
+// Pinta el LED WS2812B interno (IO02) solo cuando el color cambia.
+//
+// La función de estado del LED corre en cada vuelta de loop(); comparar contra el último
+// color evita reescribir el bus RMT si nada cambió. El "último color" vive en una variable
+// estática local, así que persiste entre llamadas.
+//
+// @param r Componente roja, 0..255.
+// @param g Componente verde, 0..255.
+// @param b Componente azul, 0..255.
+//***************************************************************************************
 void ledInterno(uint8_t r, uint8_t g, uint8_t b) {
   static int32_t anterior = -1;
   const int32_t color = (int32_t(r) << 16) | (int32_t(g) << 8) | b;
@@ -119,42 +129,70 @@ bool paro_emergencia=false;
 string mensajeBLE="ATINIAV020GD030CI003RE010GI090CIFINATFIN";  
 
 //***************************************************************************************
-// Global variables and callback classes for native ESP32 BLE (BLEDevice library)
+// Variables globales y clases de callback para el BLE nativo del ESP32 (librería BLEDevice)
 //***************************************************************************************
 
-BLEServer *pServer = NULL;               // Represents this ESP32 acting as a BLE server
-BLECharacteristic *pCharacteristic = NULL; // Pointer to the read/write characteristic 
+BLEServer *pServer = NULL;               // Representa a este ESP32 actuando como servidor BLE
+BLECharacteristic *pCharacteristic = NULL; // Puntero a la característica de lectura/escritura 
 
-volatile bool deviceConnected = false;   // true while a central (the App) is connected
-volatile bool nuevoMensajeBLE = false;   // true when a new write has arrived and hasn't been processed yet
+volatile bool deviceConnected = false;   // true mientras un central (la App) está conectado
+volatile bool nuevoMensajeBLE = false;   // true cuando llegó una escritura nueva aún no procesada
 char mensajeBLEBuffer[501] = {};
 portMUX_TYPE bleMux = portMUX_INITIALIZER_UNLOCKED;
 volatile bool bleStopPending = false;
 
 //***************************************************************************************
-// Callback class for connection/disconnection events.
-// onConnect/onDisconnect are called automatically by the BLE stack 
+// Clase de callbacks para los eventos de conexión y desconexión.
+// onConnect/onDisconnect los llama automáticamente la pila BLE
 //***************************************************************************************
 class MyServerCallbacks: public BLEServerCallbacks {
+    //***********************************************************************************
+    // Marca que hay un dispositivo central conectado.
+    //
+    // Solo actualiza la bandera global deviceConnected, que loop() usa para el LED y
+    // leerBluetooth() para decidir si procesa mensajes.
+    //
+    // @param pServer Servidor BLE que emite el evento (no se usa).
+    //***********************************************************************************
     void onConnect(BLEServer* pServer) {
       deviceConnected = true;
     }
 
+    //***********************************************************************************
+    // Marca que ya no hay dispositivo conectado y vuelve a anunciar el robot.
+    //
+    // El BLE nativo del ESP32 no reanuda el advertising solo tras una desconexión; sin
+    // reiniciarlo el robot dejaría de ser visible para nuevas conexiones. Por eso apaga
+    // deviceConnected y llama a start() del advertising del mismo servidor.
+    //
+    // @param pServer Servidor BLE que emite el evento.
+    //***********************************************************************************
     void onDisconnect(BLEServer* pServer) {
       deviceConnected = false;
-      // IMPORTANT: native ESP32 BLE does NOT restart advertising automatically
-      // after a disconnect. Without this, the device becomes invisible to new
-      // connections after the first disconnect. We'll call this here so a phone
-      // can always find and reconnect to the robot.
+      // IMPORTANTE: el BLE nativo del ESP32 NO reinicia el advertising automáticamente
+      // tras una desconexión. Sin esto, el dispositivo queda invisible para nuevas
+      // conexiones después de la primera desconexión. Se llama aquí para que un teléfono
+      // siempre pueda encontrar y reconectar con el robot.
       pServer->getAdvertising()->start();
     }
 };
 
 //***************************************************************************************
-// Callback class for write events on the characteristic.
-// onWrite is called automatically the moment the App writes a new value 
+// Clase de callbacks para los eventos de escritura de la característica.
+// onWrite lo llama automáticamente la pila BLE en el momento en que la App escribe
 //***************************************************************************************
 class MyCharacteristicCallbacks: public BLECharacteristicCallbacks {
+    //***********************************************************************************
+    // Recibe el valor escrito por la App y lo deja listo para leerBluetooth().
+    //
+    // Ignora valores vacíos o de más de 500 caracteres. Recorre el mensaje en grupos de
+    // 5 y, si encuentra "PARAR", activa bleStopPending con prioridad sobre cualquier otro
+    // mensaje para que la parada no se pierda. Si no hay PARAR, copia el texto a
+    // mensajeBLEBuffer y activa nuevoMensajeBLE. Todo el acceso se protege con bleMux
+    // porque loop() lo lee desde otra tarea.
+    //
+    // @param pCharacteristic Característica BLE que recibió la escritura.
+    //***********************************************************************************
     void onWrite(BLECharacteristic *pCharacteristic) {
       String valorRecibido = pCharacteristic->getValue();
       if (valorRecibido.length() == 0 || valorRecibido.length() > 500) return;
@@ -245,6 +283,17 @@ short velocidad=velocidadNeutra;
 // Frecuencia real del temporizador LEDC de un pin. ledcReadFreq() del core 3.x
 // devuelve 0 mientras el duty sea 0 (siempre al arrancar), así que no sirve
 // para verificar la configuración de los motores.
+//***************************************************************************************
+// Devuelve la frecuencia real del temporizador LEDC asociado a un pin.
+//
+// ledcReadFreq() del core 3.x devuelve 0 mientras el duty sea 0 (siempre al arrancar), así
+// que no sirve para verificar la configuración de los motores. Esta función obtiene el bus
+// LEDC del pin con perimanGetPinBus y consulta ledc_get_freq() del canal y temporizador.
+//
+// @param pin Número de GPIO configurado con ledcAttach.
+//
+// @return Frecuencia en Hz, o 0 si el pin no tiene un bus LEDC asociado.
+//***************************************************************************************
 uint32_t ledcTimerHz(uint8_t pin) {
   auto* bus = (ledc_channel_handle_t*)perimanGetPinBus(pin, ESP32_BUS_TYPE_LEDC);
   if (!bus) return 0;
@@ -253,17 +302,48 @@ uint32_t ledcTimerHz(uint8_t pin) {
 
 #include "MotionRuntime.h"
 
+//***************************************************************************************
+// ISR del encoder derecho: suma un pulso por cada flanco de sus canales A y B.
+//
+// Corre en contexto de interrupción, por eso protege el contador con encoderMux. El
+// controlador de movimiento lo lee de forma coherente con readEncoderCounts().
+//***************************************************************************************
 void ARDUINO_ISR_ATTR rightUpdateEncoder() {
   portENTER_CRITICAL_ISR(&encoderMux);
   ++rightEncoderPos;
   portEXIT_CRITICAL_ISR(&encoderMux);
 }
+//***************************************************************************************
+// ISR del encoder izquierdo: suma un pulso por cada flanco de sus canales A y B.
+//
+// Igual que el derecho, usa encoderMux para que el contador compartido no se lea a medias.
+//***************************************************************************************
 void ARDUINO_ISR_ATTR leftUpdateEncoder() {
   portENTER_CRITICAL_ISR(&encoderMux);
   ++leftEncoderPos;
   portEXIT_CRITICAL_ISR(&encoderMux);
 }
 
+//***************************************************************************************
+// Inicializa el robot: configuración persistente, periféricos, PWM y servidor BLE.
+//
+// Orden de arranque:
+// 1. Abre el puerto Serial y llama a loadConfig(), que lee (o crea una vez) de NVS el
+//    nombre del dispositivo, los ángulos de los servos, la frecuencia PWM y los perfiles
+//    de movimiento/giro. Si la configuración no es válida, configReady queda en false y
+//    el movimiento se bloquea.
+// 2. Apaga el LED interno y prepara el servo del lápiz (50 Hz, neutro) y el servo 360
+//    del set de herramientas.
+// 3. Configura como entrada los pines de encoders, sensores infrarrojos, trackers y
+//    batería baja; como salida los de motores y LED RGB externo.
+// 4. Reserva los temporizadores de los servos antes de llamar a attachMotorPWM() y deja
+//    los motores detenidos con stopMotion(); si el PWM no se aplicó, lo avisa por Serial.
+// 5. Engancha las interrupciones de los cuatro canales de encoder.
+// 6. Inicia el BLE nativo con el nombre en deviceName, crea el servidor, el servicio y la
+//    característica con los UUID acordados con la App, registra los callbacks y empieza a
+//    anunciarse para que la tablet pueda conectarse.
+// 7. Guarda en tiempoDeEncendidoDeLed el instante inicial del parpadeo del LED.
+//***************************************************************************************
 void setup() {
   Serial.setTxBufferSize(1024);
   Serial.begin(115200);
@@ -373,6 +453,28 @@ void setup() {
 
 
 
+//***************************************************************************************
+// Bucle principal: atiende E/S y ejecuta la máquina de estados del programa de bloques.
+//
+// En cada vuelta procesa comandos de desarrollador por Serial, revisa si hay mensajes BLE
+// nuevos (o cada 50 ms) para no perder un STOP, avanza las pruebas de motor opcionales,
+// toma las lecturas de los sensores infrarrojos, trackers y batería baja, y luego recorre
+// el switch de estado:
+// - ESPERA: aguarda a que termine de llegar un programa (flancoNegRecibeProgra) y pasa a
+//   LEE_MEMORIA reiniciando el flujo; un paro recibido aquí se ignora.
+// - LEE_MEMORIA: lee la siguiente instrucción de lista_instrucciones y salta al estado que
+//   corresponda; si se están ignorando ramas, las salta hasta la marca IF/ELSE/WHILE.
+// - MOVERSE y GIRAR: ejecutan la maniobra y pasan a DETENERSE al terminar o si hay paro u
+//   obstáculo.
+// - DETENERSE: detiene los motores, espera el asentamiento del chasis y vuelve a
+//   LEE_MEMORIA, a ESPERA (paro o prueba) o a MOVIMIENTO_OBSTACULO.
+// - CICLO, OBSTACULOS, HERRAMIENTA, IF, WHILE y HERRAMIENTA_SET: aplican esa instrucción
+//   y vuelven a LEE_MEMORIA.
+// - MOVIMIENTO_OBSTACULO: retrocede tras un obstáculo, reinicia el flujo y va a ESPERA.
+// - NADA: no hace nada.
+// Al salir del switch emite telemetría, limpia el flanco de recepción, apaga el pulso de
+// recibeProgra tras su duración y actualiza el color del LED RGB.
+//***************************************************************************************
 void loop() {
   readDeveloperSerial();
   // Procesar STOP también durante reposo de parada y retroceso por obstáculo.
@@ -394,6 +496,7 @@ void loop() {
   switch (estado) {
 
     case ESPERA:  { 
+      // En reposo: espera que termine de llegar un programa y descarta paros.
       // Leer la conexión BLE periódicamente
       if (millis() >= tiempoPasadaLecturaBT + esperaBT) {
         leerBluetooth();
@@ -414,6 +517,7 @@ void loop() {
     }
 
     case LEE_MEMORIA:  { 
+      // Toma la siguiente instrucción de la lista y decide a qué estado pasar.
       if ( inst_actual != inst_final ){ // avanza en memoria de instrucciones
         instruccion = lista_instrucciones[inst_actual][0];
         valor_instruccion = lista_instrucciones[inst_actual][1];
@@ -491,7 +595,7 @@ void loop() {
     }
     
     case MOVERSE: {
-
+      // Avanza o retrocede la distancia pedida y vigila paro y obstáculos.
       //Ejecuta el estado de avanzar o retroceder
       //(es el mismo pero con distancia negativa)
       movimiento_listo= advanceDesiredDistance(diagnosticMove ? diagnosticAmount : valor_instruccion*10);
@@ -525,7 +629,7 @@ void loop() {
     }
 
     case GIRAR: {
-
+      // Gira el ángulo pedido (negativo = izquierda) y vigila paro y obstáculos.
       //Ejecuta el estado de girar derecha o izquierda
       //(es el mismo pero con ángulo negativo)
 
@@ -563,6 +667,7 @@ void loop() {
     }
 
     case DETENERSE: {
+      // Detiene los motores, espera el asentamiento y elige el siguiente estado.
       if (!waitingForStopSettle) {
         if (paro_emergencia || obstaculo_detectado) { //en caso de apretar STOP o detectar obstaculo
           flagEjecucion = 0;
@@ -602,7 +707,7 @@ void loop() {
     }
 
     case CICLO: {
-
+      // Controla el contador de repeticiones y retrocede el puntero al inicio del ciclo.
       if ( instruccion == inst_CicloInicia  &&  primer_ciclo ){ //inicio ciclo, primera vez
         cantidad_ciclos = valor_instruccion;  //guarda cantidad de ciclos, primero 
         primer_ciclo = false;
@@ -626,7 +731,7 @@ void loop() {
     }
 
     case OBSTACULOS: {
-
+      // Activa o desactiva la detección de obstáculos según el bloque.
       //*Activa la bandera de si detectar obstáculos y luego la desactiva
       if ( instruccion == inst_ObstaculoInicia ){
         obstaculos_activo = true;
@@ -640,6 +745,7 @@ void loop() {
     }
 
     case MOVIMIENTO_OBSTACULO: {
+      // Retrocede una distancia fija tras detectar un obstáculo y termina el programa.
       // *Genera el movimiento despues que un obstaculo se detectó, el cual corresponde a un retroceso
       retroceso_listo=advanceDesiredDistance(-1* distRetrocesoObstaculo);
       obstaculo_detectado=false;
@@ -658,8 +764,8 @@ void loop() {
     }
 
     case HERRAMIENTA: {
-
-      //*Activa la bandera de si detectar obstáculos y luego la desactiva
+      // Activa o desactiva el servo del lápiz (herramienta básica).
+      // HEINI baja el lápiz; HEFIN lo sube.
       if ( instruccion == inst_HerramientaInicia ){
         controlServo(true);
       }else if ( instruccion == inst_HerramientaFin ) {
@@ -674,10 +780,12 @@ void loop() {
     }
 
     case NADA: {
+      // Estado inactivo: no ejecuta nada y deja que el switch termine.
       break;
     }
 
     case IF: {
+      // Evalúa la condición del IF/ELSE y actualiza las banderas de salto de rama.
       verSernsores();
       bifurcacionIF();
       estado = LEE_MEMORIA;
@@ -685,6 +793,7 @@ void loop() {
     }
 
     case WHILE: {
+      // Reevalúa la condición del WHILE y repite o abandona el cuerpo.
       // Leer la conexión BLE periódicamente por si se requiere salir de un loop infinito
       if (millis() >= tiempoPasadaLecturaBT + esperaBT) {
         leerBluetooth();
@@ -698,6 +807,7 @@ void loop() {
     }
 
     case HERRAMIENTA_SET: {
+      // Acciona la garra o la grúa del set de herramientas según el comando.
       accionarHerramientaSet();
       estado = LEE_MEMORIA;
       break;
@@ -720,8 +830,11 @@ void loop() {
 
 }
 
-//*****************************************************************
-// Procedimiento para observar las lecturas de los sensores inferiores
+//******************************************************************************************************************
+// Imprime por Serial las lecturas actuales de los trackers inferiores.
+//
+// Es una ayuda de depuración usada por los estados IF y WHILE antes de evaluar una rama;
+// no lee los pines, solo muestra los valores globales ya capturados en loop().
 //******************************************************************************************************************
 
 void verSernsores(){
@@ -733,10 +846,14 @@ void verSernsores(){
 
 
 //******************************************************************************************************************
-// Procedimiento que realiza la comparación de las lectura de los sensores para determinar si se salta o ejecuta la rama IF
+// Decide si se ejecuta la rama IF o se salta hasta ELSE/IFFIN.
 //
-// @param {bool} condicionSensorIzquierdo - Booleano que indica si se busca que la lectura del sensor sea alta o baja
-// @param {bool} condicionSensorDerecho - Booleano que indica si se busca que la lectura del sensor sea alta o baja
+// Si ambas condiciones se cumplen, marca ejecutandoRamaIf[anidamientoIF] para que un
+// ELSE posterior sepa que la rama ya se ejecutó. Si no, activa ignorarHastaElse y guarda
+// el nivel de anidamiento actual para saltar solo hasta la marca correspondiente.
+//
+// @param condicionSensorIzquierdo true si el tracker izquierdo cumple la condición pedida.
+// @param condicionSensorDerecho true si el tracker derecho cumple la condición pedida.
 //******************************************************************************************************************
 
 void validacionIf(bool condicionSensorIzquierdo, bool condicionSensorDerecho){
@@ -749,8 +866,11 @@ if (condicionSensorIzquierdo && condicionSensorDerecho){
 };
 
 //******************************************************************************************************************
-// Procedimiento de asignación de las condiciones de los sensores para los condicionales IF
-// 
+// Traduce el valor de la instrucción IF/ELSE a las condiciones de los trackers.
+//
+// valor_instruccion codifica qué combinación de sensores sobre negro/blanco se pidió, o
+// sensorNoImporta para un ELSE sin condición. Según el caso llama a validacionIf() con las
+// lecturas (o sus negaciones) ya capturadas en loop().
 //******************************************************************************************************************
 
 void condicionesIF(){
@@ -786,8 +906,12 @@ void condicionesIF(){
 }
 
 //******************************************************************************************************************
-// Procedimiento de ejecución de la lógica del flujo de las bifurcaciones IF
-// 
+// Ejecuta la lógica de flujo de una instrucción IF, ELSE o IFFIN.
+//
+// Al IFINICIA incrementa anidamientoIF y evalúa la condición. En ELSE, si la rama
+// anterior ya se ejecutó, activa ignorarHastaIFFIN para saltar el resto; si no, evalúa la
+// condición del ELSE. En IFFIN limpia la marca de la rama y baja el anidamiento. Se apoya
+// en las banderas globales que luego consume LEE_MEMORIA.
 //******************************************************************************************************************
 
 void bifurcacionIF(){
@@ -821,10 +945,14 @@ void bifurcacionIF(){
 
 
 //******************************************************************************************************************
-// Procedimiento que realiza la comparación de las lectura de los sensores para determinar si se salta o ejecuta la rama While
+// Decide si se entra al cuerpo del WHILE o se salta hasta WHILEFIN.
 //
-// @param {bool} condicionSensorIzquierdo - Booleano que indica si se busca que la lectura del sensor sea alta o baja
-// @param {bool} condicionSensorDerecho - Booleano que indica si se busca que la lectura del sensor sea alta o baja
+// Si la condición se cumple, guarda en indicesWhile[anidamientoWhile] el puntero a la
+// instrucción del WHILE y sube el anidamiento para poder repetir el cuerpo. Si no, activa
+// ignorarHastaWHILEFIN y guarda el nivel actual para saltar solo este ciclo.
+//
+// @param condicionSensorIzquierdo true si el tracker izquierdo cumple la condición pedida.
+// @param condicionSensorDerecho true si el tracker derecho cumple la condición pedida.
 //******************************************************************************************************************
 
 
@@ -839,10 +967,13 @@ void validacionWhile(bool condicionSensorIzquierdo, bool condicionSensorDerecho)
 };
 
 //******************************************************************************************************************
-// Procedimiento que realiza la comparación de las lectura de los sensores para determinar si se salta o ejecuta la rama WhileNot
+// Igual que validacionWhile pero para un WHILE NOT: repite mientras NO se cumpla la condición.
 //
-// @param {bool} condicionSensorIzquierdo - Booleano que indica si se busca que la lectura del sensor sea alta o baja
-// @param {bool} condicionSensorDerecho - Booleano que indica si se busca que la lectura del sensor sea alta o baja
+// Guarda el índice de retorno y sube el anidamiento cuando la condición es falsa; en caso
+// contrario activa ignorarHastaWHILEFIN y el nivel de salto.
+//
+// @param condicionSensorIzquierdo true si el tracker izquierdo cumple la condición pedida.
+// @param condicionSensorDerecho true si el tracker derecho cumple la condición pedida.
 //******************************************************************************************************************
 
 void validacionNotWhile(bool condicionSensorIzquierdo, bool condicionSensorDerecho){
@@ -856,8 +987,12 @@ void validacionNotWhile(bool condicionSensorIzquierdo, bool condicionSensorDerec
 };
 
 //******************************************************************************************************************
-// Procedimiento de ejecución de la lógica de las banderas de flujo de bifurcaciones While y WhileNot
-// 
+// Ejecuta la lógica de flujo de WHILE y WHILE NOT.
+//
+// En WHILEFIN baja el anidamiento y devuelve inst_actual al índice guardado al entrar al
+// ciclo, de modo que LEE_MEMORIA vuelva a evaluar la condición. En el inicio, decodifica
+// valor_instruccion entre "mientras" y "mientras no" y las combinaciones de trackers, y
+// llama a validacionWhile() o validacionNotWhile().
 //******************************************************************************************************************
 
 void bifurcacionWHILE(){
@@ -917,8 +1052,10 @@ void bifurcacionWHILE(){
 
 
 //******************************************************************************************************************
-// Procedimiento que mueve la herramienta la velocidad y tiempo indicados por el tipo de acción de la herramienta
-// 
+// Mueve el servo 360 del set de herramientas durante el tiempo de acción configurado.
+//
+// Usa las globales velocidad y tiempoDeAccion, que fija accionarHerramientaSet(). Tras el
+// movimiento devuelve el servo a velocidadNeutra y espera 100 ms para que se detenga.
 //******************************************************************************************************************
 
 void accionarMotorHerramientaSet(){
@@ -929,8 +1066,12 @@ void accionarMotorHerramientaSet(){
 };
 
 //******************************************************************************************************************
-// Procedimiento que asigna la velocidad y tiempo de ejecución de la herramienta según el valor del comando
-// 
+// Acciona la garra o la grúa del set de herramientas según valor_instruccion.
+//
+// Para cada acción (abrir/cerrar garra, subir/bajar grúa) elige velocidad y tiempo y llama
+// a accionarMotorHerramientaSet(). Antes comprueba posicionHerramienta: si la herramienta
+// ya está en la posición pedida no la vuelve a mover. Tras moverse actualiza esa global,
+// que arranca en 0 porque la posición inicial es desconocida.
 //******************************************************************************************************************
 
 void accionarHerramientaSet(){
@@ -986,14 +1127,18 @@ void accionarHerramientaSet(){
 //FUNCIONES DE INTERPRETACION DE MENSAJES
 
 //***************************************************************************************
-//Función que interpreta el mensaje recibido de la app de programación
+// Traduce el programa que manda la app a la lista de instrucciones del robot.
 //
-//Revisa el mensaje que se recibió por Bluetooth BLE y revisa de 5 en 5 
-//los caracteres. Los guarda en un array global luego de interpretar que 
-//instrucción es y que valor tienen
+// El mensaje se lee en bloques de 5 caracteres. Hay bloques de control de 5 letras (ATINI
+// inicio, ATFIN fin del programa, PARAR, y marcas sin valor como CIFIN, OBINI/OBFIN,
+// HEINI/HEFIN, IFFIN, WHFIN) y bloques de 2 letras + 3 dígitos de valor (AV avanzar y RE
+// retroceder en cm, GD/GI girar en grados, CI ciclo con repeticiones, IF/EL/WH condiciones
+// de los trackers, HE acción de garra/grúa). Cada instrucción se guarda en
+// lista_instrucciones como [constante inst_..., valor]; ATFIN fija inst_final y al terminar
+// inst_actual vuelve a 0 para que LEE_MEMORIA empiece desde el principio.
+// Ejemplo: ATINIAV020GD030CI003RE010GI090CIFINATFIN.
 //
-//@param mensaje Cadena de 512 caracteres máximo recibidos
-// 
+// @param mensaje Mensaje completo, de hasta 500 caracteres (onWrite descarta los más largos).
 //***************************************************************************************
 void Interpreta_mensajeBLE (string mensaje) {
 
@@ -1116,12 +1261,15 @@ void Interpreta_mensajeBLE (string mensaje) {
 }
 
 //***************************************************************************************
-//Función que lee la conexión Bluetooth BLE
+// Procesa el estado pendiente del BLE y, si corresponde, interpreta un programa nuevo.
 //
-//Determina si el robot está conectado a alguna App, y en caso de estarlo verifica
-//si llegó un mensaje nuevo. En tal caso, llama a la interpretación del nuevo mensaje.
-//También determina si se trata de una instrucción para la que se debería parpadear el
-//led en azul.
+// Actualiza flagBluetooth con deviceConnected. Dentro de la sección crítica de bleMux
+// recoge bleStopPending y nuevoMensajeBLE, copia el buffer a una variable local y limpia
+// las banderas. Un STOP pendiente tiene prioridad y llama a requestMotionStop(). Si no hay
+// conexión o mensaje, retorna. Descarta mensajes cuya longitud no sea múltiplo de 5 y no
+// reemplaza programas durante una maniobra, con configuración inválida o con un fallo
+// activo (calibrationIdle, configReady y motion.fault). Si interpreta el programa, activa
+// el pulso recibeProgra para que el LED parpadee en azul.
 //***************************************************************************************
 void leerBluetooth() {
   flagBluetooth = deviceConnected;
@@ -1147,13 +1295,14 @@ void leerBluetooth() {
 }
 
 //******************************************************************************************************************
-// Function that controls the servo based on the variable `set`. If `set` is 1, the tool is activated; otherwise, it is deactivated.
+// Activa o desactiva el lápiz moviendo el servo a activateAngle o deactivateAngle.
 //
-// This function adjusts the servo angle to activate or deactivate the tool based on the `set` value.
+// El parámetro tapa a la global int set, que no se usa aquí. Espera 500 ms después de
+// escribir el ángulo para que la siguiente instrucción no empiece con el servo en marcha.
 //
-// @param set Value that determines whether the tool is activated (1) or deactivated (0).
+// @param set true para bajar/activar la herramienta; false para subirla/desactivarla.
 //
-// @return true Returns true upon successful action.
+// @return Siempre true, porque la escritura al servo no informa errores.
 //******************************************************************************************************************
 bool controlServo(bool set) {
   if (set) {
@@ -1167,17 +1316,20 @@ bool controlServo(bool set) {
 }
 
 //******************************************************************************************************************
-//Función que basado en ciertas flags determina el estado del robot y lo muestra en un LED RGB.
+// Elige el color o parpadeo del LED RGB externo e interno según el estado del robot.
 //
-//Utiliza flags relacionadas a si la bateria está baja, si se detecta un obstáculo, si el bluetooth no se ha conectado al dispositivo,
-//si el robot está recibiendo un código, si el robot está ejecutando un código, y si el bluetooth está conectado con un dispositivo.
-//El orden en el que se mencionaron los estados es el orden de prioridad.
+// Se llama al final de cada loop(). El orden de las comprobaciones es la prioridad:
+// batería baja (rojo parpadeante), obstáculo o paro de emergencia (rojo fijo), Bluetooth
+// desconectado (verde/azul intercalados), recepción de programa (azul parpadeante),
+// ejecución (verde fijo) y Bluetooth conectado (azul fijo). Para los parpadeos reutiliza
+// tiempoDeEncendidoDeLed como referencia de fase y lo reinicia al completar cada ciclo.
 //
-//@param flagBateriaBaja Variable asociada a la señal de batería baja del powerboost, es LOW cuando batería baja.
-//@param flagBluetooth Variable que dicta si hay conexión Bluetooth del robot con la App.
-//@param flagEjecucion Variable que informa si se está ejecutando una programación.
-//@param flagObstaculo Variable asociada a los sensores infrarrojos, informa cuando hay un obstáculo frente al robot
-//@param recibeProgra Variable que es un pulso que se recibe cuando se está recibiendo/recibió una progra desde la App
+// @param flagBateriaBaja Lectura de la señal del powerboost; LOW indica batería baja.
+// @param flagBluetooth true si hay conexión Bluetooth con la App.
+// @param flagEjecucion true si se está ejecutando una programación.
+// @param flagObstaculo true si los sensores infrarrojos detectaron un obstáculo.
+// @param recibeProgra Pulso activo mientras se recibe/recién se recibió un programa.
+// @param flagParar true si se pidió un paro de emergencia.
 //******************************************************************************************************************
 void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEjecucion, bool flagObstaculo, bool recibeProgra, bool flagParar) {
   unsigned long tiempoActual = millis();

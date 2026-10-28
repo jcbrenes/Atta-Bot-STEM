@@ -15,7 +15,14 @@ constexpr double pi = 3.14159265358979323846;
 struct Punto { double x = 0, y = 0; };
 struct Pose { double x = 0, y = 0, rumbo = 0; }; // rumbo antihorario positivo
 
-// Recorrido real de cada rueda en mm (con signo) sobre la vía real.
+//***************************************************************************************
+// Avanza una pose con el recorrido real de cada rueda (modelo de dos ruedas, arco de círculo).
+//
+// @param p Pose a actualizar (mm y radianes, rumbo antihorario positivo).
+// @param dR Recorrido real de la rueda derecha, mm con signo.
+// @param dL Recorrido real de la rueda izquierda, mm con signo.
+// @param via Separación real entre ruedas, mm.
+//***************************************************************************************
 inline void tramo(Pose& p, double dR, double dL, double via) {
   const double giro = (dR - dL) / via, avance = (dR + dL) / 2;
   if (std::fabs(giro) < 1e-12) {
@@ -32,8 +39,20 @@ inline void tramo(Pose& p, double dR, double dL, double via) {
 // kR/kL: mm reales por cada mm que el firmware cree haber recorrido en esa rueda.
 struct Errores { double kR = 1, kL = 1, via = 120; };
 
-// Cuatro veces: avanzar `lado` mm y girar 90°. horario = giros a la derecha.
-// `lapiz`: mm del lápiz por delante del centro del eje (negativo si va detrás).
+//***************************************************************************************
+// Simula dónde termina el lápiz tras el cuadrado, con un robot que tiene los errores e.
+//
+// Cuatro veces: avanzar lado mm y girar 90°; el firmware manda por rueda el arco que calcula
+// con su track, pero las ruedas recorren kR y kL veces eso, sobre la vía real.
+//
+// @param e Errores del robot real.
+// @param trackFirmware track configurado en el firmware, mm.
+// @param lado Lado del cuadrado, mm.
+// @param horario true si los giros son a la derecha.
+// @param lapiz mm del lápiz por delante del centro del eje (negativo si va detrás).
+//
+// @return Posición final del lápiz respecto al punto de partida (x adelante, y a la izquierda).
+//***************************************************************************************
 inline Punto cuadrado(const Errores& e, double trackFirmware, double lado,
                       bool horario, double lapiz) {
   Pose p;
@@ -53,8 +72,22 @@ struct Resultado {
   bool convergio = false;
 };
 
-// Ajuste por mínimos cuadrados (Gauss-Newton) de 2 incógnitas con 4 mediciones:
-// delta = (kR - kL) / 2 con kR + kL = 2, y la vía efectiva.
+//***************************************************************************************
+// Estima los errores del robot a partir de dónde terminó el cuadrado en cada sentido.
+//
+// Ajuste por mínimos cuadrados (Gauss-Newton) de 2 incógnitas con 4 mediciones (x e y de cada
+// sentido): delta = (kR − kL)/2 con kR + kL = 2 (la escala media no cambia, así las rectas ya
+// calibradas se mantienen) y la vía efectiva. La vía da el mismo error en ambos sentidos; la
+// diferencia entre ruedas cambia de signo.
+//
+// @param horario Punto final medio de las corridas en sentido horario, mm.
+// @param antihorario Punto final medio en sentido antihorario, mm.
+// @param trackFirmware track configurado, mm.
+// @param lado Lado del cuadrado, mm.
+// @param lapiz Distancia del lápiz al eje, mm.
+//
+// @return Errores estimados, residuo RMS (lo que el modelo no explica) y si convergió.
+//***************************************************************************************
 inline Resultado estimar(Punto horario, Punto antihorario, double trackFirmware,
                          double lado, double lapiz) {
   double delta = 0, via = trackFirmware;
@@ -93,8 +126,19 @@ inline Resultado estimar(Punto horario, Punto antihorario, double trackFirmware,
   return out;
 }
 
-// Nuevos valores del firmware: mm por pulso = mm reales por pulso, track = vía real.
 struct Correccion { double rppr, lppr, track; };
+//***************************************************************************************
+// Convierte los errores estimados en los valores nuevos de SET rppr, lppr y track.
+//
+// Si una rueda recorre kR mm reales por cada mm que cree el firmware, su PPR nuevo es
+// rppr/kR (más cuentas por mm); el track nuevo es la vía efectiva.
+//
+// @param e Errores estimados por estimar.
+// @param rppr PPR derecho actual.
+// @param lppr PPR izquierdo actual.
+//
+// @return Valores corregidos.
+//***************************************************************************************
 inline Correccion corregir(const Errores& e, double rppr, double lppr) {
   return {rppr / e.kR, lppr / e.kL, e.via};
 }

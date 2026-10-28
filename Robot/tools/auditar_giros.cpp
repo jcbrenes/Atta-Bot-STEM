@@ -4,6 +4,15 @@
 #include <cstdio>
 #include <cmath>
 
+//***************************************************************************************
+// Simula giros con el controlador real y una planta hipotética e imprime un CSV.
+//
+// Barre respuesta de la planta, ángulo y período de control, y reporta ángulo al cortar,
+// al terminar y 500 ms después, para ver cuánto se pasa el giro por inercia. Sirve para
+// comparar cambios del controlador, no para calibrar un robot. Ver Auditoria_giros_V2.md.
+//
+// @return 0.
+//***************************************************************************************
 int main() {
   using namespace atta;
   MotionConfig c;

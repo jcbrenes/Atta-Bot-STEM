@@ -1,21 +1,57 @@
+//***************************************************************************************
+// Capa de hardware del movimiento y consola de calibración por Serial.
+//
+// Conecta el controlador de MotionControl.h con el robot: lee los encoders, escribe el PWM del
+// puente H, ejecuta las órdenes MOVE/TURN de la máquina de estados, informa fallos y
+// telemetría, y atiende el modo desarrollador (DEV) del Monitor Serie con el que se calibra.
+//
+// Se incluye dentro de CodigoESP32.ino después de los pines y la máquina de estados, porque
+// usa sus variables globales (estado, pines de motores, banderas del programa BLE).
+// tests/runtime_test.cpp lo compila en PC con stubs de Arduino.
+//
+// Comandos de la consola: ver processSerialCommand y Guia_parametros_SET.md.
+//***************************************************************************************
 #pragma once
-// Se incluye después de los pines y la máquina de estados del sketch.
+// Única instancia del controlador: la comparten MOVE/TURN de los programas, el modo DEV y MOTOR.
 atta::Controller motion;
 bool motorOutputsReady = false;
+// true si el movimiento en curso lo pidió la consola (MOVE/TURN por Serial), no un programa BLE.
 bool diagnosticMove = false;
 float diagnosticAmount = 0;
 bool telemetryEnabled = false;
 uint32_t lastTelemetry = 0;
 int appliedRightPWM = 0, appliedLeftPWM = 0;
+// Prueba en lazo abierto del comando MOTOR: una rueda a PWM fijo durante motorTestDuration ms.
 bool motorTestActive = false, motorTestRight = true;
 uint32_t motorTestStart = 0, motorTestDuration = 0, motorTestProgress = 0, motorTestTicks = 0;
 
+//***************************************************************************************
+// Copia los dos contadores de encoder de forma coherente con las interrupciones.
+//
+// Los contadores son de 32 bits y los incrementan las ISR; se leen dentro de la sección
+// crítica encoderMux para que derecha e izquierda correspondan al mismo instante.
+//
+// @param r Salida: cuenta del encoder derecho.
+// @param l Salida: cuenta del encoder izquierdo.
+//***************************************************************************************
 void readEncoderCounts(uint32_t& r, uint32_t& l) {
   portENTER_CRITICAL(&encoderMux);
   r = rightEncoderPos; l = leftEncoderPos;
   portEXIT_CRITICAL(&encoderMux);
 }
 
+//***************************************************************************************
+// Escribe el PWM y el sentido de las dos ruedas en el puente H.
+//
+// Cada motor tiene dos pines (M1 adelante, M2 atrás): primero se pone en 0 el pin del sentido
+// contrario y después se escribe el PWM en el del sentido pedido, así nunca quedan los dos
+// activos. Siempre se escriben las dos ruedas. Guarda lo aplicado para la telemetría.
+//
+// @param rightReverse true si la rueda derecha va hacia atrás.
+// @param leftReverse true si la rueda izquierda va hacia atrás.
+// @param r PWM derecho (se limita a 0..255).
+// @param l PWM izquierdo (se limita a 0..255).
+//***************************************************************************************
 void applyMotorOutputs(bool rightReverse, bool leftReverse, int r, int l) {
   r = constrain(r, 0, 255); l = constrain(l, 0, 255);
   // Apagar el pin opuesto antes de activar el nuevo sentido.
@@ -26,8 +62,17 @@ void applyMotorOutputs(bool rightReverse, bool leftReverse, int r, int l) {
   appliedRightPWM = r; appliedLeftPWM = l;
 }
 
-// Misma frecuencia y resolución en los 4 pines: el core les asigna un único
-// temporizador LEDC, distinto del de los servos (50 Hz).
+//***************************************************************************************
+// Configura el PWM de los 4 pines de motores a motorPwmHz y 8 bits, y lo comprueba.
+//
+// Con la misma frecuencia y resolución el core asigna a los 4 pines un único temporizador
+// LEDC, distinto del de los servos (50 Hz); por eso setup llama a esto después de reservar
+// los servos. Lee la frecuencia real del temporizador (ledcTimerHz) y falla si se aleja más
+// de 2 % de la pedida o si los pines quedaron en temporizadores distintos. Deja la frecuencia
+// real en motorPwmActiveHz (la muestra SHOW).
+//
+// @return true si los 4 pines quedaron con la frecuencia pedida.
+//***************************************************************************************
 bool attachMotorPWM() {
   bool ok = true;
   motorPwmActiveHz = 0;
@@ -42,20 +87,37 @@ bool attachMotorPWM() {
   return ok;
 }
 
+//***************************************************************************************
+// Detiene los motores ya: corta la maniobra, cancela la prueba MOTOR y pone PWM 0.
+//
+// No cambia el estado del programa; para un STOP completo está requestMotionStop.
+//***************************************************************************************
 void stopMotion() {
   motion.stop();
   motorTestActive = false;
   applyMotorOutputs(false, false, 0, 0);
 }
 
+//***************************************************************************************
+// Dice si el robot está quieto y sin programa, condición para tocar la configuración.
+//
+// Se exige para SET, SHOW, MOVE, MOTOR, etc. (escribir en NVS o imprimir mucho mientras los
+// motores actúan retrasaría el control) y para aceptar programas BLE nuevos.
+//
+// @return true si está en ESPERA, sin maniobra, sin prueba MOTOR, sin esperar la parada y sin
+// recibir un programa.
+//***************************************************************************************
 bool calibrationIdle() {
   return estado == ESPERA && !motion.active && !motorTestActive && !waitingForStopSettle &&
     !recibeProgra && !flancoNegRecibeProgra;
 }
 
-// Estado de flujo de un programa (ciclos, ramas, detección). Un programa
-// interrumpido (STOP u obstáculo) no llega a CIFIN/OBFIN; sin este reinicio
-// el siguiente programa heredaría la detección activa y el contador de ciclos.
+//***************************************************************************************
+// Reinicia el estado de flujo de un programa: ciclos, ramas IF/WHILE y detección de obstáculos.
+//
+// Un programa interrumpido (STOP u obstáculo) no llega a CIFIN/OBFIN; sin este reinicio el
+// siguiente programa heredaría la detección activa y el contador de ciclos.
+//***************************************************************************************
 void resetProgramFlow() {
   primer_ciclo = true;
   obstaculos_activo = false;
@@ -64,6 +126,13 @@ void resetProgramFlow() {
   for (int i = 0; i < 5; ++i) { indicesWhile[i] = 0; ejecutandoRamaIf[i] = false; }
 }
 
+//***************************************************************************************
+// STOP completo: detiene motores y cancela el programa en curso.
+//
+// Lo usan PARAR por BLE, STOP por Serial, el fin de la prueba MOTOR y los fallos no
+// recuperables. Marca paro_emergencia, borra el programa (inst_actual = inst_final = 0) y su
+// flujo, y pasa a DETENERSE, que espera stopSettlingTime antes de volver a ESPERA.
+//***************************************************************************************
 void requestMotionStop() {
   stopMotion();
   paro_emergencia = true;
@@ -78,6 +147,16 @@ void requestMotionStop() {
   estado = DETENERSE;
 }
 
+//***************************************************************************************
+// Informa un fallo del controlador por Serial (FAULT,<motivo>) y decide cómo seguir.
+//
+// Si el fallo es recuperable (rueda trabada, tiempo agotado, control atrasado o giro sin
+// asentar) y viene de un programa BLE normal, se omite solo esa instrucción: se despeja el
+// fallo, se pasa a DETENERSE y el programa sigue con la siguiente (PROGRAM_CONTINUE). Así un
+// chico no pierde todo el programa porque una rueda rozó algo. En cualquier otro caso (fallo de
+// configuración, movimiento de la consola, prueba MOTOR, STOP) se detiene todo con
+// requestMotionStop y el fallo queda hasta un CLEAR.
+//***************************************************************************************
 void reportMotionFault() {
   Serial.printf("FAULT,%s\n", atta::faultName(motion.fault));
   const bool recoverable = motion.fault == atta::Fault::RightStall ||
@@ -96,6 +175,14 @@ void reportMotionFault() {
   requestMotionStop();
 }
 
+//***************************************************************************************
+// Con TELEMETRY ON, imprime una fila CSV del controlador cada 100 ms.
+//
+// Formato: T,ms,device,modo,reverse,dt,cuentas R y L,mm R y L,referencia R y L,velocidad R y L,
+// PWM R y L,integral R y L,saturada R y L,fallo. modo es IDLE, MOVE, TURN, SETTLE o MOTOR.
+// Las columnas están en COLUMNS de tools/capturar_movimiento.py, que la guarda en CSV.
+// Si el buffer de Serial no tiene lugar se descarta la fila: nunca bloquea el control.
+//***************************************************************************************
 void emitTelemetry() {
   if (!telemetryEnabled || millis() - lastTelemetry < 100) return;
   lastTelemetry = millis();
@@ -115,6 +202,20 @@ void emitTelemetry() {
     Serial.write((const uint8_t*)row, length); // descartar antes que bloquear el control
 }
 
+//***************************************************************************************
+// Ejecuta una recta o un giro sin bloquear; la máquina de estados la llama en cada vuelta.
+//
+// En la primera llamada (sin maniobra activa) arranca la maniobra con motion.begin; en las
+// siguientes avanza el control con motion.update y aplica el PWM. Al terminar un giro imprime
+// TURN_RESULT (COMPLETE, OVERSHOOT o INCOMPLETE) con el ángulo estimado por los encoders, que
+// no es una medición del chasis. Si hay paro_emergencia no hace nada; si la configuración no
+// está lista o hay un fallo pendiente, lo informa con reportMotionFault.
+//
+// @param amount mm (recta) o grados (giro); negativo = atrás o a la izquierda.
+// @param turning true para giro.
+//
+// @return true cuando la maniobra terminó (bien o con fallo) y se puede pasar a DETENERSE.
+//***************************************************************************************
 bool runMotion(float amount, bool turning) {
   if (paro_emergencia) return true;
   if (!configReady || !motorOutputsReady) { motion.fail(atta::Fault::Config); reportMotionFault(); return true; }
@@ -144,9 +245,31 @@ bool runMotion(float amount, bool turning) {
   }
   return !motion.active;
 }
+//***************************************************************************************
+// Recta de mm milímetros (negativo = atrás). Ver runMotion.
+//
+// @param mm Distancia.
+//
+// @return true al terminar.
+//***************************************************************************************
 bool advanceDesiredDistance(float mm) { return runMotion(mm, false); }
+//***************************************************************************************
+// Giro de degrees grados (positivo = derecha). Ver runMotion.
+//
+// @param degrees Ángulo.
+//
+// @return true al terminar.
+//***************************************************************************************
 bool turnDesiredAngle(float degrees) { return runMotion(degrees, true); }
 
+//***************************************************************************************
+// Avanza la prueba MOTOR en curso; se llama en cada vuelta de loop().
+//
+// Mide las ruedas cada 25 ms (para que la telemetría muestre la velocidad) sin ningún control:
+// el PWM es fijo. Al cumplirse la duración imprime MOTOR_DONE con las cuentas y hace un STOP
+// completo, para que la rueda se detenga antes de otra prueba o de invertir el sentido. Si la
+// rueda probada no cuenta pulsos en stallMs, la declara trabada.
+//***************************************************************************************
 void updateMotorTest() {
   if (!motorTestActive) return;
   uint32_t r, l;
@@ -168,6 +291,18 @@ void updateMotorTest() {
   }
 }
 
+//***************************************************************************************
+// Arranca "MOTOR <R|L> <F|R> <PWM> <ms>": una rueda a PWM fijo, sin controlador.
+//
+// Sirve para calibrar la zona muerta: el menor PWM con el que la rueda arranca es el valor de
+// SET ..start de esa rueda y sentido (ver DriveCalibration). Imprime MOTOR_BEGIN con las
+// cuentas iniciales; restando las de MOTOR_DONE se obtienen las cuentas recorridas.
+//
+// @param command Línea en mayúsculas. Rueda R o L, sentido F (adelante) o R (atrás), PWM
+// 0..maxPWM y duración 100..3000 ms.
+//
+// @return true si el formato y los rangos son válidos y la prueba arrancó.
+//***************************************************************************************
 bool startMotorTest(const String& command) {
   char wheel, direction, extra;
   int pwm, duration;
@@ -192,6 +327,9 @@ bool startMotorTest(const String& command) {
   return true;
 }
 
+//***************************************************************************************
+// Imprime la lista corta de comandos del modo desarrollador (HELP o ?).
+//***************************************************************************************
 void printDeveloperHelp() {
   Serial.println("SHOW / VERIFY / SET <campo> <valor> / TEST <angulo> / EXIT");
   Serial.println("MOVE <mm> / TURN <grados> (signo negativo: retroceso/izquierda)");
@@ -201,6 +339,22 @@ void printDeveloperHelp() {
   Serial.println("SET pwmhz 200..30000 (8 bits): reiniciar y recalibrar start con MOTOR.");
 }
 
+//***************************************************************************************
+// Atiende una línea de la consola de calibración (Monitor Serie, 115200, fin de línea \n).
+//
+// STOP funciona siempre. El resto exige entrar antes con "DEV <clave>" (developerPassword en
+// RobotConfig.h); es protección contra cambios accidentales, no seguridad. Ya en modo DEV:
+// TELEMETRY ON/OFF y EXIT funcionan siempre; los demás solo con el robot quieto
+// (calibrationIdle) y si no, responde BUSY.
+//
+// Comandos: HELP, SHOW (configuración en RAM), VERIFY (RAM contra NVS), CLEAR (despejar fallo),
+// ENCODERS (cuentas), SET <campo> <valor> (guardar; ver saveDeveloperValue), TEST <ángulo>
+// (mover el servo del lápiz sin guardar), MOVE <mm> / TURN <grados> (maniobra con el
+// controlador, hasta ±3000 mm o ±3600°; al terminar imprime MOVE_DONE) y MOTOR (ver
+// startMotorTest).
+//
+// @param command Línea recibida, sin el salto de línea.
+//***************************************************************************************
 void processSerialCommand(String command) {
   command.trim();
   if (!command.length()) return;
@@ -255,8 +409,13 @@ void processSerialCommand(String command) {
   } else Serial.println("Comando desconocido. HELP.");
 }
 
+//***************************************************************************************
+// Lee la consola Serial sin bloquear y pasa cada línea completa a processSerialCommand.
+//
+// Atiende como máximo 64 caracteres por vuelta de loop() para que un flujo continuo no frene
+// el control. Ignora \r. Una línea de más de 95 caracteres se descarta entera.
+//***************************************************************************************
 void readDeveloperSerial() {
-  // Presupuesto por vuelta: un flujo Serial continuo no debe monopolizar loop().
   static bool overflow = false;
   for (int budget = 0; budget < 64 && Serial.available(); ++budget) {
     const char c = (char)Serial.read();

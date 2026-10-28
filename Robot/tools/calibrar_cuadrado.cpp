@@ -9,6 +9,9 @@
 #include <vector>
 
 namespace {
+//***************************************************************************************
+// Corridas de un mismo sentido: puntos finales medidos del lápiz, en mm.
+//***************************************************************************************
 struct Serie {
   std::vector<cuadrado::Punto> puntos;
   cuadrado::Punto media() const {
@@ -27,12 +30,30 @@ struct Serie {
   }
 };
 
+//***************************************************************************************
+// Pasa un texto a minúsculas (las claves del archivo no distinguen mayúsculas).
+//
+// @param s Texto.
+//
+// @return Copia en minúsculas.
+//***************************************************************************************
 std::string minusculas(std::string s) {
   for (auto& c : s) c = std::tolower(static_cast<unsigned char>(c));
   return s;
 }
 } // namespace
 
+//***************************************************************************************
+// Lee el archivo de mediciones, estima los errores e imprime las líneas SET corregidas.
+//
+// El archivo acepta la salida de SHOW tal cual (toma rppr, lppr, track y device) más las
+// líneas lado, lapiz, horario <x> <y> y antihorario <x> <y>. Ver Calibracion_cuadrado.md.
+//
+// @param argc Debe ser 2.
+// @param argv argv[1] es la ruta del archivo.
+//
+// @return 0 si calculó la corrección; distinto de 0 si faltan datos o no convergió.
+//***************************************************************************************
 int main(int argc, char** argv) {
   if (argc != 2) {
     std::fprintf(stderr, "Uso: %s <archivo de mediciones>\n", argv[0]);

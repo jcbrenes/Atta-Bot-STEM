@@ -27,3 +27,7 @@ migrate_working_dir/
 Robot/Binarios/
 Robot/CodigoESP32/build/
 Robot/Respaldos_SHOW/
+
+# Obsidian (vault en Robot/): se versiona la configuración del grafo, no el estado de la ventana
+Robot/.obsidian/workspace*.json
+Robot/.obsidian/cache
