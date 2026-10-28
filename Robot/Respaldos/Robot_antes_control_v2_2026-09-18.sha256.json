@@ -1,0 +1,13 @@
+{
+  "Robot/AttaSTEM_Leisel_Jimena/AttaSTEM_Leisel_Jimena.ino": "808f3be0c9b03274cfb2e4a81ebdd1f40530e74509f4b218dcf8659a7964dd7e",
+  "Robot/Auditoria_movimiento_13_Attas.md": "9656838a5442b1bd75cc88a1580a06acbb56f56226647c3902784155544b67df",
+  "Robot/CalibracionMotores/CalibracionMotores.ino": "63d997c118e5996369730ee5a565dc3d5c54ba8e97d866249094aa9aab53686c",
+  "Robot/CalibracionServoHerramienta/CalibracionServoHerramienta.ino": "cbd3e8a554585a4a07749a5aa8a08357faea4ad2118590f7804b46e2430a72f8",
+  "Robot/CodigoESP32/BancoDePruebasPID/BancoDePruebasPID.ino": "8f76c7668f1d4679ac64921c9d46c66ebff08dffae876cab6ef72ae0c7bdb002",
+  "Robot/CodigoESP32/BancoDePruebasPID/Lectura_y_Escritura_PID_Script.py": "d9c3bf1f08544487101a37d85eb0e517c7f3f54860a44daeb3cf056e10baa14d",
+  "Robot/CodigoESP32/CodigoESP32.ino": "b8439125596d1250a66148ddfef282a10b00920fcbb0b35bd5910c7a9f68b16a",
+  "Robot/CodigoESP32/Preferences/Preferences.ino": "a617414a33ca58799122dcc41b0600f9b3291c06d379fe260b7b9e16b618eb3b",
+  "Robot/CodigoESP32/Preferences/sketch.yaml": "37b72e88d53d9925319ed3b23dce86b9f35fa6679a7baebf589abad34c33c024",
+  "Robot/CodigoESP32/sketch.yaml": "37b72e88d53d9925319ed3b23dce86b9f35fa6679a7baebf589abad34c33c024",
+  "Robot/README.md": "d833678a28281196d26cff23678e9bbdaea43b291f31d17e324618b93291f75a"
+}

@@ -1,28 +1,40 @@
-#include <ESP32Servo.h>
-#include <ArduinoBLE.h>
+#include <ESP32Servo.h> //3.0.2
+#include <BLEDevice.h>
+#include <BLEServer.h>
+#include <BLEUtils.h>
 #include <string>
+#include "esp32-hal-periman.h" // perimanGetPinBus: temporizador LEDC de cada pin
+#include "driver/ledc.h"
+#include <Preferences.h> // Librería de almacenamiento de preferencias/credenciales para ESP32
+
+// LED WS2812B interno (IO02) con el driver RMT del core; FastLED ocupaba ~107 KB de flash.
+#define LED_PIN     2   // IO02, connected to DIN
+
+
 using namespace std;
 
+//***************************************************************************************
+// Pinta el LED WS2812B interno (IO02) solo cuando el color cambia.
+//
+// La función de estado del LED corre en cada vuelta de loop(); comparar contra el último
+// color evita reescribir el bus RMT si nada cambió. El "último color" vive en una variable
+// estática local, así que persiste entre llamadas.
+//
+// @param r Componente roja, 0..255.
+// @param g Componente verde, 0..255.
+// @param b Componente azul, 0..255.
+//***************************************************************************************
+void ledInterno(uint8_t r, uint8_t g, uint8_t b) {
+  static int32_t anterior = -1;
+  const int32_t color = (int32_t(r) << 16) | (int32_t(g) << 8) | b;
+  if (color == anterior) return;
+  anterior = color;
+  rgbLedWriteOrdered(LED_PIN, LED_COLOR_ORDER_GRB, r, g, b);
+}
+
 // Robot constants
-const int samplingTime = 25; // units: miliseconds
-const float rightPulsesPerRev = 834; // number of pulses from a single encoder output, for the right motor
-const float leftPulsesPerRev = 834; // number of pulses from a single encoder output, for the left motor
-const float wheelRadius = 22; // Wheel circumference = 139.5mm
-const float distanceWheelToWheel = 120; // actualizado a chasís v2.4 
-const float distanceCenterToWheel = distanceWheelToWheel / 2 ; // Turning radius of the robot, distance in mm between the center and one wheel
 
-// Constants for PID control with samplingTime = 25ms
-const float targetSpeed = 120.0; // Target speed for the robot in mm/s
-const float kpSpeed = 2; // Proportional constant for speed control 0.75, 1.1
-const float kiSpeed = 2; // Integral constant for speed control
-const float kdSpeed = 0.0; // Derivative constant for speed control (set to zero for no derivative action)
-
-// Constants for PID control implementation
-const int minIntegralErrorSpeed = -255; // Minimum value for integral error to avoid windup
-const int maxIntegralErrorSpeed = 255; // Maximum value for integral error to avoid windup
-
-const int upperDutyCycleLimitSpeed = 200; // Maximum allowed PWM value for speed control
-const int lowerDutyCycleLimitSpeed = 60; // Minimum allowed PWM value for speed control
+#include "RobotConfig.h"
 
 // Constants for RGB LED configuration
 const int duracionParpadeoLed = 500;
@@ -41,42 +53,21 @@ const int distRetrocesoObstaculo = 50;
 // Constante para tener siempre activos (o no) los sensores inferiores (trackers)
 const bool trackersSiempreActivos = false;
 
-// Error accumulation for speed PID control
-float sumErrorVelRight = 0; // Accumulated integral error for the right wheel
-float prevErrorVelRight = 0; // Previous error value for the right wheel (used for derivative calculation)
-float sumErrorVelLeft = 0; // Accumulated integral error for the left wheel
-float prevErrorVelLeft = 0; // Previous error value for the left wheel (used for derivative calculation)
+// Cambio del delay
+// Keeping it explicit makes it safe to tune from measurements without blocking the loop.
+const unsigned long stopSettlingTime = 500;
+unsigned long stopStartTime = 0;
+bool waitingForStopSettle = false;
 
-int distanceTraveled = 0; // Variable to track the total distance traveled by the robot
-const float correctionFactorLines = 0.95; //0.92 
+// Contadores acumulativos x4; snapshot coherente compartido con las ISR.
+portMUX_TYPE encoderMux = portMUX_INITIALIZER_UNLOCKED;
+volatile uint32_t rightEncoderPos = 0, leftEncoderPos = 0;
 
-
-int prevPWMRight = 0;
-int prevPWMLeft = 0;
-bool prevReverse = 0;
-
-
-// For speed sampling
-unsigned long previousTime = 0;
-
-// Variables to keep track of the encoder state
-volatile long leftEncoderPos = 0; // Current position of the left encoder (in ticks)
-long leftTicksForSpeed = 0; // Number of encoder ticks counted for left wheel speed calculation
-long leftPrevTicks = 0; // Previous encoder tick count for the left wheel (used to calculate speed) 
-volatile long rightEncoderPos = 0; // Current position of the right encoder (in ticks)
-long rightTicksForSpeed = 0; // Number of encoder ticks counted for right wheel speed calculation
-long rightPrevTicks = 0; // Previous encoder tick count for the right wheel (used to calculate speed)
-
-// Variables to store the servo position
-const int activateAngle = 87;  // Activated Tool
-const int deactivateAngle = 118; // Deactivated Tool
+// Variables to store the servo position (loaded from Preferences at startup)
 int set = 0;
 
 //Variables del servomotor 360 del set de herramientas
 const int pinServo360 = 23;
-const int velocidadPositiva = 115; // ###
-const int velocidadNegativa = 70; // ###
-const int velocidadNeutra = 90; // ###
 
 // Create a Servo object to control the MG90S
 Servo myServo;
@@ -103,10 +94,10 @@ const int leftMotorM2 = 15;   // Direction control pin 1 for the left motor
 
 // Obstacle sensors setup
 const int rightInfraredSensor = 4; // Pin for the right infrared obstacle sensor
-const int leftInfraredSensor = 34;  // Pin for the left infrared obstacle sensor
+const int leftInfraredSensor = 25;  // Pin for the left infrared obstacle sensor
 
 // Tracker sensors setup
-const int rightTrackerSensor = 36;  // Pin for the right tracker sensor
+const int rightTrackerSensor = 34;  // Pin for the right tracker sensor
 const int leftTrackerSensor = 39;   // Pin for the left tracker sensor
 
 // LED RGB setup
@@ -136,9 +127,88 @@ bool paro_emergencia=false;
 
 //variables para comunicación Bluetooth
 string mensajeBLE="ATINIAV020GD030CI003RE010GI090CIFINATFIN";  
-BLEService servicio("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
-BLEStringCharacteristic caracteristico("beb5483e-36e1-4688-b7f5-ea07361b26a8", BLERead | BLEWrite, 512);
-//char nombreBLErobot= "AttaBotSTEM";
+
+//***************************************************************************************
+// Variables globales y clases de callback para el BLE nativo del ESP32 (librería BLEDevice)
+//***************************************************************************************
+
+BLEServer *pServer = NULL;               // Representa a este ESP32 actuando como servidor BLE
+BLECharacteristic *pCharacteristic = NULL; // Puntero a la característica de lectura/escritura 
+
+volatile bool deviceConnected = false;   // true mientras un central (la App) está conectado
+volatile bool nuevoMensajeBLE = false;   // true cuando llegó una escritura nueva aún no procesada
+char mensajeBLEBuffer[501] = {};
+portMUX_TYPE bleMux = portMUX_INITIALIZER_UNLOCKED;
+volatile bool bleStopPending = false;
+
+//***************************************************************************************
+// Clase de callbacks para los eventos de conexión y desconexión.
+// onConnect/onDisconnect los llama automáticamente la pila BLE
+//***************************************************************************************
+class MyServerCallbacks: public BLEServerCallbacks {
+    //***********************************************************************************
+    // Marca que hay un dispositivo central conectado.
+    //
+    // Solo actualiza la bandera global deviceConnected, que loop() usa para el LED y
+    // leerBluetooth() para decidir si procesa mensajes.
+    //
+    // @param pServer Servidor BLE que emite el evento (no se usa).
+    //***********************************************************************************
+    void onConnect(BLEServer* pServer) {
+      deviceConnected = true;
+    }
+
+    //***********************************************************************************
+    // Marca que ya no hay dispositivo conectado y vuelve a anunciar el robot.
+    //
+    // El BLE nativo del ESP32 no reanuda el advertising solo tras una desconexión; sin
+    // reiniciarlo el robot dejaría de ser visible para nuevas conexiones. Por eso apaga
+    // deviceConnected y llama a start() del advertising del mismo servidor.
+    //
+    // @param pServer Servidor BLE que emite el evento.
+    //***********************************************************************************
+    void onDisconnect(BLEServer* pServer) {
+      deviceConnected = false;
+      // IMPORTANTE: el BLE nativo del ESP32 NO reinicia el advertising automáticamente
+      // tras una desconexión. Sin esto, el dispositivo queda invisible para nuevas
+      // conexiones después de la primera desconexión. Se llama aquí para que un teléfono
+      // siempre pueda encontrar y reconectar con el robot.
+      pServer->getAdvertising()->start();
+    }
+};
+
+//***************************************************************************************
+// Clase de callbacks para los eventos de escritura de la característica.
+// onWrite lo llama automáticamente la pila BLE en el momento en que la App escribe
+//***************************************************************************************
+class MyCharacteristicCallbacks: public BLECharacteristicCallbacks {
+    //***********************************************************************************
+    // Recibe el valor escrito por la App y lo deja listo para leerBluetooth().
+    //
+    // Ignora valores vacíos o de más de 500 caracteres. Recorre el mensaje en grupos de
+    // 5 y, si encuentra "PARAR", activa bleStopPending con prioridad sobre cualquier otro
+    // mensaje para que la parada no se pierda. Si no hay PARAR, copia el texto a
+    // mensajeBLEBuffer y activa nuevoMensajeBLE. Todo el acceso se protege con bleMux
+    // porque loop() lo lee desde otra tarea.
+    //
+    // @param pCharacteristic Característica BLE que recibió la escritura.
+    //***********************************************************************************
+    void onWrite(BLECharacteristic *pCharacteristic) {
+      String valorRecibido = pCharacteristic->getValue();
+      if (valorRecibido.length() == 0 || valorRecibido.length() > 500) return;
+      // STOP tiene prioridad y no puede perderse por otro mensaje posterior.
+      bool stopRequested = false;
+      for (unsigned int i = 0; i + 5 <= valorRecibido.length(); i += 5)
+        if (valorRecibido.substring(i, i + 5) == "PARAR") stopRequested = true;
+      portENTER_CRITICAL(&bleMux);
+      if (stopRequested) bleStopPending = true;
+      else {
+        memcpy(mensajeBLEBuffer, valorRecibido.c_str(), valorRecibido.length() + 1);
+        nuevoMensajeBLE = true;
+      }
+      portEXIT_CRITICAL(&bleMux);
+    }
+};
 
 //apuntadores y variables para la lista de instrucciones
 enum posibles_Instrucciones {inst_Avanzar=1, inst_Retroceder, inst_GiroIzquierdo, inst_GiroDerecho, 
@@ -210,44 +280,93 @@ const short tiempoGrua = 4000;//###;
 short tiempoDeAccion=0;
 short velocidad=velocidadNeutra; 
 
-//******************************************************************************************************************
-// Function that updates the position of the right wheel encoder.
+// Frecuencia real del temporizador LEDC de un pin. ledcReadFreq() del core 3.x
+// devuelve 0 mientras el duty sea 0 (siempre al arrancar), así que no sirve
+// para verificar la configuración de los motores.
+//***************************************************************************************
+// Devuelve la frecuencia real del temporizador LEDC asociado a un pin.
 //
-// This function increments the encoder position counter for the right wheel each time it is called. The counter 
-// reflects the accumulated encoder pulses, allowing for the calculation of distance or speed based on pulses.
+// ledcReadFreq() del core 3.x devuelve 0 mientras el duty sea 0 (siempre al arrancar), así
+// que no sirve para verificar la configuración de los motores. Esta función obtiene el bus
+// LEDC del pin con perimanGetPinBus y consulta ledc_get_freq() del canal y temporizador.
 //
-//******************************************************************************************************************
-void rightUpdateEncoder() {
-  // Update encoder positions based on direction
-  rightEncoderPos ++;
-
+// @param pin Número de GPIO configurado con ledcAttach.
+//
+// @return Frecuencia en Hz, o 0 si el pin no tiene un bus LEDC asociado.
+//***************************************************************************************
+uint32_t ledcTimerHz(uint8_t pin) {
+  auto* bus = (ledc_channel_handle_t*)perimanGetPinBus(pin, ESP32_BUS_TYPE_LEDC);
+  if (!bus) return 0;
+  return ledc_get_freq((ledc_mode_t)(bus->channel / SOC_LEDC_CHANNEL_NUM), (ledc_timer_t)bus->timer_num);
 }
 
-//******************************************************************************************************************
-// Function that updates the position of the left wheel encoder.
+#include "MotionRuntime.h"
+
+//***************************************************************************************
+// ISR del encoder derecho: suma un pulso por cada flanco de sus canales A y B.
 //
-// This function increments the encoder position counter for the left wheel each time it is called. The counter 
-// reflects the accumulated encoder pulses, which can be used to determine distance or speed based on pulse count.
+// Corre en contexto de interrupción, por eso protege el contador con encoderMux. El
+// controlador de movimiento lo lee de forma coherente con readEncoderCounts().
+//***************************************************************************************
+void ARDUINO_ISR_ATTR rightUpdateEncoder() {
+  portENTER_CRITICAL_ISR(&encoderMux);
+  ++rightEncoderPos;
+  portEXIT_CRITICAL_ISR(&encoderMux);
+}
+//***************************************************************************************
+// ISR del encoder izquierdo: suma un pulso por cada flanco de sus canales A y B.
 //
-//******************************************************************************************************************
-void leftUpdateEncoder() {
-  // Update encoder positions based on direction
-  leftEncoderPos ++;
+// Igual que el derecho, usa encoderMux para que el contador compartido no se lea a medias.
+//***************************************************************************************
+void ARDUINO_ISR_ATTR leftUpdateEncoder() {
+  portENTER_CRITICAL_ISR(&encoderMux);
+  ++leftEncoderPos;
+  portEXIT_CRITICAL_ISR(&encoderMux);
 }
 
-
+//***************************************************************************************
+// Inicializa el robot: configuración persistente, periféricos, PWM y servidor BLE.
+//
+// Orden de arranque:
+// 1. Abre el puerto Serial y llama a loadConfig(), que lee (o crea una vez) de NVS el
+//    nombre del dispositivo, los ángulos de los servos, la frecuencia PWM y los perfiles
+//    de movimiento/giro. Si la configuración no es válida, configReady queda en false y
+//    el movimiento se bloquea.
+// 2. Apaga el LED interno y prepara el servo del lápiz (50 Hz, neutro) y el servo 360
+//    del set de herramientas.
+// 3. Configura como entrada los pines de encoders, sensores infrarrojos, trackers y
+//    batería baja; como salida los de motores y LED RGB externo.
+// 4. Reserva los temporizadores de los servos antes de llamar a attachMotorPWM() y deja
+//    los motores detenidos con stopMotion(); si el PWM no se aplicó, lo avisa por Serial.
+// 5. Engancha las interrupciones de los cuatro canales de encoder.
+// 6. Inicia el BLE nativo con el nombre en deviceName, crea el servidor, el servicio y la
+//    característica con los UUID acordados con la App, registra los callbacks y empieza a
+//    anunciarse para que la tablet pueda conectarse.
+// 7. Guarda en tiempoDeEncendidoDeLed el instante inicial del parpadeo del LED.
+//***************************************************************************************
 void setup() {
+  Serial.setTxBufferSize(1024);
+  Serial.begin(115200);
+  loadConfig(); // Lee (o inicializa una vez) la configuracion persistente.
+
+  Serial.print("Loaded device name: [");
+  Serial.print(deviceName);
+  Serial.println("]");
+  Serial.println("Serial listo. Para configurar: DEV <clave>");
+
+  ledInterno(0, 0, 0);
 
   // Set the PWM properties (50 Hz is typical for servos)
   myServo.setPeriodHertz(50);    // Standard 50Hz servo
   myServo.attach(servoPin, 500, 2400);  // Attach the servo on the pin with min/max pulse widths
+  myServo.write(neutralAngle);   // Lleva el lápiz a neutral al encender el Atta
 
   // Set encoder pins as inputs
   pinMode(rightEncoderA, INPUT_PULLUP);
   pinMode(rightEncoderB, INPUT_PULLUP);
 
   pinMode(leftEncoderA, INPUT_PULLUP);
-  pinMode(leftEncoderB, INPUT_PULLUP);
+  pinMode(leftEncoderB, INPUT); // GPIO35 no tiene pull-up interno; verificar circuito externo.
 
   pinMode(rightMotorM1, OUTPUT);
   pinMode(rightMotorM2, OUTPUT);
@@ -260,8 +379,9 @@ void setup() {
   pinMode(leftInfraredSensor, INPUT);
 
   // Tracker sensors set up
-  pinMode(rightTrackerSensor, INPUT_PULLDOWN);
-  pinMode(leftTrackerSensor, INPUT_PULLDOWN);
+  // GPIO 34 y 39 son solo de entrada y no tienen pulldown interno.
+  pinMode(rightTrackerSensor, INPUT);
+  pinMode(leftTrackerSensor, INPUT);
 
   // LED RGB set up
   pinMode(pinLedRgbRojo, OUTPUT);
@@ -270,8 +390,17 @@ void setup() {
 
   // Setup servo360
   pinMode(pinServo360, OUTPUT);
+  servoHerramientaSet.setPeriodHertz(50);
   servoHerramientaSet.attach(pinServo360);
   servoHerramientaSet.write(velocidadNeutra);
+
+  // Reservar ambos servos ANTES de que LEDC asigne canales para motores/LED.
+  // Frecuencia configurable (SET pwmhz, por defecto 20 kHz); resolución fija de 8 bits.
+  motorOutputsReady = myServo.attached() && servoHerramientaSet.attached();
+  motorOutputsReady = attachMotorPWM() && motorOutputsReady;
+  stopMotion();
+  Serial.printf("PWM motores: %lu Hz, %d bits\n", (unsigned long)motorPwmActiveHz, motorPwmBits);
+  if (!motorOutputsReady) Serial.println("ERROR PWM: canales o frecuencia no aplicados; movimiento bloqueado.");
 
   // Señal de batería baja set up
   pinMode(pinBateriaBaja, INPUT_PULLUP);
@@ -283,26 +412,78 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(leftEncoderA), leftUpdateEncoder, CHANGE);
   attachInterrupt(digitalPinToInterrupt(leftEncoderB), leftUpdateEncoder, CHANGE);
 
-  Serial.begin(115200);
-  //Inicialización comunicación bluetooth BLE
-  if (!BLE.begin()) {
-    Serial.println("starting BLE failed!");
-    while (1);
-  }
-  BLE.setLocalName("AttaBotSTEM");
-  BLE.setAdvertisedService(servicio);
-  servicio.addCharacteristic(caracteristico);
-  BLE.addService(servicio);
-  BLE.advertise();
+    //Inicialización comunicación bluetooth BLE
+
+  //***************************************************************************************
+  // Inicialización nativa de BLE para ESP32 
+  //***************************************************************************************
+
+  // Establece el nombre que se anuncia del dispositivo 
+  //BLEDevice::init(deviceName.c_str()); // Use the device name loaded from preferences
+  BLEDevice::init(deviceName);
+  // Crea el objeto servidor y registra los callbacks de conexión/desconexión
+  // para que deviceConnected se actualice automáticamente
+  pServer = BLEDevice::createServer();
+  pServer->setCallbacks(new MyServerCallbacks()); // Callback es cuando un dispositivo se conecta al server
+
+  // Crea el servicio usando el UUID. Este número es un acuerdo entre la APP y el robot. Se puede cambiar a otro UUID, pero se debe cambiar también en la APP.
+  BLEService *pService = pServer->createService("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
+
+  // Crea el característico usando el UUID y permisos de
+  // Lectura/Escritura 
+  pCharacteristic = pService->createCharacteristic(
+                      "beb5483e-36e1-4688-b7f5-ea07361b26a8", //Este número es un acuerdo entre la APP y el robot. Se puede cambiar a otro UUID, pero se debe cambiar también en la APP.
+                      BLECharacteristic::PROPERTY_READ |
+                      BLECharacteristic::PROPERTY_WRITE
+                    );
+
+  // Registra el callback onWrite  para que nuevoMensajeBLE se active
+  // automáticamente 
+  pCharacteristic->setCallbacks(new MyCharacteristicCallbacks());
+
+  // Inicia el servicio — debe ocurrir después de crear todos los característicos
+  pService->start();
+
+  // Hace que el servicio sea detectable, y luego inicia el anuncio (advertising)
+  pServer->getAdvertising()->addServiceUUID("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
+  pServer->getAdvertising()->start(); 
 
   tiempoDeEncendidoDeLed = millis();
 }
 
 
 
+//***************************************************************************************
+// Bucle principal: atiende E/S y ejecuta la máquina de estados del programa de bloques.
+//
+// En cada vuelta procesa comandos de desarrollador por Serial, revisa si hay mensajes BLE
+// nuevos (o cada 50 ms) para no perder un STOP, avanza las pruebas de motor opcionales,
+// toma las lecturas de los sensores infrarrojos, trackers y batería baja, y luego recorre
+// el switch de estado:
+// - ESPERA: aguarda a que termine de llegar un programa (flancoNegRecibeProgra) y pasa a
+//   LEE_MEMORIA reiniciando el flujo; un paro recibido aquí se ignora.
+// - LEE_MEMORIA: lee la siguiente instrucción de lista_instrucciones y salta al estado que
+//   corresponda; si se están ignorando ramas, las salta hasta la marca IF/ELSE/WHILE.
+// - MOVERSE y GIRAR: ejecutan la maniobra y pasan a DETENERSE al terminar o si hay paro u
+//   obstáculo.
+// - DETENERSE: detiene los motores, espera el asentamiento del chasis y vuelve a
+//   LEE_MEMORIA, a ESPERA (paro o prueba) o a MOVIMIENTO_OBSTACULO.
+// - CICLO, OBSTACULOS, HERRAMIENTA, IF, WHILE y HERRAMIENTA_SET: aplican esa instrucción
+//   y vuelven a LEE_MEMORIA.
+// - MOVIMIENTO_OBSTACULO: retrocede tras un obstáculo, reinicia el flujo y va a ESPERA.
+// - NADA: no hace nada.
+// Al salir del switch emite telemetría, limpia el flanco de recepción, apaga el pulso de
+// recibeProgra tras su duración y actualiza el color del LED RGB.
+//***************************************************************************************
 void loop() {
- 
-  BLEDevice central = BLE.central();
+  readDeveloperSerial();
+  // Procesar STOP también durante reposo de parada y retroceso por obstáculo.
+  if (bleStopPending || nuevoMensajeBLE || millis() - tiempoPasadaLecturaBT >= 50) {
+    leerBluetooth();
+    tiempoPasadaLecturaBT = millis();
+  }
+  updateMotorTest();
+  
 
   lecturaInfrarrojoDerecho=digitalRead(rightInfraredSensor);
   lecturaInfrarrojoIzquierdo=digitalRead(leftInfraredSensor);
@@ -315,17 +496,19 @@ void loop() {
   switch (estado) {
 
     case ESPERA:  { 
+      // En reposo: espera que termine de llegar un programa y descarta paros.
       // Leer la conexión BLE periódicamente
       if (millis() >= tiempoPasadaLecturaBT + esperaBT) {
-        leerBluetooth(central);
+        leerBluetooth();
         tiempoPasadaLecturaBT = millis();
       }
 
       //Lógica de estado siguiente
       if (flancoNegRecibeProgra) {
-          flagEjecucion = 1; 
+          flagEjecucion = 1;
           estado = LEE_MEMORIA;
           inst_actual = 0;
+          resetProgramFlow(); // cada programa arranca sin detección ni ciclos heredados
       } else if (paro_emergencia) { // si se recibe un comando de detener mientras está en ESPERA, se ignora
         flagParar = 0; 
         paro_emergencia = 0;
@@ -334,6 +517,7 @@ void loop() {
     }
 
     case LEE_MEMORIA:  { 
+      // Toma la siguiente instrucción de la lista y decide a qué estado pasar.
       if ( inst_actual != inst_final ){ // avanza en memoria de instrucciones
         instruccion = lista_instrucciones[inst_actual][0];
         valor_instruccion = lista_instrucciones[inst_actual][1];
@@ -379,27 +563,15 @@ void loop() {
           }  // estado se mantiene igual, se salta el resto de comparaciones y lee nueva instruccion   
       
       }else if (instruccion == inst_Avanzar) {
-        rightEncoderPos = 0; 
-        leftEncoderPos = 0;
         estado = MOVERSE;
-
       }else if (instruccion == inst_Retroceder) {
         estado = MOVERSE;
         valor_instruccion = valor_instruccion * -1;
-        rightEncoderPos = 0; 
-        leftEncoderPos = 0;
-
       }else if (instruccion == inst_GiroIzquierdo) {
         estado = GIRAR;
         valor_instruccion = valor_instruccion * -1;
-        rightEncoderPos = 0;
-        leftEncoderPos = 0;
-
       }else if (instruccion == inst_GiroDerecho) {
         estado = GIRAR;
-        rightEncoderPos = 0;
-        leftEncoderPos = 0;
-      
       }else if (instruccion == inst_CicloInicia  ||  instruccion == inst_CicloFin) {
         estado = CICLO;
 
@@ -423,14 +595,14 @@ void loop() {
     }
     
     case MOVERSE: {
-
+      // Avanza o retrocede la distancia pedida y vigila paro y obstáculos.
       //Ejecuta el estado de avanzar o retroceder
       //(es el mismo pero con distancia negativa)
-      movimiento_listo= advanceDesiredDistance(valor_instruccion*10);
+      movimiento_listo= advanceDesiredDistance(diagnosticMove ? diagnosticAmount : valor_instruccion*10);
 
       // Leer la conexión BLE periódicamente
       if (millis() >= tiempoPasadaLecturaBT + esperaBT) {
-        leerBluetooth(central);
+        leerBluetooth();
         tiempoPasadaLecturaBT = millis();
       }
 
@@ -457,16 +629,16 @@ void loop() {
     }
 
     case GIRAR: {
-
+      // Gira el ángulo pedido (negativo = izquierda) y vigila paro y obstáculos.
       //Ejecuta el estado de girar derecha o izquierda
       //(es el mismo pero con ángulo negativo)
 
       //giro
-      movimiento_listo= turnDesiredAngle(valor_instruccion);
+      movimiento_listo= turnDesiredAngle(diagnosticMove ? diagnosticAmount : valor_instruccion);
 
       // Leer la conexión BLE periódicamente
       if (millis() >= tiempoPasadaLecturaBT + esperaBT) {
-        leerBluetooth(central);
+        leerBluetooth();
         tiempoPasadaLecturaBT = millis();
       }
 
@@ -495,24 +667,39 @@ void loop() {
     }
 
     case DETENERSE: {
-      
-      if (paro_emergencia || obstaculo_detectado) { //en caso de apretar STOP o detectar obstaculo
-        flagEjecucion = 0;
-        configureHBridge(false, 3, 0, 0); //Detiene el robot 
-      } // Ojo que la funcion avanzar y girar ya detiene el robot al final
-        //configureHBridgeTurn(false, 3, 0, 0);
-      delay(500);
-      flagParar = 0;
-            
+      // Detiene los motores, espera el asentamiento y elige el siguiente estado.
+      if (!waitingForStopSettle) {
+        if (paro_emergencia || obstaculo_detectado) { //en caso de apretar STOP o detectar obstaculo
+          flagEjecucion = 0;
+          stopMotion(); // mismo reinicio para STOP y obstáculo
+        } // Ojo que la funcion avanzar y girar ya detiene el robot al final
+
+        stopStartTime = millis();
+        waitingForStopSettle = true;
+        flagParar = 0;
+      }
+
+      // Keep the firmware responsive while the chassis settles after stopping.
+      const bool turnAlreadySettled = motion.turning && motion.turnSettled &&
+        motion.fault == atta::Fault::None && !paro_emergencia && !obstaculo_detectado;
+      if (!turnAlreadySettled && millis() - stopStartTime < stopSettlingTime) {
+        break;
+      }
+
+      waitingForStopSettle = false;
+
       //Lógica estado siguiente
       if (paro_emergencia){
         paro_emergencia=false;
-        estado = ESPERA;     
+        estado = ESPERA;
       } else if (obstaculo_detectado){
-        // Se reinician los valores de posición para que no tome en cuenta el movimiento recién interrumpido
-        rightEncoderPos = 0; 
-        leftEncoderPos = 0;
+        // El controlador toma nuevos orígenes al iniciar el retroceso.
         estado = MOVIMIENTO_OBSTACULO;
+      } else if (diagnosticMove) {
+        diagnosticMove = false;
+        flagEjecucion = false;
+        estado = ESPERA;
+        Serial.println("MOVE_DONE");
       } else {
         estado = LEE_MEMORIA;
       }
@@ -520,7 +707,7 @@ void loop() {
     }
 
     case CICLO: {
-
+      // Controla el contador de repeticiones y retrocede el puntero al inicio del ciclo.
       if ( instruccion == inst_CicloInicia  &&  primer_ciclo ){ //inicio ciclo, primera vez
         cantidad_ciclos = valor_instruccion;  //guarda cantidad de ciclos, primero 
         primer_ciclo = false;
@@ -544,7 +731,7 @@ void loop() {
     }
 
     case OBSTACULOS: {
-
+      // Activa o desactiva la detección de obstáculos según el bloque.
       //*Activa la bandera de si detectar obstáculos y luego la desactiva
       if ( instruccion == inst_ObstaculoInicia ){
         obstaculos_activo = true;
@@ -558,21 +745,27 @@ void loop() {
     }
 
     case MOVIMIENTO_OBSTACULO: {
+      // Retrocede una distancia fija tras detectar un obstáculo y termina el programa.
       // *Genera el movimiento despues que un obstaculo se detectó, el cual corresponde a un retroceso
       retroceso_listo=advanceDesiredDistance(-1* distRetrocesoObstaculo);
       obstaculo_detectado=false;
       flagObstaculo = 0;
       
       // Lógica estado siguiente
-      if (retroceso_listo) {
+      if (paro_emergencia) {
+        estado = DETENERSE;
+      } else if (retroceso_listo) {
+        diagnosticMove = false;
+        flagEjecucion = false;
+        resetProgramFlow(); // el programa termina aquí: no se llega a OBFIN/CIFIN
         estado = ESPERA;
       } 
       break;
     }
 
     case HERRAMIENTA: {
-
-      //*Activa la bandera de si detectar obstáculos y luego la desactiva
+      // Activa o desactiva el servo del lápiz (herramienta básica).
+      // HEINI baja el lápiz; HEFIN lo sube.
       if ( instruccion == inst_HerramientaInicia ){
         controlServo(true);
       }else if ( instruccion == inst_HerramientaFin ) {
@@ -587,10 +780,12 @@ void loop() {
     }
 
     case NADA: {
+      // Estado inactivo: no ejecuta nada y deja que el switch termine.
       break;
     }
 
     case IF: {
+      // Evalúa la condición del IF/ELSE y actualiza las banderas de salto de rama.
       verSernsores();
       bifurcacionIF();
       estado = LEE_MEMORIA;
@@ -598,9 +793,10 @@ void loop() {
     }
 
     case WHILE: {
+      // Reevalúa la condición del WHILE y repite o abandona el cuerpo.
       // Leer la conexión BLE periódicamente por si se requiere salir de un loop infinito
       if (millis() >= tiempoPasadaLecturaBT + esperaBT) {
-        leerBluetooth(central);
+        leerBluetooth();
         tiempoPasadaLecturaBT = millis();
       }
 
@@ -611,6 +807,7 @@ void loop() {
     }
 
     case HERRAMIENTA_SET: {
+      // Acciona la garra o la grúa del set de herramientas según el comando.
       accionarHerramientaSet();
       estado = LEE_MEMORIA;
       break;
@@ -619,6 +816,7 @@ void loop() {
 
   }
 
+  emitTelemetry();
   flancoNegRecibeProgra = 0;
   // Reseteo de la señal de recibeProgra
   if (recibeProgra && millis() > recibePrograTiempo0 + duracionIndicadorRecibeProgra) {
@@ -630,11 +828,13 @@ void loop() {
   // Se asigna el color del LED RGB
   ConfigurarEstadoLedRgb(flagBateriaBaja, flagBluetooth, flagEjecucion, flagObstaculo, recibeProgra, flagParar);
 
-  delay(5);
 }
 
-//*****************************************************************
-// Procedimiento para observar las lecturas de los sensores inferiores
+//******************************************************************************************************************
+// Imprime por Serial las lecturas actuales de los trackers inferiores.
+//
+// Es una ayuda de depuración usada por los estados IF y WHILE antes de evaluar una rama;
+// no lee los pines, solo muestra los valores globales ya capturados en loop().
 //******************************************************************************************************************
 
 void verSernsores(){
@@ -646,10 +846,14 @@ void verSernsores(){
 
 
 //******************************************************************************************************************
-// Procedimiento que realiza la comparación de las lectura de los sensores para determinar si se salta o ejecuta la rama IF
+// Decide si se ejecuta la rama IF o se salta hasta ELSE/IFFIN.
 //
-// @param {bool} condicionSensorIzquierdo - Booleano que indica si se busca que la lectura del sensor sea alta o baja
-// @param {bool} condicionSensorDerecho - Booleano que indica si se busca que la lectura del sensor sea alta o baja
+// Si ambas condiciones se cumplen, marca ejecutandoRamaIf[anidamientoIF] para que un
+// ELSE posterior sepa que la rama ya se ejecutó. Si no, activa ignorarHastaElse y guarda
+// el nivel de anidamiento actual para saltar solo hasta la marca correspondiente.
+//
+// @param condicionSensorIzquierdo true si el tracker izquierdo cumple la condición pedida.
+// @param condicionSensorDerecho true si el tracker derecho cumple la condición pedida.
 //******************************************************************************************************************
 
 void validacionIf(bool condicionSensorIzquierdo, bool condicionSensorDerecho){
@@ -662,8 +866,11 @@ if (condicionSensorIzquierdo && condicionSensorDerecho){
 };
 
 //******************************************************************************************************************
-// Procedimiento de asignación de las condiciones de los sensores para los condicionales IF
-// 
+// Traduce el valor de la instrucción IF/ELSE a las condiciones de los trackers.
+//
+// valor_instruccion codifica qué combinación de sensores sobre negro/blanco se pidió, o
+// sensorNoImporta para un ELSE sin condición. Según el caso llama a validacionIf() con las
+// lecturas (o sus negaciones) ya capturadas en loop().
 //******************************************************************************************************************
 
 void condicionesIF(){
@@ -699,8 +906,12 @@ void condicionesIF(){
 }
 
 //******************************************************************************************************************
-// Procedimiento de ejecución de la lógica del flujo de las bifurcaciones IF
-// 
+// Ejecuta la lógica de flujo de una instrucción IF, ELSE o IFFIN.
+//
+// Al IFINICIA incrementa anidamientoIF y evalúa la condición. En ELSE, si la rama
+// anterior ya se ejecutó, activa ignorarHastaIFFIN para saltar el resto; si no, evalúa la
+// condición del ELSE. En IFFIN limpia la marca de la rama y baja el anidamiento. Se apoya
+// en las banderas globales que luego consume LEE_MEMORIA.
 //******************************************************************************************************************
 
 void bifurcacionIF(){
@@ -734,10 +945,14 @@ void bifurcacionIF(){
 
 
 //******************************************************************************************************************
-// Procedimiento que realiza la comparación de las lectura de los sensores para determinar si se salta o ejecuta la rama While
+// Decide si se entra al cuerpo del WHILE o se salta hasta WHILEFIN.
 //
-// @param {bool} condicionSensorIzquierdo - Booleano que indica si se busca que la lectura del sensor sea alta o baja
-// @param {bool} condicionSensorDerecho - Booleano que indica si se busca que la lectura del sensor sea alta o baja
+// Si la condición se cumple, guarda en indicesWhile[anidamientoWhile] el puntero a la
+// instrucción del WHILE y sube el anidamiento para poder repetir el cuerpo. Si no, activa
+// ignorarHastaWHILEFIN y guarda el nivel actual para saltar solo este ciclo.
+//
+// @param condicionSensorIzquierdo true si el tracker izquierdo cumple la condición pedida.
+// @param condicionSensorDerecho true si el tracker derecho cumple la condición pedida.
 //******************************************************************************************************************
 
 
@@ -752,10 +967,13 @@ void validacionWhile(bool condicionSensorIzquierdo, bool condicionSensorDerecho)
 };
 
 //******************************************************************************************************************
-// Procedimiento que realiza la comparación de las lectura de los sensores para determinar si se salta o ejecuta la rama WhileNot
+// Igual que validacionWhile pero para un WHILE NOT: repite mientras NO se cumpla la condición.
 //
-// @param {bool} condicionSensorIzquierdo - Booleano que indica si se busca que la lectura del sensor sea alta o baja
-// @param {bool} condicionSensorDerecho - Booleano que indica si se busca que la lectura del sensor sea alta o baja
+// Guarda el índice de retorno y sube el anidamiento cuando la condición es falsa; en caso
+// contrario activa ignorarHastaWHILEFIN y el nivel de salto.
+//
+// @param condicionSensorIzquierdo true si el tracker izquierdo cumple la condición pedida.
+// @param condicionSensorDerecho true si el tracker derecho cumple la condición pedida.
 //******************************************************************************************************************
 
 void validacionNotWhile(bool condicionSensorIzquierdo, bool condicionSensorDerecho){
@@ -769,8 +987,12 @@ void validacionNotWhile(bool condicionSensorIzquierdo, bool condicionSensorDerec
 };
 
 //******************************************************************************************************************
-// Procedimiento de ejecución de la lógica de las banderas de flujo de bifurcaciones While y WhileNot
-// 
+// Ejecuta la lógica de flujo de WHILE y WHILE NOT.
+//
+// En WHILEFIN baja el anidamiento y devuelve inst_actual al índice guardado al entrar al
+// ciclo, de modo que LEE_MEMORIA vuelva a evaluar la condición. En el inicio, decodifica
+// valor_instruccion entre "mientras" y "mientras no" y las combinaciones de trackers, y
+// llama a validacionWhile() o validacionNotWhile().
 //******************************************************************************************************************
 
 void bifurcacionWHILE(){
@@ -830,8 +1052,10 @@ void bifurcacionWHILE(){
 
 
 //******************************************************************************************************************
-// Procedimiento que mueve la herramienta la velocidad y tiempo indicados por el tipo de acción de la herramienta
-// 
+// Mueve el servo 360 del set de herramientas durante el tiempo de acción configurado.
+//
+// Usa las globales velocidad y tiempoDeAccion, que fija accionarHerramientaSet(). Tras el
+// movimiento devuelve el servo a velocidadNeutra y espera 100 ms para que se detenga.
 //******************************************************************************************************************
 
 void accionarMotorHerramientaSet(){
@@ -842,8 +1066,12 @@ void accionarMotorHerramientaSet(){
 };
 
 //******************************************************************************************************************
-// Procedimiento que asigna la velocidad y tiempo de ejecución de la herramienta según el valor del comando
-// 
+// Acciona la garra o la grúa del set de herramientas según valor_instruccion.
+//
+// Para cada acción (abrir/cerrar garra, subir/bajar grúa) elige velocidad y tiempo y llama
+// a accionarMotorHerramientaSet(). Antes comprueba posicionHerramienta: si la herramienta
+// ya está en la posición pedida no la vuelve a mover. Tras moverse actualiza esa global,
+// que arranca en 0 porque la posición inicial es desconocida.
 //******************************************************************************************************************
 
 void accionarHerramientaSet(){
@@ -899,14 +1127,18 @@ void accionarHerramientaSet(){
 //FUNCIONES DE INTERPRETACION DE MENSAJES
 
 //***************************************************************************************
-//Función que interpreta el mensaje recibido de la app de programación
+// Traduce el programa que manda la app a la lista de instrucciones del robot.
 //
-//Revisa el mensaje que se recibió por Bluetooth BLE y revisa de 5 en 5 
-//los caracteres. Los guarda en un array global luego de interpretar que 
-//instrucción es y que valor tienen
+// El mensaje se lee en bloques de 5 caracteres. Hay bloques de control de 5 letras (ATINI
+// inicio, ATFIN fin del programa, PARAR, y marcas sin valor como CIFIN, OBINI/OBFIN,
+// HEINI/HEFIN, IFFIN, WHFIN) y bloques de 2 letras + 3 dígitos de valor (AV avanzar y RE
+// retroceder en cm, GD/GI girar en grados, CI ciclo con repeticiones, IF/EL/WH condiciones
+// de los trackers, HE acción de garra/grúa). Cada instrucción se guarda en
+// lista_instrucciones como [constante inst_..., valor]; ATFIN fija inst_final y al terminar
+// inst_actual vuelve a 0 para que LEE_MEMORIA empiece desde el principio.
+// Ejemplo: ATINIAV020GD030CI003RE010GI090CIFINATFIN.
 //
-//@param mensaje Cadena de 512 caracteres máximo recibidos
-// 
+// @param mensaje Mensaje completo, de hasta 500 caracteres (onWrite descarta los más largos).
 //***************************************************************************************
 void Interpreta_mensajeBLE (string mensaje) {
 
@@ -1029,46 +1261,48 @@ void Interpreta_mensajeBLE (string mensaje) {
 }
 
 //***************************************************************************************
-//Función que lee la conexión Bluetooth BLE
+// Procesa el estado pendiente del BLE y, si corresponde, interpreta un programa nuevo.
 //
-//Determina si el robot está conectado a alguna App, y en caso de estarlo verifica
-//si llegó un mensaje nuevo. En tal caso, llama a la interpretación del nuevo mensaje.
-//También determina si se trata de una instrucción para la que se debería parpadear el
-//led en azul.
-//
-//@param central Variable que indica si hay un central conectado con este dispositivo
+// Actualiza flagBluetooth con deviceConnected. Dentro de la sección crítica de bleMux
+// recoge bleStopPending y nuevoMensajeBLE, copia el buffer a una variable local y limpia
+// las banderas. Un STOP pendiente tiene prioridad y llama a requestMotionStop(). Si no hay
+// conexión o mensaje, retorna. Descarta mensajes cuya longitud no sea múltiplo de 5 y no
+// reemplaza programas durante una maniobra, con configuración inválida o con un fallo
+// activo (calibrationIdle, configReady y motion.fault). Si interpreta el programa, activa
+// el pulso recibeProgra para que el LED parpadee en azul.
 //***************************************************************************************
-void leerBluetooth(BLEDevice central) {
-  if (central) {
-
-      if (central.connected()) {//era un while
-        flagBluetooth = 1;
-        if (caracteristico.written()) {
-          mensajeBLE = string( caracteristico.value().c_str() );
-          Serial.println(mensajeBLE.c_str()); 
-          caracteristico.writeValue("");
-          Interpreta_mensajeBLE(mensajeBLE);
-          if (!flagParar) { // si no se trata de un comando de detener, se parpadea el LED RGB
-            recibeProgra = 1;
-            recibePrograTiempo0 = millis();
-          }
-        }
-      } 
-    } else {
-        flagBluetooth = 0;
-    }
+void leerBluetooth() {
+  flagBluetooth = deviceConnected;
+  char incoming[501];
+  bool pending, stopRequested;
+  portENTER_CRITICAL(&bleMux);
+  stopRequested = bleStopPending;
+  bleStopPending = false;
+  pending = nuevoMensajeBLE;
+  if (pending) memcpy(incoming, mensajeBLEBuffer, sizeof(incoming));
+  nuevoMensajeBLE = false;
+  portEXIT_CRITICAL(&bleMux);
+  if (stopRequested) { requestMotionStop(); return; }
+  if (!deviceConnected || !pending) return;
+  mensajeBLE = incoming;
+  if (mensajeBLE.size() % 5 != 0) return;
+  // No reemplazar un programa ni su geometría durante una maniobra.
+  if (!calibrationIdle() || !configReady || motion.fault != atta::Fault::None) return;
+  Interpreta_mensajeBLE(mensajeBLE);
+  if (paro_emergencia) { requestMotionStop(); return; }
+  recibeProgra = 1;
+  recibePrograTiempo0 = millis();
 }
 
-
-
 //******************************************************************************************************************
-// Function that controls the servo based on the variable `set`. If `set` is 1, the tool is activated; otherwise, it is deactivated.
+// Activa o desactiva el lápiz moviendo el servo a activateAngle o deactivateAngle.
 //
-// This function adjusts the servo angle to activate or deactivate the tool based on the `set` value.
+// El parámetro tapa a la global int set, que no se usa aquí. Espera 500 ms después de
+// escribir el ángulo para que la siguiente instrucción no empiece con el servo en marcha.
 //
-// @param set Value that determines whether the tool is activated (1) or deactivated (0).
+// @param set true para bajar/activar la herramienta; false para subirla/desactivarla.
 //
-// @return true Returns true upon successful action.
+// @return Siempre true, porque la escritura al servo no informa errores.
 //******************************************************************************************************************
 bool controlServo(bool set) {
   if (set) {
@@ -1082,421 +1316,20 @@ bool controlServo(bool set) {
 }
 
 //******************************************************************************************************************
-// Function that controls the speed of the wheels using a PID controller based on the reference and actual speeds.
+// Elige el color o parpadeo del LED RGB externo e interno según el estado del robot.
 //
-// This function calculates a PWM output for the motors by applying a PID control loop to match the actual speed to a setpoint.
+// Se llama al final de cada loop(). El orden de las comprobaciones es la prioridad:
+// batería baja (rojo parpadeante), obstáculo o paro de emergencia (rojo fijo), Bluetooth
+// desconectado (verde/azul intercalados), recepción de programa (azul parpadeante),
+// ejecución (verde fijo) y Bluetooth conectado (azul fijo). Para los parpadeos reutiliza
+// tiempoDeEncendidoDeLed como referencia de fase y lo reinicia al completar cada ciclo.
 //
-// @param refSpeed The target speed for the motor.
-// @param actualSpeed The current speed of the motor.
-// @param sumErrorSpeed Accumulated integral error for the speed PID.
-// @param prevErrorSpeed Previous speed error for the derivative calculation.
-//
-// @return The computed PWM signal as an integer to control the motor speed.
-//******************************************************************************************************************
-int controlWheelSpeed(float refSpeed, float actualSpeed, float& sumErrorSpeed, float& prevErrorSpeed) {
-  
-  // Calculate the error between the reference speed and the actual speed
-  float errorSpeed = refSpeed - actualSpeed;
-
-  // Update the integral error by accumulating the current error over time
-  // Multiply by 0.01 to scale the contribution of the error (based on sampling time)
-  sumErrorSpeed += errorSpeed * 0.01;
-
-  // Constrain the integral error to avoid windup
-  sumErrorSpeed = constrain(sumErrorSpeed, minIntegralErrorSpeed , maxIntegralErrorSpeed);
-
-  // Calculate the derivative of the error (difference between current and previous error)
-  float diffErrorSpeed = (errorSpeed - prevErrorSpeed);
-
-  // PID control equation to calculate the control output
-  float pidOutput = (kpSpeed * errorSpeed) + (kiSpeed * sumErrorSpeed) + (kdSpeed * diffErrorSpeed);
-
-  // Constrain the PID output to avoid saturation and ensure it stays within motor PWM limits
-  pidOutput = constrain((int)pidOutput, lowerDutyCycleLimitSpeed, upperDutyCycleLimitSpeed);
-
-  // Update the previous error for the next iteration of the control loop
-  prevErrorSpeed = errorSpeed;
-  
-  // Return the calculated PWM value as an integer
-  return (int)pidOutput;
-}
-
-//******************************************************************************************************************
-// Function that moves the robot a desired linear distance using PID control to maintain speed and direction.
-//
-// This function continuously calculates the speed of each wheel, adjusts the motor PWM values, and checks if the robot has reached the desired distance.
-//
-// @param desiredDistance The target distance in mm that the robot should travel.
-//
-// @return true if the desired distance is reached; false otherwise.
-//******************************************************************************************************************
-bool advanceDesiredDistance(int desiredDistance) {
-
-  // Flag to indicate if the robot should move in reverse
-  bool reverse = false;
-
-  // Create a time condition using millis to apply a sampling time without delays
-  unsigned long currentTime = millis(); // Get the current time in milliseconds
-  unsigned long deltaTime = currentTime - previousTime; // Time elapsed since the last sample
-
-  // Check if the elapsed time has reached the sampling time (10 ms)
-  if (deltaTime >= samplingTime) {
-    previousTime = currentTime; // Reset previous time for the next sample
-
-    // Convert deltaTime to seconds
-    float deltaTimeSec = deltaTime / 1000.0;
-
-
-    // Calculate the number of encoder ticks since the last sample
-    rightTicksForSpeed = rightEncoderPos - rightPrevTicks;
-    leftTicksForSpeed = leftEncoderPos - leftPrevTicks;
-
-    
-    // Calculate the current speeds of both wheels based on the encoder ticks
-    float actualSpeedLeft = calculateSpeed(leftTicksForSpeed, deltaTimeSec, 1); // Speed of the left wheel in mm/s
-    float actualSpeedRight = calculateSpeed(rightTicksForSpeed, deltaTimeSec, 0); // Speed of the right wheel in mm/s
-
-    // Update the previous encoder tick counts
-    rightPrevTicks = rightEncoderPos;
-    leftPrevTicks = leftEncoderPos;
-
-
-    // Set desired speeds
-
-    if (desiredDistance < 0) { // If the desired distance is negative, move in reverse
-        reverse = true;
-    }
-
-    float speedSetPoint = targetSpeed; // Define the target speed for both wheels (in mm/s)
-
-    // PID control loop for speed to calculate PWM values for both wheel
-    int pwmRightWheel = controlWheelSpeed(speedSetPoint, actualSpeedRight, sumErrorVelRight, prevErrorVelRight);
-    int pwmLeftWheel = controlWheelSpeed(speedSetPoint, actualSpeedLeft, sumErrorVelLeft, prevErrorVelLeft);
-
-
-
-    // Determine if the PWM values for the right and left wheels have changed
-    bool rightChanged = (prevPWMRight != pwmRightWheel); // Check if right wheel needs to be updated
-    bool leftChanged = (prevPWMLeft != pwmLeftWheel); // Check if left wheel needs to be updated
-    bool reverseChanged = (prevReverse != reverse); // Check if both wheels need to be updated
-
-    // Update the H-Bridge configuration if there are changes in the PWM values
-    if (rightChanged) {
-      configureHBridge(reverse, 1, pwmRightWheel, pwmLeftWheel);// Update the right motor control
-    }
-    if (leftChanged) {
-      configureHBridge(reverse, 2, pwmRightWheel, pwmLeftWheel);// Update the left motor control
-    }
-    if ((rightChanged && leftChanged) || reverseChanged) {
-      configureHBridge(reverse, 3, pwmRightWheel, pwmLeftWheel); // Update both motors if both values changed or if direction changed
-    }
-
-    // Store the current PWM values for comparison in the next iteration
-    prevPWMRight = pwmRightWheel;
-    prevPWMLeft = pwmLeftWheel;
-    prevReverse = reverse;
-
-    
-    // Calculate the distance traveled by the robot using encoder data
-    float distanceTraveled = calculateLinearDistanceTraveled(leftEncoderPos, rightEncoderPos);
-
-    // Check if the robot has traveled the desired distance
-    if (abs(distanceTraveled) >= correctionFactorLines * abs(desiredDistance)) {
-
-      // If the desired distance is reached, stop the robot
-      configureHBridge(reverse, 3, 0, 0);
-
-      // Reset PID control values
-      sumErrorVelRight = 0;
-      prevErrorVelRight = 0;
-      sumErrorVelLeft = 0;
-      prevErrorVelLeft = 0;
-
-      // Reset encoder tick counts
-      rightPrevTicks = 0;
-      leftPrevTicks = 0;
-
-      rightEncoderPos = 0;
-      leftEncoderPos = 0;
-
-      return true; // Return true to indicate that the desired distance has been reached
-    }
-
-  }
-  return false; // Return false if the robot has not yet reached the desired distance
-}
-
-//******************************************************************************************************************
-// Function that turns the robot to a specified angle using PID control for each wheel's speed.
-//
-// This function calculates the speed of each wheel, updates the H-Bridge configuration to turn, and checks if the robot has turned to the desired angle.
-//
-// @param desiredAngle The target angle in degrees for the robot to turn.
-//
-// @return true if the desired angle is reached; false otherwise.
-//******************************************************************************************************************
-bool turnDesiredAngle (int desiredAngle) {
-
-  // Flag to indicate if the robot should turn in counterClockwise
-  bool counterClockwise = false;
-
-  if (desiredAngle < 0) { // If the desired angle is negative, move in counterClockwise
-    counterClockwise = true;
-  }
-
-  // Create a time condition using millis to apply a sampling time without delays
-  unsigned long currentTime = millis(); // Get the current time in milliseconds
-  unsigned long deltaTime = currentTime - previousTime; // Time elapsed since the last sample
-
-
-  // Calculate the linear distance required for the given angle
-  float desiredDistance = calculateLinearDistanceDesired(desiredAngle);
-
-  // Check if the elapsed time has reached the sampling time (10 ms)
-  if (deltaTime >= samplingTime) {
-    previousTime = currentTime; // Reset previous time for the next sample
-
-    // Convert deltaTime to seconds
-    float deltaTimeSec = deltaTime / 1000.0;
-
-
-    // Calculate the number of encoder ticks since the last sample
-    rightTicksForSpeed = rightEncoderPos - rightPrevTicks;
-    leftTicksForSpeed = leftEncoderPos - leftPrevTicks;
-
-    
-    // Calculate the current speeds of both wheels based on the encoder ticks
-    float actualSpeedLeft = calculateSpeed(leftTicksForSpeed, deltaTimeSec, 1); // Speed of the left wheel in mm/s
-    float actualSpeedRight = calculateSpeed(rightTicksForSpeed, deltaTimeSec, 0); // Speed of the right wheel in mm/s
-
-    // Update the previous encoder tick counts
-    rightPrevTicks = rightEncoderPos;
-    leftPrevTicks = leftEncoderPos;
-
-
-    // Set desired speeds
-
-    float speedSetPoint = targetSpeed; // Define the target speed for both wheels (in mm/s)
-
-    // PID control loop for speed to calculate PWM values for both wheel
-    int pwmRightWheel = controlWheelSpeed(speedSetPoint, actualSpeedRight, sumErrorVelRight, prevErrorVelRight);
-    int pwmLeftWheel = controlWheelSpeed(speedSetPoint, actualSpeedLeft, sumErrorVelLeft, prevErrorVelLeft);
-
-    // Determine if the PWM values for the right and left wheels have changed
-    bool rightChanged = (prevPWMRight != pwmRightWheel); // Check if right wheel needs to be updated
-    bool leftChanged = (prevPWMLeft != pwmLeftWheel); // Check if left wheel needs to be updated
-
-    // Update the H-Bridge configuration if there are changes in the PWM values
-    if (rightChanged) {
-      configureHBridgeTurn(counterClockwise, 1, pwmRightWheel, pwmLeftWheel);// Update the right motor control
-    }
-    if (leftChanged) {
-      configureHBridgeTurn(counterClockwise, 2, pwmRightWheel, pwmLeftWheel);// Update the left motor control
-    }
-    if (rightChanged && leftChanged) {
-      configureHBridgeTurn(counterClockwise, 3, pwmRightWheel, pwmLeftWheel); // Update both motors if both values changed
-    }
-
-    // Store the current PWM values for comparison in the next iteration
-    prevPWMRight = pwmRightWheel;
-    prevPWMLeft = pwmLeftWheel;
-
-    // Calculate the distance traveled by the robot using encoder data
-    float distanceTraveled = calculateLinearDistanceTraveled(leftEncoderPos, rightEncoderPos);
-
-    // Check if the robot has traveled the desired distance
-    if (abs(distanceTraveled) >= abs(desiredDistance)) {
-
-      // If the desired distance is reached, stop the robot
-      configureHBridgeTurn(counterClockwise, 3, 0, 0);
-
-      // Reset PID control values
-      sumErrorVelRight = 0;
-      prevErrorVelRight = 0;
-      sumErrorVelLeft = 0;
-      prevErrorVelLeft = 0;
-
-      // Reset encoder tick counts
-      rightPrevTicks = 0;
-      leftPrevTicks = 0;
-
-      rightEncoderPos = 0;
-      leftEncoderPos = 0;
-
-      return true; // Return true to indicate that the desired distance has been reached
-    }
-
-  }
-  return false; // Return false if the robot has not yet reached the desired distance
-}
-
-//******************************************************************************************************************
-// Function that calculates the speed of a wheel based on encoder pulses and elapsed time.
-//
-// The function converts the number of pulses into a linear distance, then calculates the speed in mm/s based on the time interval.
-//
-// @param pulses The number of encoder pulses detected.
-// @param deltaTime The time interval in seconds.
-// @param motorID Whether the calculation is for the right (0) or left (1) motor.
-//
-// @return The calculated speed in mm/s.
-//******************************************************************************************************************
-float calculateSpeed(long pulses, float deltaTime, int motorID) {
-    // Wheel circumference in mm
-    float wheelCircumference = 2 * 3.1416 * wheelRadius;
-
-    // Full revolutions based on the number of pulses
-    float revolutions = 0;
-    if (motorID == 0) { // for right motor
-      revolutions = pulses / rightPulsesPerRev;
-    } else { // for left motor (id = 1)
-      revolutions = pulses / leftPulsesPerRev;
-    }
-    
-
-    // Distance traveled in mm
-    float distance = revolutions * wheelCircumference;
-
-    //Speed mm/s
-
-    float vel = distance / deltaTime;
-    
-    return vel;
-}
-
-//******************************************************************************************************************
-// Function that configures the H-Bridge to control forward or reverse motion of each wheel based on PWM values and direction.
-//
-// This function sets the PWM for each motor pin depending on the motion direction and update mode.
-//
-// @param reverse Boolean indicating whether to move in reverse (true) or forward (false).
-// @param update Mode to update specific wheels: 1 for right, 2 for left, 3 for both.
-// @param pwmRightWheel PWM value for the right wheel.
-// @param pwmLeftWheel PWM value for the left wheel.
-//******************************************************************************************************************
-void configureHBridge(bool reverse, int update, int pwmRightWheel, int pwmLeftWheel){
-
-    // Check if right wheel should be updated (update == 1 or update == 3)
-    if (update == 1 || update == 3) {
-        if (!reverse) { // Set right wheel for forward direction
-            analogWrite(rightMotorM1, pwmRightWheel); // Apply PWM to right motor for forward motion
-            analogWrite(rightMotorM2, 0);             // Set right motor reverse pin to 0 (off)
-        } else { // Set right wheel for reverse direction
-            analogWrite(rightMotorM1, 0);             // Set right motor forward pin to 0 (off)
-            analogWrite(rightMotorM2, pwmRightWheel); // Apply PWM to right motor for reverse motion
-        }
-    }
-
-    // Check if left wheel should be updated (update == 2 or update == 3)
-    if (update == 2 || update == 3) {
-        if (!reverse) { // Set left wheel for forward direction
-            analogWrite(leftMotorM1, pwmLeftWheel); // Apply PWM to left motor for forward motion
-            analogWrite(leftMotorM2, 0);            // Set left motor reverse pin to 0 (off)
-        } else { // Set left wheel for reverse direction
-            analogWrite(leftMotorM1, 0);            // Set left motor forward pin to 0 (off)
-            analogWrite(leftMotorM2, pwmLeftWheel); // Apply PWM to left motor for reverse motion
-        }
-    }
-}
-
-
-//******************************************************************************************************************
-// Function that configures the H-Bridge for turning based on the specified direction and update mode.
-//
-// This function sets PWM values for each wheel's motor pins to achieve a clockwise or counterclockwise turn.
-//
-// @param counterClockwise Boolean indicating if the turn is counterclockwise (true) or clockwise (false).
-// @param update Mode to update specific wheels: 1 for right, 2 for left, 3 for both.
-// @param pwmRightWheel PWM value for the right wheel.
-// @param pwmLeftWheel PWM value for the left wheel.
-//******************************************************************************************************************
-void configureHBridgeTurn(bool counterClockwise, int update, int pwmRightWheel, int pwmLeftWheel){
-
-    // Check if right wheel should be updated (update == 1 or update == 3)
-    if (update == 1 || update == 3) {
-        if (!counterClockwise) { // Set right wheel for clockwise turn
-            analogWrite(rightMotorM1, 0);  // Right motor pin M1 set to 0
-            analogWrite(rightMotorM2, pwmRightWheel); // Right motor pin M2 set to PWM value
-        } else { // Set right wheel for counterclockwise turn
-            analogWrite(rightMotorM1, pwmRightWheel); // Right motor pin M1 set to PWM value
-            analogWrite(rightMotorM2, 0);  // Right motor pin M2 set to 0
-        }
-    }
-
-    // Check if left wheel should be updated (update == 2 or update == 3)
-    if (update == 2 || update == 3) {
-        if (!counterClockwise) { // Set left wheel for clockwise turn
-            analogWrite(leftMotorM1, pwmLeftWheel); // Left motor pin M1 set to PWM value
-            analogWrite(leftMotorM2, 0);  // Left motor pin M2 set to 0
-        } else { // Set left wheel for counterclockwise turn
-            analogWrite(leftMotorM1, 0);  // Left motor pin M1 set to 0
-            analogWrite(leftMotorM2, pwmLeftWheel); // Left motor pin M2 set to PWM value
-        }
-    }
-}
-
-//******************************************************************************************************************
-// Function that calculates the average linear distance traveled by the robot based on encoder pulses.
-//
-// This function converts the pulse count from both wheels to a linear distance, then averages both distances.
-//
-// @param leftPulseCount Pulse count for the left wheel encoder.
-// @param rightPulseCount Pulse count for the right wheel encoder.
-//
-// @return The average distance traveled in mm.
-//******************************************************************************************************************
-float calculateLinearDistanceTraveled(long leftPulseCount, long rightPulseCount) {
-
-  // Wheel circumference in mm
-  float wheelCircumference = 2 * PI * wheelRadius;
-
-  // Full revolutions based on the number of pulses
-  float rightRevolutions = (float) rightPulseCount / rightPulsesPerRev;
-  float leftRevolutions = (float) leftPulseCount / leftPulsesPerRev;
-
-  // Distance traveled in mm
-  float rightDistance = rightRevolutions * wheelCircumference;
-  float leftDistance = leftRevolutions * wheelCircumference;
-
-  // Calculate the average linear distance
-  float linearDistance = (rightDistance + leftDistance) / 2.0;
-
-  return linearDistance;
-}
-
-
-//******************************************************************************************************************
-// Function that calculates the linear distance required for the robot to achieve a desired turning angle.
-//
-// This function computes the distance based on the angle input, assuming a circular path defined by the distance 
-// between the wheels.
-//
-// @param desiredAngle The angle in degrees that the robot needs to turn.
-//
-// @return The calculated linear distance in mm required to achieve the desired turn.
-//******************************************************************************************************************
-float calculateLinearDistanceDesired(int desiredAngle) {
-
-  // Calculate the linear distance based on the desired angle, assuming a circular path
-  // Formula: (desiredAngle / 360) * π * distanceWheelToWheel
-  float linearDesiredDistance = (desiredAngle / 360.0) * PI * distanceWheelToWheel * correctionFactorLines;
-
-  // Return the calculated linear distance
-  return linearDesiredDistance;
-}
-
-//******************************************************************************************************************
-//Función que basado en ciertas flags determina el estado del robot y lo muestra en un LED RGB.
-//
-//Utiliza flags relacionadas a si la bateria está baja, si se detecta un obstáculo, si el bluetooth no se ha conectado al dispositivo,
-//si el robot está recibiendo un código, si el robot está ejecutando un código, y si el bluetooth está conectado con un dispositivo.
-//El orden en el que se mencionaron los estados es el orden de prioridad.
-//
-//@param flagBateriaBaja Variable asociada a la señal de batería baja del powerboost, es LOW cuando batería baja.
-//@param flagBluetooth Variable que dicta si hay conexión Bluetooth del robot con la App.
-//@param flagEjecucion Variable que informa si se está ejecutando una programación.
-//@param flagObstaculo Variable asociada a los sensores infrarrojos, informa cuando hay un obstáculo frente al robot
-//@param recibeProgra Variable que es un pulso que se recibe cuando se está recibiendo/recibió una progra desde la App
+// @param flagBateriaBaja Lectura de la señal del powerboost; LOW indica batería baja.
+// @param flagBluetooth true si hay conexión Bluetooth con la App.
+// @param flagEjecucion true si se está ejecutando una programación.
+// @param flagObstaculo true si los sensores infrarrojos detectaron un obstáculo.
+// @param recibeProgra Pulso activo mientras se recibe/recién se recibió un programa.
+// @param flagParar true si se pidió un paro de emergencia.
 //******************************************************************************************************************
 void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEjecucion, bool flagObstaculo, bool recibeProgra, bool flagParar) {
   unsigned long tiempoActual = millis();
@@ -1508,6 +1341,8 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
       analogWrite(pinLedRgbRojo, 255);
       analogWrite(pinLedRgbVerde, 0);
       analogWrite(pinLedRgbAzul, 0);
+      // Internal WS2812B mirrors external: red on
+      ledInterno(255, 0, 0);
 
     } else if (tiempoActual > tiempoDeEncendidoDeLed + 2*duracionParpadeoLed) {
       //Se reinicia el "ciclo" de parpadeo
@@ -1517,12 +1352,16 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
       analogWrite(pinLedRgbRojo, 0);
       analogWrite(pinLedRgbVerde, 0);
       analogWrite(pinLedRgbAzul, 0);
+      // Internal WS2812B mirrors external: off
+      ledInterno(0, 0, 0);
     }
    
   } else if (flagObstaculo == 1 || flagParar == 1) { //Obstaculo o paro de emergencia -> rojo fijo
     analogWrite(pinLedRgbRojo, 255);
     analogWrite(pinLedRgbVerde, 0);
     analogWrite(pinLedRgbAzul, 0);
+    // Internal WS2812B mirrors external: red fixed
+    ledInterno(255, 0, 0);
 
   } else if (flagBluetooth == 0) { //Bluetooth no conectado -> azul y verde intercalados
     // setear el tiempo de Encendido de LED en el momento de activar la flag
@@ -1530,6 +1369,8 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
       analogWrite(pinLedRgbRojo, 0);
       analogWrite(pinLedRgbVerde, 255);
       analogWrite(pinLedRgbAzul, 0);
+      // Internal WS2812B mirrors external: green
+      ledInterno(0, 255, 0);
 
     } else if (tiempoActual > tiempoDeEncendidoDeLed + 2*duracionParpadeoLed) {
       //Se reinicia el "ciclo" de parpadeo
@@ -1539,6 +1380,8 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
       analogWrite(pinLedRgbRojo, 0);
       analogWrite(pinLedRgbVerde, 0);
       analogWrite(pinLedRgbAzul, 255);
+      // Internal WS2812B mirrors external: blue
+      ledInterno(0, 0, 255);
     } 
 
   } else if (recibeProgra == 1) { //Recibe progra de la App -> azul parpadeante
@@ -1547,6 +1390,8 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
       analogWrite(pinLedRgbRojo, 0);
       analogWrite(pinLedRgbVerde, 0);
       analogWrite(pinLedRgbAzul, 255);
+      // Internal WS2812B mirrors external: blue
+      ledInterno(0, 0, 255);
 
     } else if (tiempoActual > tiempoDeEncendidoDeLed + 2*duracionParpadeoLed) {
       //Se reinicia el "ciclo" de parpadeo
@@ -1556,18 +1401,22 @@ void ConfigurarEstadoLedRgb(int flagBateriaBaja, bool flagBluetooth, bool flagEj
       analogWrite(pinLedRgbRojo, 0);
       analogWrite(pinLedRgbVerde, 0);
       analogWrite(pinLedRgbAzul, 0);
+      // Internal WS2812B mirrors external: off
+      ledInterno(0, 0, 0);
     }
 
   } else if (flagEjecucion == 1) { //Robot ejecutando progra -> verde fijo
     analogWrite(pinLedRgbRojo, 0);
     analogWrite(pinLedRgbVerde, 255);
     analogWrite(pinLedRgbAzul, 0);
+    // Internal WS2812B mirrors external: green fixed
+    ledInterno(0, 255, 0);
     
   } else if (flagBluetooth == 1) { //Bluetooth conectado -> azul fijo
     analogWrite(pinLedRgbRojo, 0);
     analogWrite(pinLedRgbVerde, 0);
     analogWrite(pinLedRgbAzul, 255);
+    // Internal WS2812B mirrors external: blue fixed
+    ledInterno(0, 0, 255);
   }
 }
-
-

@@ -22,3 +22,12 @@ migrate_working_dir/
 #.vscode/
 /App/AttabotAndroidIOS/android/app/.cxx/Debug/3s4f326q/armeabi-v7a/CMakeFiles/3.22.1-g37088a8-dirty/CompilerIdC
 /App/AttabotAndroidIOS/android/app/.cxx/Debug
+
+.vscode/tasks.json
+Robot/Binarios/
+Robot/CodigoESP32/build/
+Robot/Respaldos_SHOW/
+
+# Obsidian (vault en Robot/): se versiona la configuración del grafo, no el estado de la ventana
+Robot/.obsidian/workspace*.json
+Robot/.obsidian/cache
