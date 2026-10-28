@@ -48,6 +48,13 @@ fi
 echo "Publicando $TAG en $REPO (versionCode $CODIGO, sha256 $SHA)"
 gh release create "$TAG" -R "$REPO" "${ORIGEN[@]}" "${TIPO[@]}" \
   --title "Atta-Bot app $VERSION" \
-  --notes "APK $VERSION (versionCode $CODIGO). Firma SHA-256: \`$FIRMA\`. APK SHA-256: \`$SHA\`." \
+  --notes "APK de la app Atta-Bot $VERSION (versionCode $CODIGO) para las tabletas en modo kiosko.
+
+Repositorio oficial: https://github.com/$REPO
+
+- Firma SHA-256: \`$FIRMA\`
+- APK SHA-256: \`$SHA\`
+
+Las tabletas se actualizan desde el menú de administración, que lee latest.json de este release." \
   "$DESTINO/$ARCHIVO" "$DESTINO/latest.json"
 echo "latest.json: https://github.com/$REPO/releases/download/$TAG/latest.json"
