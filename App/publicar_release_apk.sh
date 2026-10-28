@@ -8,7 +8,7 @@
 # su dirección exacta en el menú (…/releases/download/app-vX.Y.Z/latest.json).
 set -euo pipefail
 
-REPO="${ATTA_REPO:-eduardo00-fv/Atta-Bot-STEM}"
+REPO="${ATTA_REPO:-jcbrenes/Atta-Bot-STEM}"  # repo oficial del proyecto
 # Las tabletas solo aceptan actualizaciones con esta firma (clave debug de la laptop de compilación).
 FIRMA_ESPERADA="34f0efd4fb561de69dcaad826487fa6f1c06db4bb3eda7eb4ac1520b7da5f84b"
 PAQUETE="com.example.proyecto_tec"

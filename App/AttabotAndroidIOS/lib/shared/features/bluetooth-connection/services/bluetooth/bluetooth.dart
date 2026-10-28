@@ -10,14 +10,21 @@ import 'package:proyecto_tec/shared/interfaces/bluetooth/bluetooth_service_inter
 
 //TODO: Add permissions for bluetooth in ios
 //https://pub.dev/packages/flutter_blue_plus#getting-started
+
 class FlutterBluePlusService implements BluetoothServiceInterface {
   static final FlutterBluePlusService _instance =
       FlutterBluePlusService._internal();
 
-  final ValueNotifier<BluetoothDevice?> _connectedDevice = ValueNotifier(null);
-  final ValueNotifier<BluetoothDevice?> _connectingDevice = ValueNotifier(null);
-  StreamSubscription<BluetoothConnectionState>? _connectionSubscription;
+  BluetoothDevice? _connectedDevice;
   BluetoothCharacteristic? writableCharacteristic;
+  StreamSubscription<BluetoothConnectionState>? _connectionSubscription;
+  final StreamController<bool> _connectionStatusController =
+      StreamController<bool>.broadcast();
+  int _connectionGeneration = 0;
+  // Avisan a la UI apenas cambia la conexión (incluye desconexiones del robot).
+  // El robot figura conectado recién cuando su característica está lista.
+  final ValueNotifier<BluetoothDevice?> _connectedNotifier = ValueNotifier(null);
+  final ValueNotifier<BluetoothDevice?> _connectingNotifier = ValueNotifier(null);
 
   factory FlutterBluePlusService() {
     return _instance;
@@ -30,19 +37,22 @@ class FlutterBluePlusService implements BluetoothServiceInterface {
       .map((event) => event.map((e) => e.device).toList());
 
   @override
-  bool get isConnected =>
-      _connectedDevice.value != null && writableCharacteristic != null;
+  Stream<bool> get connectionStatus$ => _connectionStatusController.stream;
 
   @override
-  BluetoothDevice? get connectedDevice => _connectedDevice.value;
+  bool get isConnected =>
+      _connectedDevice != null && writableCharacteristic != null;
+
+  @override
+  BluetoothDevice? get connectedDevice => _connectedDevice;
 
   @override
   ValueListenable<BluetoothDevice?> get connectedDeviceListenable =>
-      _connectedDevice;
+      _connectedNotifier;
 
   @override
   ValueListenable<BluetoothDevice?> get connectingDeviceListenable =>
-      _connectingDevice;
+      _connectingNotifier;
 
   @override
   Future<bool> initBluetooth() async {
@@ -79,41 +89,34 @@ class FlutterBluePlusService implements BluetoothServiceInterface {
   }
 
   @override
-  Future<void> connectToDevice(BluetoothDevice device) async {
-    _connectingDevice.value = device;
-    try {
-      // Cambiar de robot: soltar la conexión anterior y su característica
-      final previous = _connectedDevice.value;
-      if (previous != null && previous.remoteId != device.remoteId) {
-        await disconnectDevice(previous);
-      }
-      writableCharacteristic = null;
+  Future<bool> connectToDevice(BluetoothDevice device) async {
+    _connectingNotifier.value = device;
+    await _clearConnection(disconnectDevice: true);
+    final int connectionGeneration = ++_connectionGeneration;
 
-      // Connect to the device
+    try {
       await device.connect();
       print('Connected to device: ${device.platformName}');
+      _connectedDevice = device;
 
-      // Listen for connection state changes (una sola suscripción activa)
-      await _connectionSubscription?.cancel();
-      _connectionSubscription = device.connectionState.listen((state) {
+      _connectionSubscription = device.connectionState.listen((state) async {
         print('Connection state changed: $state');
         if (state == BluetoothConnectionState.disconnected &&
-            _connectedDevice.value?.remoteId == device.remoteId) {
-          _connectedDevice.value = null;
-          writableCharacteristic = null;
+            _connectionGeneration == connectionGeneration &&
+            _connectedDevice == device) {
+          await _clearConnection();
           print('Device disconnected unexpectedly');
         }
       });
 
-      // Discover services and characteristics
       List<BluetoothService> services = await device.discoverServices();
 
-      // Find a writable characteristic
       for (BluetoothService service in services) {
-        if(service.uuid.toString() == AppConfig.bluetoothServiceUUID){
+        if (service.uuid.toString() == AppConfig.bluetoothServiceUUID) {
           for (BluetoothCharacteristic characteristic
               in service.characteristics) {
-            if (characteristic.uuid.toString() == AppConfig.bluetoothCharacteristicUUID) {
+            if (characteristic.uuid.toString() ==
+                AppConfig.bluetoothCharacteristicUUID) {
               writableCharacteristic = characteristic;
               print('Found writable characteristic: ${characteristic.uuid}');
               break;
@@ -123,14 +126,23 @@ class FlutterBluePlusService implements BluetoothServiceInterface {
         if (writableCharacteristic != null) break;
       }
 
-      if (writableCharacteristic == null) {
+      if (_connectionGeneration != connectionGeneration ||
+          _connectedDevice != device ||
+          writableCharacteristic == null) {
         print('No writable characteristic found!');
+        await _clearConnection(disconnectDevice: true);
+        return false;
       }
-      _connectedDevice.value = device;
+      _connectedNotifier.value = device;
+      _connectionStatusController.add(true);
+      return true;
     } catch (e) {
       print('Error connecting to device: $e');
+      await _clearConnection(disconnectDevice: true);
+      return false;
     } finally {
-      _connectingDevice.value = null;
+      // Solo la conexión más reciente borra el "conectando…".
+      if (_connectingNotifier.value == device) _connectingNotifier.value = null;
     }
   }
 
@@ -147,6 +159,7 @@ class FlutterBluePlusService implements BluetoothServiceInterface {
       return true;
     } catch (e) {
       debugPrint('Error sending message: $e');
+      await _clearConnection(disconnectDevice: true);
       return false;
     }
   }
@@ -155,11 +168,30 @@ class FlutterBluePlusService implements BluetoothServiceInterface {
   Future<void> disconnectDevice(BluetoothDevice device) async {
     try {
       await device.disconnect();
-      _connectedDevice.value = null;
-      writableCharacteristic = null;
-        print('Disconnected from device: ${device.name}');
+      await _clearConnection();
+      print('Disconnected from device: ${device.name}');
     } catch (e) {
       print('Error disconnecting from device: $e');
+      await _clearConnection();
+    }
+  }
+
+  Future<void> _clearConnection({bool disconnectDevice = false}) async {
+    final BluetoothDevice? device = _connectedDevice;
+    _connectionGeneration++;
+    await _connectionSubscription?.cancel();
+    _connectionSubscription = null;
+    _connectedDevice = null;
+    writableCharacteristic = null;
+    _connectedNotifier.value = null;
+    _connectionStatusController.add(false);
+
+    if (disconnectDevice && device != null) {
+      try {
+        await device.disconnect();
+      } catch (_) {
+        // The native connection may already be gone.
+      }
     }
   }
 }

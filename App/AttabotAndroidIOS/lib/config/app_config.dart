@@ -12,5 +12,5 @@ class AppConfig {
   // Menú de administración: 5 toques sobre el título de inicio + PIN.
   static const String adminPin = '2026';
   static const String updateManifestUrl =
-      'https://github.com/eduardo00-fv/Atta-Bot-STEM/releases/latest/download/latest.json';
+      'https://github.com/jcbrenes/Atta-Bot-STEM/releases/latest/download/latest.json';
 }

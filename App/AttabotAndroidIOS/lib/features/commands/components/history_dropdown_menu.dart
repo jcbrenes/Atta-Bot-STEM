@@ -330,14 +330,20 @@ class _InstructionHistoryDropdownState
   Future<void> openFileExplorer() async {
     try {
       final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['dat', 'json'],
+        type: FileType.any,
         withData: true,
       );
 
       if (result == null) return;
 
       final selectedFile = result.files.single;
+
+      // Validar extensión manualmente (.dat o .json)
+      final extension = selectedFile.extension?.toLowerCase();
+      if (extension != 'dat' && extension != 'json') {
+        showSnackBar('Formato no compatible. Use archivos .dat o .json');
+        return;
+      }
 
       final fileBytes = selectedFile.bytes ??
           (selectedFile.path == null
@@ -414,7 +420,7 @@ class _InstructionHistoryDropdownState
       context: context,
       useRootNavigator: !isLandscape,
       builder: (context) => AlertDialog(
-            title: Text('Exportar a json', style: titleTextStyle),
+            title: Text('Exportar a dat', style: titleTextStyle),
             backgroundColor: neutralDarkBlueAD,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24.0),
