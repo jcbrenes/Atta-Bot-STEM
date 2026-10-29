@@ -240,7 +240,7 @@ class _ActionMenuState extends State<ActionMenu> {
                   }
                   showMessageSnackBar("Comandos enviados");
                 },
-                icon: IconType.cloud,
+                icon: IconType.bluetooth,
               ),
             ],
           ),

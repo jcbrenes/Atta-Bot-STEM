@@ -18,6 +18,7 @@ enum IconType {
   pencil,
   claw,
   cloud,
+  bluetooth, 
 }
 
 // Factory class to create buttons
@@ -144,6 +145,8 @@ class DefaultButtonFactory {
         return 'assets/button_icons/claw.png';
       case IconType.cloud:
         return 'assets/button_icons/cloud.png';
+      case IconType.bluetooth:
+        return 'assets/button_icons/bluetooth.png';
     }
   }
 }
