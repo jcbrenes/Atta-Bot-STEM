@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:proyecto_tec/features/admin/components/battery_indicator.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
 import 'package:proyecto_tec/pages/bot_control_page.dart';
 import 'package:proyecto_tec/pages/home_page.dart';
@@ -32,6 +33,7 @@ class AttaBotApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: const HomePage(),
+      builder: (context, child) => BatteryIndicator(child: child!),
       theme: ThemeData(
         textTheme: const TextTheme(
           bodyMedium: TextStyle(fontFamily: 'Poppins'),

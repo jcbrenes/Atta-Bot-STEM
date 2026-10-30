@@ -7,6 +7,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.BatteryManager
 import android.os.Handler
 import android.os.Looper
 import io.flutter.embedding.android.FlutterActivity
@@ -31,6 +32,25 @@ class MainActivity: FlutterActivity() {
         }
     }
 
+    // Batería de la tableta: en kiosko la barra de estado queda vacía, así que la app muestra el porcentaje.
+    private val batteryReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) = sendBattery(intent)
+    }
+
+    private fun sendBattery(intent: Intent?) {
+        val level = intent?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
+        val scale = intent?.getIntExtra(BatteryManager.EXTRA_SCALE, 100) ?: 100
+        val status = intent?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
+        if (level < 0 || scale <= 0) return
+        adminChannel?.invokeMethod("battery", mapOf(
+            "percent" to level * 100 / scale,
+            "charging" to (status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                status == BatteryManager.BATTERY_STATUS_FULL),
+            // Fuera del kiosko Android ya muestra la batería en la barra.
+            "kiosk" to kioskEnabled,
+        ))
+    }
+
     private fun dpm() = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
     private fun admin() = ComponentName(this, DeviceAdminReceiver::class.java)
     private fun lockTaskState() = (getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).lockTaskModeState
@@ -42,6 +62,7 @@ class MainActivity: FlutterActivity() {
         }
         if (enabled && lockTaskState() == ActivityManager.LOCK_TASK_MODE_NONE) startLockTask()
         if (!enabled && lockTaskState() != ActivityManager.LOCK_TASK_MODE_NONE) stopLockTask()
+        sendBattery(registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)))
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -57,6 +78,10 @@ class MainActivity: FlutterActivity() {
                             "deviceOwner" to dpm().isDeviceOwnerApp(packageName),
                             "kiosk" to (lockTaskState() != ActivityManager.LOCK_TASK_MODE_NONE),
                         ))
+                    }
+                    "battery" -> {
+                        sendBattery(registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)))
+                        result.success(null)
                     }
                     "setKiosk" -> {
                         setKiosk(call.argument<Boolean>("enabled") == true)
@@ -89,10 +114,13 @@ class MainActivity: FlutterActivity() {
             Context.RECEIVER_EXPORTED
         )
         if (kioskEnabled) setKiosk(true)
+        // Es un aviso persistente: al registrarlo llega de inmediato el estado actual.
+        registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
     }
 
     override fun onPause() {
         super.onPause()
         unregisterReceiver(exitReceiver)
+        unregisterReceiver(batteryReceiver)
     }
 }

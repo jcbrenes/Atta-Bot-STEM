@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -12,6 +13,14 @@ class AppInfo {
   final bool kiosk;
 
   AppInfo(this.versionName, this.versionCode, this.deviceOwner, this.kiosk);
+}
+
+class BatteryState {
+  final int percent;
+  final bool charging;
+  final bool kiosk;
+
+  BatteryState(this.percent, this.charging, this.kiosk);
 }
 
 // Contenido de latest.json publicado junto al APK.
@@ -30,14 +39,23 @@ class AdminService {
   static final _installStatus = StreamController<String>.broadcast();
   static bool _listening = false;
 
+  // Batería de la tableta; null hasta que Android envíe el primer dato.
+  static final battery = ValueNotifier<BatteryState?>(null);
+
   AdminService() {
     if (_listening) return;
     _listening = true;
     _channel.setMethodCallHandler((call) async {
       if (call.method == 'installStatus') {
         _installStatus.add('${call.arguments['mensaje']}');
+      } else if (call.method == 'battery') {
+        final m = call.arguments as Map;
+        battery.value = BatteryState(
+            (m['percent'] as num).toInt(), m['charging'] == true, m['kiosk'] == true);
       }
     });
+    // El primer aviso de Android puede llegar antes de que Flutter escuche.
+    _channel.invokeMethod('battery').catchError((_) {});
   }
 
   // Mensajes de la sesión de instalación (error o confirmación pendiente).

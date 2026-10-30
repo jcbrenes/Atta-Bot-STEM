@@ -7,7 +7,9 @@ import android.content.Intent
 import android.content.pm.PackageInfo
 import android.content.pm.PackageInstaller
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import java.io.File
 import java.security.MessageDigest
 
@@ -31,6 +33,20 @@ object UpdateInstaller {
             return "La versión ${nuevo.versionName} no es más nueva que la instalada"
         // Otra firma haría fallar la instalación o, peor, obligaría a desinstalar y perder Device Owner.
         if (firmas(nuevo).isEmpty() || firmas(nuevo) != firmas(actual)) return "El APK está firmado con otra clave"
+
+        // HyperOS rechaza la sesión ("INSTALL_FAILED_ABORTED: Permission Denied") sin este permiso,
+        // aunque la app sea Device Owner. Fuera del kiosko se abre Ajustes para concederlo.
+        if (!pm.canRequestPackageInstalls()) {
+            try {
+                context.startActivity(
+                    Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${context.packageName}"))
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                )
+            } catch (_: Exception) {
+            }
+            return "Falta el permiso «Instalar apps desconocidas». Desactive el kiosko, toque Actualizar, " +
+                "active «Permitir de esta fuente» en Ajustes y vuelva a tocar Actualizar."
+        }
 
         val installer = pm.packageInstaller
         val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
