@@ -388,7 +388,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                   thumbVisibility: true,
                                   controller: _historyScrollController,
                                   interactive: true,
-                                  thickness: 16.0,
+                                  thickness: 6.0,
                                   radius: const Radius.circular(10),
                                   thumbColor: neutralWhite,
                                   trackColor:

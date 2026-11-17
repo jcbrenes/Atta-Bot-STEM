@@ -117,7 +117,7 @@ class _LandingPageState extends State<LandingPage> {
         ),
         child: Icon(
           Icons.home,
-          size: 20,
+          size: 10,
           color: Colors.transparent,
         ),
       ),
@@ -134,7 +134,7 @@ class _LandingPageState extends State<LandingPage> {
         ),
         child: Icon(
           Icons.history,
-          size: 20,
+          size: 10,
           color: Colors.transparent,
         ),
       ),
@@ -151,7 +151,7 @@ class _LandingPageState extends State<LandingPage> {
         ),
         child: Icon(
           Icons.smart_toy,
-          size: 20,
+          size: 10,
           color: Colors.transparent,
         ),
       ),
@@ -229,8 +229,8 @@ class _LandingPageState extends State<LandingPage> {
     final double landscapeSwitchWidth =
       (MediaQuery.of(context).size.width * 0.42).clamp(260.0, 520.0).toDouble();
 
-    return WillPopScope(
-      onWillPop: _handleBackNavigation,
+    return PopScope(
+      canPop: false,
       child: Theme(
           data: Theme.of(context).copyWith(
             navigationBarTheme: NavigationBarThemeData(
@@ -508,14 +508,14 @@ class _LandingPageState extends State<LandingPage> {
   Widget _buildNavigationBar() {
     return Container(
       color: neutralDarkBlue,
-      padding: const EdgeInsets.fromLTRB(0, 0, 0, 10),
+      padding: const EdgeInsets.only(bottom: 30),
       child: NavigationBar(
         backgroundColor: neutralDarkBlue,
         indicatorColor: neutralWhite,
         indicatorShape: const CircleBorder(),
         destinations: destinations,
         selectedIndex: _selectedIndex,
-        height: 10,
+        height: 13,
         onDestinationSelected: (index) {
           if (index < 7 || index > 9) return;
 

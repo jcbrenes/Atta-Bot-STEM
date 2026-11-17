@@ -57,13 +57,22 @@ class InstructionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget mainContent = Row(
       children: [
-        // Punto indicador
+        // Área exclusiva para reordenar la instrucción
         Padding(
-          padding: EdgeInsets.fromLTRB(10, 0, tilePadding, 0),
-          child: const Icon(
-            Icons.circle,
-            color: neutralWhite,
-            size: 6,
+          padding: EdgeInsets.fromLTRB(8, 0, tilePadding, 0),
+          child: ReorderableDragStartListener(
+            index: index,
+            child: const SizedBox(
+              width: 32,
+              height: 48,
+              child: Center(
+                child: Icon(
+                  Icons.drag_indicator,
+                  color: neutralWhite,
+                  size: 24,
+                ),
+              ),
+            ),
           ),
         ),
 
@@ -113,9 +122,6 @@ class InstructionTile extends StatelessWidget {
       ],
     );
 
-    return ReorderableDragStartListener(
-      index: index,
-      child: mainContent,
-    );
+    return mainContent;
   }
 }

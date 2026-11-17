@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:proyecto_tec/shared/components/ui/buttons/default_button_factory.dart';
 import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
 import 'package:proyecto_tec/shared/features/navigation/services/navigation.dart';
 import 'package:proyecto_tec/shared/interfaces/bluetooth/bluetooth_service_interface.dart';
@@ -39,23 +40,40 @@ class BotControlHeader extends StatelessWidget {
                 onTap: () => navService.goToBluetoothDevicesPage(context),
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(4, 12, 4, 8),
-                  child: Baseline(
-                    baseline: 14,
-                    baselineType: TextBaseline.alphabetic,
-                    child: Text(
-                      'Conexión: $connectionName',
-                      style: const TextStyle(
-                        shadows: [
-                          Shadow(color: neutralWhite, offset: Offset(0, -6))
-                        ],
-                        fontSize: 12,
-                        color: Colors.transparent,
-                        fontWeight: FontWeight.w500,
-                        decorationColor: neutralGray,
-                        decorationThickness: 3,
-                        decoration: TextDecoration.underline,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Image.asset(
+                        DefaultButtonFactory.getIconAssetPath(
+                          IconType.bluetooth,
+                        ),
+                        width: 14,
+                        height: 14,
+                        color: neutralGray,
                       ),
-                    ),
+                      const SizedBox(width: 4),
+                      Baseline(
+                        baseline: 14,
+                        baselineType: TextBaseline.alphabetic,
+                        child: Text(
+                          'Conexión: $connectionName',
+                          style: const TextStyle(
+                            shadows: [
+                              Shadow(
+                                color: neutralWhite,
+                                offset: Offset(0, -6),
+                              ),
+                            ],
+                            fontSize: 12,
+                            color: Colors.transparent,
+                            fontWeight: FontWeight.w500,
+                            decorationColor: neutralGray,
+                            decorationThickness: 3,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               );

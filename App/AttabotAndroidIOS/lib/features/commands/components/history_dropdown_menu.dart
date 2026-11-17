@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:provider/provider.dart';
-import 'package:file_picker/file_picker.dart'; 
+import 'package:file_picker/file_picker.dart';
 import 'package:proyecto_tec/features/commands/models/command.dart';
 import 'package:proyecto_tec/features/file-management/services/file_management_service.dart';
+import 'package:proyecto_tec/features/file-management/services/preset_service.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog.dart';
@@ -24,6 +25,7 @@ class InstructionHistoryDropdown extends StatefulWidget {
 class _InstructionHistoryDropdownState
     extends State<InstructionHistoryDropdown> {
   final FileManagementService fmService = FileManagementService();
+  final PresetService presetService = PresetService();
 
   final GlobalKey<FormState> _fileNameKey = GlobalKey<FormState>();
   final TextEditingController fileNameController = TextEditingController();
@@ -36,6 +38,10 @@ class _InstructionHistoryDropdownState
         PopupMenuItem(
           value: 2,
           child: Text('Cargar Instrucciones', style: titleTextStyle),
+        ),
+        PopupMenuItem(
+          value: 7,
+          child: Text('Figuras predeterminadas', style: titleTextStyle),
         ),
         PopupMenuItem(
           value: 3,
@@ -75,14 +81,13 @@ class _InstructionHistoryDropdownState
         fontWeight: FontWeight.w500,
       );
 
-  
-
   Future<void> openSaveFileDialog() async {
-    final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final bool isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
     await showDialog(
-      context: context,
-      useRootNavigator: !isLandscape,
-      builder: (context) => AlertDialog(
+        context: context,
+        useRootNavigator: !isLandscape,
+        builder: (context) => AlertDialog(
               title: Text('Guardar Instrucciones', style: titleTextStyle),
               backgroundColor: neutralDarkBlueAD,
               shape: RoundedRectangleBorder(
@@ -115,14 +120,14 @@ class _InstructionHistoryDropdownState
                     child: TextFormField(
                       controller: fileNameController,
                       decoration: InputDecoration(
-                          border: const UnderlineInputBorder(
-                            borderSide: BorderSide(
-                              color: neutralWhite,
-                            ),
+                        border: const UnderlineInputBorder(
+                          borderSide: BorderSide(
+                            color: neutralWhite,
                           ),
-                          hintText: '*Ingresese el nombre para el archivo',
-                          hintStyle: contentTextStyle,
-                          ),
+                        ),
+                        hintText: '*Ingresese el nombre para el archivo',
+                        hintStyle: contentTextStyle,
+                      ),
                       validator: (value) {
                         final v = value?.trim() ?? '';
                         if (v.isEmpty) return 'Campo requerido';
@@ -184,7 +189,8 @@ class _InstructionHistoryDropdownState
   }
 
   Future<void> openInvalidFileNameDialog() async {
-    final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final bool isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
     await showDialog(
       context: context,
       useRootNavigator: !isLandscape,
@@ -201,9 +207,11 @@ class _InstructionHistoryDropdownState
           children: [
             Text('El nombre de archivo es inválido.', style: contentTextStyle),
             const SizedBox(height: 12),
-            Text('Utilice únicamente letras, números y guión bajo.', style: subtitleTextStyle),
+            Text('Utilice únicamente letras, números y guión bajo.',
+                style: subtitleTextStyle),
             const SizedBox(height: 4),
-            Text('* No se aceptan caracteres especiales, ni espacios.', style: subtitleTextStyle),
+            Text('* No se aceptan caracteres especiales, ni espacios.',
+                style: subtitleTextStyle),
           ],
         ),
         actions: [
@@ -220,7 +228,8 @@ class _InstructionHistoryDropdownState
   }
 
   Future<void> openSaveSuccessDialog(String fileName) async {
-    final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final bool isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
     await showDialog(
       context: context,
       useRootNavigator: !isLandscape,
@@ -231,7 +240,8 @@ class _InstructionHistoryDropdownState
           borderRadius: BorderRadius.circular(24.0),
           side: const BorderSide(color: neutralWhite, width: 4.0),
         ),
-        content: Text('El archivo “$fileName” ha sido guardado exitosamente.', style: contentTextStyle),
+        content: Text('El archivo “$fileName” ha sido guardado exitosamente.',
+            style: contentTextStyle),
         actions: [
           TextButton(
             child: Text('Continuar', style: contentTextStyle),
@@ -245,11 +255,12 @@ class _InstructionHistoryDropdownState
   }
 
   Future<void> openOverwiteFileDialog() async {
-    final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final bool isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
     await showDialog(
-      context: context,
-      useRootNavigator: !isLandscape,
-      builder: (context) => AlertDialog(
+        context: context,
+        useRootNavigator: !isLandscape,
+        builder: (context) => AlertDialog(
               title: Text('Sobrescribir Instrucciones', style: titleTextStyle),
               backgroundColor: neutralDarkBlueAD,
               shape: RoundedRectangleBorder(
@@ -278,6 +289,55 @@ class _InstructionHistoryDropdownState
             ));
   }
 
+  Future<void> openPresetDialog() async {
+    if (!mounted) return;
+    final bool isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+    await showDialog(
+      context: context,
+      useRootNavigator: !isLandscape,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('Figuras predeterminadas', style: titleTextStyle),
+        backgroundColor: neutralDarkBlueAD,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24.0),
+          side: const BorderSide(color: neutralWhite, width: 4.0),
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: PresetService.availablePresets.length,
+            itemBuilder: (context, index) {
+              final preset = PresetService.availablePresets[index];
+              return ListTile(
+                leading: const Icon(Icons.crop_square, color: neutralWhite),
+                title: Text(preset.name, style: contentTextStyle),
+                onTap: () async {
+                  final commandService = this.context.read<CommandService>();
+                  try {
+                    final fileData = await presetService.loadPreset(preset);
+                    if (!mounted) return;
+                    commandService.loadCommands(fileData);
+                    if (!dialogContext.mounted) return;
+                    Navigator.of(dialogContext).pop();
+                    showSnackBar('${preset.name} cargado');
+                  } on FormatException {
+                    if (!mounted) return;
+                    showSnackBar('La figura no contiene instrucciones válidas');
+                  } on FlutterError {
+                    if (!mounted) return;
+                    showSnackBar('No se pudo cargar la figura');
+                  }
+                },
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> openLoadFileDialog() async {
     List<String> fileNames;
     try {
@@ -285,12 +345,14 @@ class _InstructionHistoryDropdownState
     } catch (e) {
       fileNames = [];
     }
+
     if (!mounted) return;
-    final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final bool isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
     showDialog(
-      context: context,
-      useRootNavigator: !isLandscape,
-      builder: (context) => AlertDialog(
+        context: context,
+        useRootNavigator: !isLandscape,
+        builder: (context) => AlertDialog(
             title: Text('Cargar Instrucciones', style: titleTextStyle),
             backgroundColor: neutralDarkBlueAD,
             shape: RoundedRectangleBorder(
@@ -323,8 +385,7 @@ class _InstructionHistoryDropdownState
                           },
                         );
                       }),
-                ))
-                ));
+                ))));
   }
 
   Future<void> openFileExplorer() async {
@@ -371,11 +432,12 @@ class _InstructionHistoryDropdownState
   }
 
   Future<void> openClearInstructionsDialog() async {
-    final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final bool isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
     await showDialog(
-      context: context,
-      useRootNavigator: !isLandscape,
-      builder: (context) {
+        context: context,
+        useRootNavigator: !isLandscape,
+        builder: (context) {
           return AlertDialog(
             title: Text('Borrar Instrucciones', style: titleTextStyle),
             backgroundColor: neutralDarkBlueAD,
@@ -406,8 +468,7 @@ class _InstructionHistoryDropdownState
         });
   }
 
-
-    Future<void> openExportFileToFolderDialog() async {
+  Future<void> openExportFileToFolderDialog() async {
     List<String> fileNames;
     try {
       fileNames = await fmService.getSavedFilesList();
@@ -415,11 +476,12 @@ class _InstructionHistoryDropdownState
       fileNames = [];
     }
     if (!mounted) return;
-    final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final bool isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
     showDialog(
-      context: context,
-      useRootNavigator: !isLandscape,
-      builder: (context) => AlertDialog(
+        context: context,
+        useRootNavigator: !isLandscape,
+        builder: (context) => AlertDialog(
             title: Text('Exportar a dat', style: titleTextStyle),
             backgroundColor: neutralDarkBlueAD,
             shape: RoundedRectangleBorder(
@@ -438,13 +500,15 @@ class _InstructionHistoryDropdownState
                               Text(fileNames[index], style: contentTextStyle),
                           onTap: () async {
                             try {
-                                await fmService.saveFileToFolder(fileNames[index]);
-                                Navigator.of(context).pop();
-                                showSnackBar('Archivo exportado a la carpeta seleccionada');
-                              } catch (e) {
-                                Navigator.of(context).pop();
-                                showSnackBar('Error al exportar archivo');
-                              }
+                              await fmService
+                                  .saveFileToFolder(fileNames[index]);
+                              Navigator.of(context).pop();
+                              showSnackBar(
+                                  'Archivo exportado a la carpeta seleccionada');
+                            } catch (e) {
+                              Navigator.of(context).pop();
+                              showSnackBar('Error al exportar archivo');
+                            }
                           },
                         );
                       }),
@@ -546,10 +610,13 @@ class _InstructionHistoryDropdownState
 
         switch (value) {
           case 1:
-            final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
-            final simplified = context.read<SimplifiedModeProvider>().simplifiedMode;
+            final bool isLandscape =
+                MediaQuery.of(context).orientation == Orientation.landscape;
+            final simplified =
+                context.read<SimplifiedModeProvider>().simplifiedMode;
             if (simplified) {
-              HelpDialogForSimplifiedMode.show(context, useRootNavigator: !isLandscape);
+              HelpDialogForSimplifiedMode.show(context,
+                  useRootNavigator: !isLandscape);
             } else {
               HelpDialog.show(context, useRootNavigator: !isLandscape);
             }
@@ -609,7 +676,8 @@ class _InstructionHistoryDropdownState
             final int initAngle = sp.defaultAngle;
             final int initCycle = sp.defaultCycle;
 
-            final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+            final bool isLandscape =
+                MediaQuery.of(context).orientation == Orientation.landscape;
             showDialog(
               context: context,
               useRootNavigator: !isLandscape,
@@ -626,9 +694,11 @@ class _InstructionHistoryDropdownState
           case 6:
             openExportFileToFolderDialog();
             break;
+          case 7:
+            openPresetDialog();
+            break;
           default:
             break;
-          
         }
       },
     );
