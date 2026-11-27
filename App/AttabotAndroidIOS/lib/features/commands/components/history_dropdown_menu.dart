@@ -4,12 +4,12 @@ import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:proyecto_tec/features/commands/models/command.dart';
 import 'package:proyecto_tec/features/file-management/services/file_management_service.dart';
-import 'package:proyecto_tec/features/file-management/services/preset_service.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog.dart';
 import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog_for_simplified.dart';
 import 'package:proyecto_tec/features/bot-control/dialogs/default_movement_dialog.dart';
+import 'package:proyecto_tec/features/bot-control/dialogs/predetermined_figures_dialog.dart';
 import 'package:proyecto_tec/pages/bot_control_page.dart'; // SimplifiedModeProvider
 
 class InstructionHistoryDropdown extends StatefulWidget {
@@ -25,8 +25,6 @@ class InstructionHistoryDropdown extends StatefulWidget {
 class _InstructionHistoryDropdownState
     extends State<InstructionHistoryDropdown> {
   final FileManagementService fmService = FileManagementService();
-  final PresetService presetService = PresetService();
-
   final GlobalKey<FormState> _fileNameKey = GlobalKey<FormState>();
   final TextEditingController fileNameController = TextEditingController();
 
@@ -287,55 +285,6 @@ class _InstructionHistoryDropdownState
                 ),
               ],
             ));
-  }
-
-  Future<void> openPresetDialog() async {
-    if (!mounted) return;
-    final bool isLandscape =
-        MediaQuery.of(context).orientation == Orientation.landscape;
-    await showDialog(
-      context: context,
-      useRootNavigator: !isLandscape,
-      builder: (dialogContext) => AlertDialog(
-        title: Text('Figuras predeterminadas', style: titleTextStyle),
-        backgroundColor: neutralDarkBlueAD,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24.0),
-          side: const BorderSide(color: neutralWhite, width: 4.0),
-        ),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: PresetService.availablePresets.length,
-            itemBuilder: (context, index) {
-              final preset = PresetService.availablePresets[index];
-              return ListTile(
-                leading: const Icon(Icons.crop_square, color: neutralWhite),
-                title: Text(preset.name, style: contentTextStyle),
-                onTap: () async {
-                  final commandService = this.context.read<CommandService>();
-                  try {
-                    final fileData = await presetService.loadPreset(preset);
-                    if (!mounted) return;
-                    commandService.loadCommands(fileData);
-                    if (!dialogContext.mounted) return;
-                    Navigator.of(dialogContext).pop();
-                    showSnackBar('${preset.name} cargado');
-                  } on FormatException {
-                    if (!mounted) return;
-                    showSnackBar('La figura no contiene instrucciones válidas');
-                  } on FlutterError {
-                    if (!mounted) return;
-                    showSnackBar('No se pudo cargar la figura');
-                  }
-                },
-              );
-            },
-          ),
-        ),
-      ),
-    );
   }
 
   Future<void> openLoadFileDialog() async {
@@ -695,7 +644,12 @@ class _InstructionHistoryDropdownState
             openExportFileToFolderDialog();
             break;
           case 7:
-            openPresetDialog();
+            final bool isLandscape =
+                MediaQuery.of(context).orientation == Orientation.landscape;
+            PredeterminedFiguresDialog.show(
+              context,
+              useRootNavigator: !isLandscape,
+            );
             break;
           default:
             break;
