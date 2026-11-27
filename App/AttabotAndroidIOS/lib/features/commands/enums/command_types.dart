@@ -11,6 +11,8 @@ enum CommandType {
   rotateRight('Girar a la derecha _°', 'GD_'),
   activateTool('Lápiz activado', 'HEINI'),
   deactivateTool('Lápiz desactivado', 'HEFIN'),
+  // ES005 is a local history token; the current robot firmware cannot run it.
+  wait('Esperar 5 segundos', 'ES005'),
   ;
   // Add new command types here
 

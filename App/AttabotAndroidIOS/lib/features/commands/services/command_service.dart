@@ -238,6 +238,10 @@ class CommandService extends ChangeNotifier {
   }
 
   String getCommandsBotString() {
+    if (hasSimulatorOnlyCommands) {
+      throw StateError(
+          'La espera de 5 segundos solo está disponible en el simulador.');
+    }
     String commandsString = "";
     commandsString += CommandType.commandHeader.botTranslation;
     for (Command command in _commands) {
@@ -246,6 +250,9 @@ class CommandService extends ChangeNotifier {
     commandsString += CommandType.commandFooter.botTranslation;
     return commandsString;
   }
+
+  bool get hasSimulatorOnlyCommands =>
+      _commands.any((command) => command.action == CommandType.wait);
 
 // ================================COMMANDS=====================================
   void _addCommandRespectingSimplifiedCycle(Command command) {

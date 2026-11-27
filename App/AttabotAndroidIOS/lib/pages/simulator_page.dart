@@ -9,6 +9,7 @@ import 'package:proyecto_tec/features/simulator/dialogs/simulator_actions_dialog
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
 import 'package:proyecto_tec/features/commands/models/command.dart';
 import 'package:proyecto_tec/features/commands/enums/command_types.dart';
+import 'package:proyecto_tec/features/simulator/services/simulator_background.dart';
 import 'package:proyecto_tec/features/simulator/services/simulator_program_parser.dart';
 import 'package:proyecto_tec/shared/features/dependency-manager/dependency_manager.dart';
 import 'package:proyecto_tec/shared/features/navigation/services/navigation.dart';
@@ -19,8 +20,9 @@ import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog_for_simpli
 
 class SimulatorPage extends StatefulWidget {
   final bool embedded;
+  final SimulatorBackground? background;
 
-  const SimulatorPage({super.key, this.embedded = false});
+  const SimulatorPage({super.key, this.embedded = false, this.background});
 
   @override
   State<SimulatorPage> createState() => _SimulatorPageState();
@@ -35,10 +37,46 @@ class _SimulatorPageState extends State<SimulatorPage> {
   bool isExecutingCycleInstruction = false;
   int stopSignal = 0;
   int restartSignal = 0;
+  SimulatorBackground? _standaloneBackground;
+  SimulatorBackground get _background =>
+      widget.background ?? (_standaloneBackground ??= SimulatorBackground());
   static const Color _panelBlue = Color(0xFF1A3564);
   static const Color _panelBorder = Color(0xFFF5F6F9);
   static const Color _gridFrame = Color(0xFFE5E9F2);
   static const int _maximumProgramFileBytes = 100 * 1024;
+
+  @override
+  void dispose() {
+    _standaloneBackground?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadBackgroundImage(SimulatorBackgroundSource source) async {
+    try {
+      await _background.load(source);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error is FormatException
+              ? error.message
+              : 'No se pudo abrir la imagen. Prueba con PNG, JPG o WebP.'),
+        ),
+      );
+    }
+  }
+
+  void _setBackgroundVisible(bool visible) {
+    if (visible && _background.image == null) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(content: Text('Primero carga una imagen de fondo')),
+        );
+      return;
+    }
+    _background.setVisible(visible);
+  }
 
   bool _hasOpenCycleLabel(String instruction) {
     return instruction.toLowerCase().contains('ciclo abierto');
@@ -168,6 +206,13 @@ class _SimulatorPageState extends State<SimulatorPage> {
     });
   }
 
+  Future<void> _editInstructions() async {
+    final commands = await showSimulatorActionsDialog(context);
+    if (!mounted || commands == null) return;
+    context.read<CommandService>().replaceCommands(commands);
+    restartSimulation();
+  }
+
   Widget _buildSimulationControlButton({
     required IconData icon,
     required String tooltip,
@@ -207,6 +252,13 @@ class _SimulatorPageState extends State<SimulatorPage> {
 
   @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: _background,
+      builder: (context, _) => _buildPage(context),
+    );
+  }
+
+  Widget _buildPage(BuildContext context) {
     final simplifiedProvider = Provider.of<SimplifiedModeProvider>(context);
     final bool isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
@@ -368,9 +420,8 @@ class _SimulatorPageState extends State<SimulatorPage> {
                               ),
                             ),
                             child: IconButton(
-                              onPressed: () {
-                                showSimulatorActionsDialog(context);
-                              },
+                              onPressed: _editInstructions,
+                              tooltip: 'Editar instrucciones',
                               padding: EdgeInsets.zero,
                               icon: Icon(
                                 Icons.add_rounded,
@@ -446,6 +497,50 @@ class _SimulatorPageState extends State<SimulatorPage> {
                         ],
                       ),
                       SizedBox(height: rowGap),
+                      Wrap(
+                        spacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          PopupMenuButton<SimulatorBackgroundSource>(
+                            enabled: !_background.loading,
+                            onSelected: _loadBackgroundImage,
+                            itemBuilder: (context) => const [
+                              PopupMenuItem(
+                                value: SimulatorBackgroundSource.file,
+                                child: Text('Elegir archivo'),
+                              ),
+                              PopupMenuItem(
+                                value: SimulatorBackgroundSource.farm,
+                                child: Text('Usar mapa de la granja'),
+                              ),
+                            ],
+                            child: const Padding(
+                              padding: EdgeInsets.all(8),
+                              child: Text('Cargar imagen',
+                                  style: TextStyle(color: neutralWhite)),
+                            ),
+                          ),
+                          MergeSemantics(
+                            child: InkWell(
+                              onTap: () =>
+                                  _setBackgroundVisible(!_background.visible),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Checkbox(
+                                    value: _background.visible,
+                                    side: const BorderSide(color: neutralWhite),
+                                    onChanged: (value) =>
+                                        _setBackgroundVisible(value ?? false),
+                                  ),
+                                  const Text('Mostrar imagen',
+                                      style: TextStyle(color: neutralWhite)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                       Expanded(
                         child: Container(
                           padding: EdgeInsets.all(gridFramePadding),
@@ -466,6 +561,9 @@ class _SimulatorPageState extends State<SimulatorPage> {
                               height: double.infinity,
                               useImage: true,
                               botImagePath: 'assets/atta_bot.svg',
+                              backgroundImage: _background.visible
+                                  ? _background.image
+                                  : null,
                               onInstructionChange: (instruction) {
                                 WidgetsBinding.instance
                                     .addPostFrameCallback((_) {

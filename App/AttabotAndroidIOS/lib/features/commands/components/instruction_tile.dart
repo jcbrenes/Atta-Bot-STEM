@@ -55,6 +55,7 @@ class InstructionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tileRadius = BorderRadius.circular(15);
     Widget mainContent = Row(
       children: [
         // Punto indicador
@@ -72,40 +73,42 @@ class InstructionTile extends StatelessWidget {
           child: Container(
             margin: EdgeInsets.fromLTRB(0, tileMargin, 40, tileMargin),
             decoration: BoxDecoration(
-              color: color, // Fondo completo
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: tileRadius,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
+                  color: Colors.black.withValues(alpha: 0.15),
                   offset: const Offset(0, 2),
                   blurRadius: 4,
                 ),
               ],
             ),
-            child: ListTile(
-              onTap: onTap,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              title: Row(
-                children: [
-                  // Ícono a la izquierda
-                  Image.asset(
-                    getIconPath(),
-                    width: 20,
-                    height: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  // Texto de la instrucción
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: titleTextStyle,
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
+            child: Material(
+              color: color,
+              borderRadius: tileRadius,
+              clipBehavior: Clip.antiAlias,
+              child: ListTile(
+                onTap: onTap,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                title: Row(
+                  children: [
+                    Image.asset(
+                      getIconPath(),
+                      width: 20,
+                      height: 20,
                     ),
-                  ),
-                  trailing ?? const SizedBox(),
-                ],
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: titleTextStyle,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                    ),
+                    trailing ?? const SizedBox(),
+                  ],
+                ),
               ),
             ),
           ),

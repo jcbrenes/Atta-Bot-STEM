@@ -242,6 +242,7 @@ class _BotControlPageState extends State<BotControlPage> {
 
     return Scaffold(
       extendBodyBehindAppBar: false,
+      resizeToAvoidBottomInset: false,
       backgroundColor: neutralDarkBlue,
       appBar: AppBar(
         title: const Text('Atta-Bot Educativo'),

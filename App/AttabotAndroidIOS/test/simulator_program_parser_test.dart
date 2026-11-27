@@ -5,6 +5,19 @@ import 'package:proyecto_tec/features/simulator/services/simulator_program_parse
 void main() {
   final parser = SimulatorProgramParser();
 
+  test('acepta esperar sin parámetros y rechaza una duración variable', () {
+    final commands = parser.parse('avanzar(18); esperar(); retroceder(18);');
+    expect(commands.map((command) => command.action), [
+      CommandType.moveForward,
+      CommandType.wait,
+      CommandType.moveBackward,
+    ]);
+    expect(
+      () => parser.parse('esperar(10);'),
+      throwsA(isA<SimulatorProgramParseException>()),
+    );
+  });
+
   test('convierte un programa válido en instrucciones del simulador', () {
     final commands = parser.parse('''
       void main() {

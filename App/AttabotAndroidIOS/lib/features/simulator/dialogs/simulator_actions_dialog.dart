@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:proyecto_tec/features/commands/enums/command_types.dart';
+import 'package:proyecto_tec/features/commands/models/command.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
-import 'package:proyecto_tec/shared/components/ui/list/list_instructions.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 
-void showSimulatorActionsDialog(BuildContext context) {
-  // Se obtiene la lista de instrucciones desde el CommandService.
-  final commandService = Provider.of<CommandService>(context, listen: false);
-  final List<String> instructions =
-      commandService.commandHistory.map((cmd) => cmd.toUiString()).toList();
-
-  showDialog(
+Future<List<Command>?> showSimulatorActionsDialog(BuildContext context) {
+  // Keep edits local until applied so an active run is not changed mid-program.
+  final commands = List<Command>.of(
+    context.read<CommandService>().commandHistory,
+  );
+  return showDialog<List<Command>>(
     context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (context, setDialogState) => AlertDialog(
         buttonPadding: const EdgeInsets.all(20.0),
         actionsPadding: const EdgeInsets.fromLTRB(20, 20, 30, 10),
         contentPadding: const EdgeInsets.fromLTRB(0, 40, 0, 20),
@@ -33,26 +33,68 @@ void showSimulatorActionsDialog(BuildContext context) {
           side: const BorderSide(color: neutralWhite, width: 4.0),
         ),
         content: SizedBox(
-          height: 200,
+          height: MediaQuery.sizeOf(context).height * 0.45,
           width: double.maxFinite,
-          child: InstructionsList(instructions: instructions),
+          child: ListView.builder(
+            itemCount: commands.length * 2 + 1,
+            itemBuilder: (context, index) {
+              final commandIndex = index ~/ 2;
+              if (index.isEven) {
+                return TextButton.icon(
+                  key: ValueKey('insert-wait-$commandIndex'),
+                  style: TextButton.styleFrom(foregroundColor: neutralWhite),
+                  onPressed: () => setDialogState(() {
+                    commands.insert(
+                      commandIndex,
+                      Command(CommandType.wait, null),
+                    );
+                  }),
+                  icon: const Icon(Icons.timer_outlined, size: 18),
+                  label: const Text('+ Esperar 5 s'),
+                );
+              }
+              final command = commands[commandIndex];
+              return ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  '${commandIndex + 1}. ${command.toUiString()}',
+                  style: const TextStyle(color: neutralWhite, fontSize: 13),
+                ),
+                trailing: command.action == CommandType.wait
+                    ? IconButton(
+                        tooltip: 'Quitar espera',
+                        color: neutralWhite,
+                        icon: const Icon(Icons.delete_outline),
+                        onPressed: () => setDialogState(() {
+                          commands.removeAt(commandIndex);
+                        }),
+                      )
+                    : null,
+              );
+            },
+          ),
         ),
         actions: [
           TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child:
+                const Text('Cancelar', style: TextStyle(color: neutralWhite)),
+          ),
+          TextButton(
+            onPressed: commands.isEmpty
+                ? null
+                : () => Navigator.of(dialogContext).pop(commands),
             child: const Text(
-              "Continuar",
+              "Aplicar y reiniciar",
               style: TextStyle(
                 fontSize: 14,
                 fontFamily: "Poppins",
                 color: neutralWhite,
               ),
             ),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
           ),
         ],
-      );
-    },
+      ),
+    ),
   );
 }

@@ -232,6 +232,12 @@ class _ActionMenuState extends State<ActionMenu> {
                     showEmptyHistorySnackBar(context);
                     return;
                   }
+                  if (commandService.hasSimulatorOnlyCommands) {
+                    showMessageSnackBar(
+                      'La espera de 5 segundos solo está disponible en el simulador',
+                    );
+                    return;
+                  }
                   String message = context.read<CommandService>().getCommandsBotString();
                   bool messageSent = await btService.sendStringToDevice(message);
                   if (!messageSent) {

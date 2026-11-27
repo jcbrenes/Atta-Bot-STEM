@@ -39,6 +39,7 @@ class _MovementState extends State<Movement> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      scrollable: true,
       buttonPadding: const EdgeInsets.all(20.0),
       actionsPadding: const EdgeInsets.fromLTRB(20, 20, 30, 10),
       contentPadding: const EdgeInsets.fromLTRB(0, 40, 0, 20),

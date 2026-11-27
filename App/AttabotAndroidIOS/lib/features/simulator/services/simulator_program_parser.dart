@@ -278,6 +278,7 @@ class _ProgramParser {
     );
 
     final command = switch (nameToken.lexeme) {
+      'esperar' => _parseCommandWithoutValue(nameToken, CommandType.wait),
       'avanzar' => _parseCommandWithValue(
           nameToken,
           CommandType.moveForward,

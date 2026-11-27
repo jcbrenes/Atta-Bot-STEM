@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:proyecto_tec/shared/styles/colors.dart';
 import 'object_simulator.dart';
@@ -33,6 +34,7 @@ class SimulationArea extends StatefulWidget {
   final bool useImage;
   final String? botImagePath;
   final bool paused;
+  final ui.Image? backgroundImage;
 
   const SimulationArea({
     super.key,
@@ -47,6 +49,7 @@ class SimulationArea extends StatefulWidget {
     this.restartSignal = 0,
     this.useImage = false,
     this.botImagePath,
+    this.backgroundImage,
   });
 
   @override
@@ -74,6 +77,7 @@ class _SimulationAreaState extends State<SimulationArea> {
   static const int _movementMillisecondsPerGridCell = 400;
   static const int _rotationMillisecondsPer90Degrees = 300;
   static const Duration _defaultAnimationDuration = Duration(milliseconds: 400);
+  static const Duration _fixedWaitDuration = Duration(seconds: 5);
   double _gridCellSize = _defaultGridCellSize;
   Offset _visibleWorldPosition = Offset.zero;
   double _visibleRotation = 0;
@@ -297,7 +301,9 @@ class _SimulationAreaState extends State<SimulationArea> {
           ?.call(expandedInstruction.isInsideCycle);
 
       final canContinue = await _waitFor(
-        const Duration(milliseconds: 600),
+        _normalizeInstruction(instruction) == 'esperar 5 segundos'
+            ? Duration.zero
+            : const Duration(milliseconds: 600),
         runId,
         allowPause: true,
       );
@@ -319,7 +325,12 @@ class _SimulationAreaState extends State<SimulationArea> {
           _addCycleBoundaryMarker(instructionStartPosition);
         }
 
-        if (inst.contains("avanzar")) {
+        if (inst == 'esperar 5 segundos') {
+          stateChanged = true;
+          markInstructionStart = true;
+          instructionMarkerLabel = 'Esperar 5 segundos';
+          animationDuration = _fixedWaitDuration;
+        } else if (inst.contains("avanzar")) {
           stateChanged = true;
           markInstructionStart = true;
           instructionMarkerLabel =
@@ -602,6 +613,7 @@ class _SimulationAreaState extends State<SimulationArea> {
                                     ),
                                     lineColor: gridLineColor,
                                     backgroundColor: Colors.white,
+                                    backgroundImage: widget.backgroundImage,
                                   ),
                                 ),
                                 CustomPaint(
@@ -738,18 +750,46 @@ class GridBackgroundPainter extends CustomPainter {
   final Offset offset;
   final Color lineColor;
   final Color backgroundColor;
+  final ui.Image? backgroundImage;
 
   GridBackgroundPainter({
     required this.cellSize,
     required this.offset,
     required this.lineColor,
     required this.backgroundColor,
+    this.backgroundImage,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final backgroundPaint = Paint()..color = backgroundColor;
     canvas.drawRect(Offset.zero & size, backgroundPaint);
+
+    final image = backgroundImage;
+    if (image != null && !size.isEmpty) {
+      final scale = min(size.width / image.width, size.height / image.height);
+      final tileWidth = image.width * scale;
+      final tileHeight = image.height * scale;
+      // Center the starting tile and keep the repeating pattern in world space.
+      final originX = ((size.width - tileWidth) / 2 + offset.dx) % tileWidth;
+      final originY = ((size.height - tileHeight) / 2 + offset.dy) % tileHeight;
+      final transform = Matrix4.diagonal3Values(scale, scale, 1)
+        ..setTranslationRaw(originX, originY, 0);
+      final shader = ui.ImageShader(
+        image,
+        TileMode.repeated,
+        TileMode.repeated,
+        transform.storage,
+        filterQuality: FilterQuality.low,
+      );
+      canvas.drawRect(
+        Offset.zero & size,
+        Paint()
+          ..shader = shader
+          ..color = Colors.white.withValues(alpha: 0.3),
+      );
+      shader.dispose();
+    }
 
     final linePaint = Paint()
       ..color = lineColor
@@ -776,7 +816,8 @@ class GridBackgroundPainter extends CustomPainter {
     return oldDelegate.offset != offset ||
         oldDelegate.cellSize != cellSize ||
         oldDelegate.lineColor != lineColor ||
-        oldDelegate.backgroundColor != backgroundColor;
+        oldDelegate.backgroundColor != backgroundColor ||
+        oldDelegate.backgroundImage != backgroundImage;
   }
 }
 

@@ -38,6 +38,7 @@ void main() {
   activarDeteccion();
   repetir(2, () {
     avanzar(18);
+    esperar(); // Pausa fija de 5 segundos entre movimientos.
     girarDerecha(90);
   });
   desactivarDeteccion();
@@ -46,9 +47,18 @@ void main() {
 
 Comandos disponibles: `avanzar(cm)`, `retroceder(cm)`,
 `girarIzquierda(grados)`, `girarDerecha(grados)`, `activarDeteccion()`,
-`desactivarDeteccion()`, `activarLapiz()`, `desactivarLapiz()` y
+`desactivarDeteccion()`, `activarLapiz()`, `desactivarLapiz()`, `esperar()` y
 `repetir(veces, () { ... })`. Las distancias deben estar entre 1 y 999 cm; los
 giros, entre 1 y 360 grados; y los ciclos, entre 1 y 999 repeticiones.
+
+`esperar()` siempre dura 5 segundos y por ahora solo funciona en el simulador.
+También se puede insertar desde el botón `+` del historial, en el lugar deseado,
+y usar **Aplicar y reiniciar**. Pausar congela la espera y detener la cancela.
+
+En **Cargar imagen** puedes elegir un archivo o usar el mapa de la granja.
+Marca **Mostrar imagen** para ver el fondo al 30 % de opacidad. Al desmarcarla,
+la imagen queda lista para volver a mostrarse. La primera copia se centra y el
+patrón se repite en todas las direcciones mientras se desplaza la cuadrícula.
 
 ## Estructura del proyecto
 El proyecto utiliza una estructura basada en Screaming Architecture y componentes, la cual se divide en tres capas principales:

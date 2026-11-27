@@ -4,6 +4,7 @@ import 'package:proyecto_tec/features/commands/components/warning_mode_dialog.da
 import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog.dart';
 import 'package:proyecto_tec/features/bot-control/dialogs/help_dialog_for_simplified.dart';
 import 'package:proyecto_tec/features/commands/services/command_service.dart';
+import 'package:proyecto_tec/features/simulator/services/simulator_background.dart';
 import 'package:proyecto_tec/pages/bot_control_page.dart';
 import 'package:proyecto_tec/pages/home_page.dart';
 import 'package:proyecto_tec/pages/history_page.dart';
@@ -37,6 +38,7 @@ class _LandingPageState extends State<LandingPage> {
   int _selectedIndex = 7;
   bool _useAlternateLandscapeSplit = false;
   late final PageController _portraitPageController;
+  final _simulatorBackground = SimulatorBackground();
   // Navigator key for the left pane in landscape
   GlobalKey<NavigatorState> _leftPaneNavKey = GlobalKey<NavigatorState>();
   // Navigator key for the right pane in landscape
@@ -245,6 +247,8 @@ class _LandingPageState extends State<LandingPage> {
             ),
           ),
           child: Scaffold(
+            // The input dialogs handle keyboard insets above the control panes.
+            resizeToAvoidBottomInset: false,
             appBar: isLandscape
                 ? AppBar(
                     title: const Text('Atta-Bot Educativo'),
@@ -440,6 +444,7 @@ class _LandingPageState extends State<LandingPage> {
   @override
   void dispose() {
     _portraitPageController.dispose();
+    _simulatorBackground.dispose();
     if (SplitNav.rightPaneNavKey == _rightPaneNavKey) {
       SplitNav.rightPaneNavKey = null;
     }
@@ -456,7 +461,7 @@ class _LandingPageState extends State<LandingPage> {
         defaultCycle: widget.initialCycle,
       ),
       const HistoryPage(embedded: true),
-      const SimulatorPage(embedded: true),
+      SimulatorPage(embedded: true, background: _simulatorBackground),
     ];
   }
 
@@ -487,7 +492,7 @@ class _LandingPageState extends State<LandingPage> {
           );
 
     final Widget rightPane = _useAlternateLandscapeSplit
-        ? const SimulatorPage(embedded: true)
+        ? SimulatorPage(embedded: true, background: _simulatorBackground)
         : const HistoryPage(embedded: true);
 
     return Row(
